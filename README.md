@@ -4,35 +4,49 @@ A Home Assistant custom integration for controlling smart adjustable beds via Bl
 
 > **Warning: Alpha Software**
 >
-> This project is in early alpha. **Only Linak beds have been tested.** Other bed types are planned but not yet implemented. Expect bugs, breaking changes, and incomplete features. Use at your own risk.
+> This project is in early alpha. **Only Linak beds have been fully tested.** Other bed types are implemented but need community testing. Expect bugs, breaking changes, and incomplete features. Use at your own risk.
 >
-> **Contributions are very welcome!** If you have a different bed type and want to help add support, please open an issue or submit a pull request. See [Contributing](#contributing) below.
+> **Contributions are very welcome!** If you have a different bed type and can help test or improve support, please open an issue or submit a pull request. See [Contributing](#contributing) below.
 
 ## Supported Beds
 
-### Currently Implemented & Tested
-- **Linak** - Full support for Linak-based adjustable beds (the only bed type tested so far)
+### Implemented
 
-### Planned (Not Yet Implemented)
-- Richmat
-- Solace
-- MotoSleep
-- Reverie
-- Leggett & Platt (Okin and Richmat variants)
-- Okimat
-- Keeson
-- Octo
-- Sleeptracker AI (cloud-based: Tempur Ergo, BeautyRest, Serta)
+| Brand | Status | Protocol | Notes |
+|-------|--------|----------|-------|
+| **Linak** | Tested | Linak BLE | Full support with position feedback |
+| **Richmat** | Implemented | Nordic / WiLinke | Two protocol variants |
+| **Keeson** | Implemented | KSBT / BaseI4/I5 | Member's Mark, Purple, ErgoMotion |
+| **Solace** | Implemented | 11-byte packets | Hospital/care beds |
+| **MotoSleep** | Implemented | HHC ASCII | Device name starts with "HHC" |
+| **Leggett & Platt** | Implemented | Gen2 ASCII / Okin | Two distinct variants |
+| **Reverie** | Implemented | XOR checksum | Position-based motor control |
+| **Okimat** | Implemented | Okin binary | Requires BLE pairing |
+
+### Not Yet Implemented
+- **Octo / Sleeptracker AI** - Cloud-based (Tempur Ergo, BeautyRest, Serta)
 
 ## Features
 
-### Linak Beds
+### Common Features (All Brands)
 
 - **Motor Control**: Control head, back, legs, and feet positions (depending on motor count)
-- **Memory Presets**: 4 programmable memory positions
-- **Under-Bed Lights**: On/Off control
-- **Massage** (if equipped): Head and foot massage with intensity control
-- **Position Feedback**: Real-time angle sensors for beds that support it
+- **Memory Presets**: Go to saved positions (number varies by brand)
+- **Stop All**: Immediately stop all motor movement
+
+### Brand-Specific Features
+
+| Feature | Linak | Richmat | Keeson | Solace | MotoSleep | Leggett | Reverie | Okimat |
+|---------|-------|---------|--------|--------|-----------|---------|---------|--------|
+| Memory Presets | 4 | 2 | 4 | 5 | 2 | 4 | 4 | 4 |
+| Program Memory | Yes | Yes | - | Yes | Yes | Yes* | Yes | - |
+| Under-bed Lights | Yes | Yes | Yes | - | Yes | RGB* | Yes | Yes |
+| Massage Control | Yes | Yes | Yes | - | Yes | Yes* | Yes | Yes |
+| Position Feedback | Yes | - | - | - | - | - | - | - |
+| Zero-G Preset | - | Yes | Yes | Yes | Yes | - | Yes | Yes |
+| Anti-Snore | - | Yes | - | Yes | Yes | Yes* | Yes | - |
+
+*Gen2 variant only
 
 ## Installation
 
@@ -53,7 +67,7 @@ A Home Assistant custom integration for controlling smart adjustable beds via Bl
 
 ### Automatic Discovery
 
-The integration will automatically discover Linak beds via Bluetooth. When discovered:
+The integration will automatically discover supported beds via Bluetooth based on their service UUIDs and device names. When discovered:
 
 1. Go to **Settings** → **Devices & Services**
 2. You should see a notification about a discovered Smart Bed
@@ -167,14 +181,23 @@ If you're migrating from the smartbed-mqtt addon:
 
 ## Contributing
 
-**Contributions are very welcome!** This project needs help from the community to support more bed types.
+**Contributions are very welcome!** We need help testing the newly implemented bed types.
 
 ### How You Can Help
 
-- **Own a non-Linak bed?** Help us add support! Even just capturing BLE traffic is incredibly valuable.
+- **Own a supported bed?** Help us test! Report what works and what doesn't.
 - **Found a bug?** Please open an issue with as much detail as possible.
 - **Have ideas?** Feature requests and suggestions are welcome.
 - **Can code?** Pull requests are greatly appreciated.
+
+### Testing New Bed Types
+
+Most bed types are now implemented but need real-world testing:
+
+1. Install the integration and configure your bed
+2. Test all features (motors, presets, lights, massage)
+3. Report any issues with debug logs enabled
+4. Share your bed brand/model for documentation
 
 ### Adding Support for New Bed Types
 
@@ -184,8 +207,6 @@ If you're migrating from the smartbed-mqtt addon:
 4. Add bed detection to `config_flow.py`
 
 See [Technical Details](docs/CONNECTION_GUIDE.md#technical-details) for protocol documentation format.
-
-If you're not comfortable coding, even sharing BLE captures or protocol documentation for your bed would be a huge help!
 
 ## License
 

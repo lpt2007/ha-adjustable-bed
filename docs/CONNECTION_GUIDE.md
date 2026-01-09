@@ -29,23 +29,22 @@ Most smart beds use Bluetooth Low Energy (BLE) to communicate with their remote 
 
 ## Supported Beds
 
-### Currently Implemented
+### Implemented
 
-| Brand | BLE Service UUID | Notes |
-|-------|------------------|-------|
-| **Linak** | `99fa0001-338a-1024-8a49-009c0215f78a` | Full support with position feedback |
+| Brand | Detection Method | Protocol | Notes |
+|-------|------------------|----------|-------|
+| **Linak** | Service UUID `99fa0001-...` | 2-byte commands | Full support with position feedback (tested) |
+| **Richmat** | Service UUID `6e400001-...` or WiLinke UUIDs | Nordic (1-byte) / WiLinke (5-byte) | Two protocol variants |
+| **Keeson** | Service UUID `0000ffe5-...` | KSBT / BaseI4/I5 | Member's Mark, Purple, ErgoMotion |
+| **Solace** | Service UUID `0000ffe0-...` | 11-byte packets | Hospital/care beds |
+| **MotoSleep** | Device name starts with "HHC" | ASCII `[$, char]` | HHC controllers |
+| **Leggett & Platt** | Service UUID `45e25100-...` (Gen2) | ASCII / Binary | Gen2 and Okin variants |
+| **Reverie** | Service UUID `1b1d9641-...` | XOR checksum | Position-based motor control |
+| **Okimat** | Service UUID `62741523-...` | Okin binary | Requires BLE pairing |
 
-### Planned (Not Yet Implemented)
+### Not Yet Implemented
 
-- Richmat
-- Solace
-- MotoSleep
-- Reverie
-- Leggett & Platt (Okin and Richmat variants)
-- Okimat
-- Keeson
-- Octo
-- Sleeptracker AI (cloud-based)
+- **Octo / Sleeptracker AI** - Cloud-based (Tempur Ergo, BeautyRest, Serta)
 
 ---
 
@@ -219,12 +218,30 @@ If you have an ESPHome proxy:
    [bluetooth_proxy] Proxying packet from AA:BB:CC:DD:EE:FF...
    ```
 
-### Identifying Linak Beds
+### Identifying Beds by Brand
 
-Linak bed controllers typically:
-- Have device names starting with "Desk" (e.g., "Desk 12345")
-- Advertise service UUID: `99fa0001-338a-1024-8a49-009c0215f78a`
-- May have a label on the controller showing "Linak" branding
+**Linak beds:**
+- Device names often start with "Desk" (e.g., "Desk 12345")
+- Service UUID: `99fa0001-338a-1024-8a49-009c0215f78a`
+
+**MotoSleep beds:**
+- Device names start with "HHC" (e.g., "HHC3611243CDEF")
+- Service UUID: `0000ffe0-0000-1000-8000-00805f9b34fb`
+
+**Richmat beds:**
+- Nordic variant: Service UUID `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
+- WiLinke variant: Various UUIDs starting with `8ebd4f76-...` or `0000fee9-...`
+
+**Leggett & Platt beds:**
+- Gen2: Service UUID `45e25100-3171-4cfc-ae89-1d83cf8d8071`
+- Okin: Service UUID `62741523-52f9-8864-b1ab-3b3a8d65950b`
+
+**Reverie beds:**
+- Service UUID: `1b1d9641-b942-4da8-89cc-98e6a58fbd93`
+
+**Okimat beds:**
+- Service UUID: `62741523-52f9-8864-b1ab-3b3a8d65950b` (same as Leggett Okin)
+- Requires BLE pairing before use
 
 ---
 
@@ -398,14 +415,15 @@ If you're still having issues:
 
 ## Contributing
 
-Found a bug or want to add support for a new bed type?
+Found a bug or want to help test/improve bed support?
 
 1. Fork the repository
-2. Enable debug logging and capture the BLE traffic
-3. Document the protocol (services, characteristics, commands)
-4. Submit a pull request
+2. Enable debug logging and test your bed
+3. Report what works and what doesn't
+4. Submit a pull request with fixes
 
-We especially welcome contributions for:
-- New bed types (Richmat, Reverie, etc.)
-- Protocol documentation
+We especially welcome:
+- **Testing feedback** for newly implemented beds (all except Linak)
+- Protocol corrections based on real-world testing
 - Bug fixes and improvements
+- Support for Octo/Sleeptracker AI (cloud-based)

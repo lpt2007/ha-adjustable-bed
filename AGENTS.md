@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Home Assistant custom integration for controlling smart adjustable beds via Bluetooth Low Energy (BLE). It replaces the broken `smartbed-mqtt` addon with a native HA integration that uses Home Assistant's Bluetooth stack directly, avoiding the ESPHome Native API compatibility issues that broke the old addon.
 
-**Current status:** Linak beds fully implemented. Other bed types (Richmat, Solace, MotoSleep, Reverie, etc.) are planned but not yet implemented.
+**Current status:** All major BLE bed types implemented. Linak beds fully tested. Other brands need community testing.
 
 ## Why the Old Integration Broke
 
@@ -30,7 +30,14 @@ custom_components/smartbed/
 ├── entity.py            # Base entity class
 ├── beds/                # Bed controller implementations
 │   ├── base.py          # Abstract base class (BedController)
-│   └── linak.py         # Linak-specific protocol implementation
+│   ├── linak.py         # Linak protocol (tested)
+│   ├── richmat.py       # Richmat Nordic/WiLinke protocols
+│   ├── keeson.py        # Keeson KSBT/BaseI4/I5 protocols
+│   ├── solace.py        # Solace 11-byte packet protocol
+│   ├── motosleep.py     # MotoSleep HHC ASCII protocol
+│   ├── leggett_platt.py # Leggett & Platt Gen2/Okin protocols
+│   ├── reverie.py       # Reverie XOR checksum protocol
+│   └── okimat.py        # Okimat/Okin binary protocol
 ├── button.py            # Preset and massage button entities
 ├── cover.py             # Motor control entities (open=up, close=down)
 ├── sensor.py            # Position angle feedback entities
@@ -64,38 +71,53 @@ custom_components/smartbed/
 - Manual entry with bed type selection
 - Per-device Bluetooth adapter/proxy selection
 
+## Implemented Bed Types
+
+| Brand | Controller | Protocol | Detection |
+|-------|------------|----------|-----------|
+| Linak | `LinakController` | 2-byte commands, write-with-response | Service UUID `99fa0001-...` |
+| Richmat | `RichmatController` | Nordic (1-byte) or WiLinke (5-byte checksum) | Service UUIDs vary by variant |
+| Keeson | `KeesonController` | KSBT (6-byte) or BaseI4/I5 (8-byte XOR) | Service UUID `0000ffe5-...` |
+| Solace | `SolaceController` | 11-byte packets with built-in CRC | Service UUID `0000ffe0-...` |
+| MotoSleep | `MotoSleepController` | 2-byte ASCII `[$, char]` | Device name starts with "HHC" |
+| Leggett & Platt | `LeggettPlattController` | Gen2 (ASCII) or Okin (binary) | Service UUID `45e25100-...` (Gen2) |
+| Reverie | `ReverieController` | XOR checksum, position-based motors | Service UUID `1b1d9641-...` |
+| Okimat | `OkimatController` | Okin binary, requires BLE pairing | Service UUID `62741523-...` |
+
 ## Adding a New Bed Type
 
 1. **Document the BLE protocol** - Use nRF Connect or similar to capture GATT services, characteristics, and command bytes
 
 2. **Add constants to `const.py`**:
    ```python
-   BED_TYPE_RICHMAT: Final = "richmat"
-   RICHMAT_CONTROL_SERVICE_UUID: Final = "..."
-   RICHMAT_CONTROL_CHAR_UUID: Final = "..."
+   BED_TYPE_NEWBED: Final = "newbed"
+   NEWBED_SERVICE_UUID: Final = "..."
+   NEWBED_CHAR_UUID: Final = "..."
    ```
 
-3. **Create controller in `beds/`** (e.g., `richmat.py`):
+3. **Create controller in `beds/`** (e.g., `newbed.py`):
    - Extend `BedController`
    - Implement all abstract methods
-   - Define command bytes as a class (see `LinakCommands`)
+   - Define command bytes as a class (see existing controllers)
 
 4. **Add detection to `config_flow.py`** in `detect_bed_type()`:
    ```python
-   if RICHMAT_CONTROL_SERVICE_UUID.lower() in service_uuids:
-       return BED_TYPE_RICHMAT
+   if NEWBED_SERVICE_UUID.lower() in service_uuids:
+       return BED_TYPE_NEWBED
    ```
 
 5. **Update `coordinator.py`** `_create_controller()`:
    ```python
-   if self._bed_type == BED_TYPE_RICHMAT:
-       from .beds.richmat import RichmatController
-       return RichmatController(self)
+   if self._bed_type == BED_TYPE_NEWBED:
+       from .beds.newbed import NewbedController
+       return NewbedController(self)
    ```
 
-6. **Uncomment in `const.py`** `SUPPORTED_BED_TYPES` list
+6. **Add to `const.py`** `SUPPORTED_BED_TYPES` list
 
 7. **Add to `manifest.json`** `bluetooth` array if using different service UUID for discovery
+
+8. **Update `beds/__init__.py`** to export the new controller
 
 ## Linak BLE Protocol Reference
 
@@ -139,6 +161,76 @@ Position Service: 99fa0020-338a-1024-8a49-009c0215f78a
 Position data format:
   - Little-endian 16-bit: raw = data[0] | (data[1] << 8)
   - Angle = max_angle * (raw / max_raw)
+```
+
+## Other Protocol References
+
+### Richmat
+```
+Nordic variant:
+  Service: 6e400001-b5a3-f393-e0a9-e50e24dcca9e
+  Write:   6e400002-b5a3-f393-e0a9-e50e24dcca9e
+  Command: Single byte [cmd]
+
+WiLinke variant:
+  Service: Various (8ebd4f76-..., 0000fee9-..., 0000fff0-...)
+  Command: [110, 1, 0, cmd, checksum] where checksum = cmd + 111
+```
+
+### Keeson (Member's Mark, Purple, ErgoMotion)
+```
+BaseI4/I5 variant:
+  Service: 0000ffe5-0000-1000-8000-00805f9b34fb
+  Write:   0000ffe9-0000-1000-8000-00805f9b34fb
+  Command: [0xe5, 0xfe, 0x16, ...int_bytes_le, xor_checksum]
+
+Commands are 32-bit values with motor bits that can be combined:
+  Head up/down: 0x1/0x2, Feet up/down: 0x4/0x8
+  Tilt up/down: 0x10/0x20, Lumbar up/down: 0x40/0x80
+```
+
+### MotoSleep (HHC controllers)
+```
+Service: 0000ffe0-0000-1000-8000-00805f9b34fb
+Write:   0000ffe1-0000-1000-8000-00805f9b34fb
+Command: [0x24, ASCII_char] (0x24 = '$')
+
+Device identification: BLE name starts with "HHC"
+```
+
+### Leggett & Platt
+```
+Gen2 variant (ASCII commands):
+  Service: 45e25100-3171-4cfc-ae89-1d83cf8d8071
+  Write:   45e25101-3171-4cfc-ae89-1d83cf8d8071
+  Commands: ASCII strings like "MEM 0", "STOP", "MVI 0:5"
+
+Okin variant (binary, requires pairing):
+  Service: 62741523-52f9-8864-b1ab-3b3a8d65950b
+  Write:   62741525-52f9-8864-b1ab-3b3a8d65950b
+  Command: [0x04, 0x02, ...int_to_bytes(cmd)]
+```
+
+### Reverie
+```
+Service: 1b1d9641-b942-4da8-89cc-98e6a58fbd93
+Write:   6af87926-dc79-412e-a3e0-5f85c2d55de2
+Command: [0x55, ...bytes, xor_checksum]
+  Checksum = all bytes XOR'd together XOR 0x55
+
+Unique: Position-based motor control (0-100%)
+  Motor head: [0x51, position]
+  Motor feet: [0x52, position]
+```
+
+### Okimat (requires BLE pairing)
+```
+Service: 62741523-52f9-8864-b1ab-3b3a8d65950b
+Write:   62741525-52f9-8864-b1ab-3b3a8d65950b
+Command: [0x04, 0x02, ...int_to_bytes(cmd)]
+
+Same protocol as Leggett & Platt Okin variant.
+32-bit command values similar to Keeson.
 ```
 
 ## Critical Implementation Details
