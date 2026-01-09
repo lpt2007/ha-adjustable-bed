@@ -2,6 +2,8 @@
 
 A Home Assistant custom integration for controlling smart adjustable beds via Bluetooth Low Energy (BLE).
 
+**A massive thanks to the developers of [smartbed-mqtt](https://github.com/kanten-website/smartbed-mqtt)!** This integration wouldn't have been possible without their pioneering work reverse-engineering bed protocols and building the original MQTT-based solution.
+
 > **Warning: Alpha Software**
 >
 > This project is in early alpha. **Only Linak beds have been fully tested.** Other bed types are implemented but need community testing. Expect bugs, breaking changes, and incomplete features. Use at your own risk.
