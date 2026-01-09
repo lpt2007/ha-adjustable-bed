@@ -150,12 +150,60 @@ class ReverieController(BedController):
         try:
             def handler(_, data: bytearray) -> None:
                 _LOGGER.debug("Reverie notification: %s", data.hex())
-                # Parse position data if available
+                self._parse_position_data(data)
 
             await self.client.start_notify(REVERIE_CHAR_UUID, handler)
             _LOGGER.debug("Started Reverie notifications")
         except BleakError as err:
             _LOGGER.debug("Could not start notifications: %s", err)
+
+    def _parse_position_data(self, data: bytearray) -> None:
+        """Parse position data from notification.
+
+        Reverie position notification format:
+        - Byte 0: 0x55 (header)
+        - Byte 1: Command type (0x51 = head, 0x52 = feet)
+        - Byte 2: Position (0-100)
+        - Byte 3: Checksum
+        """
+        if len(data) < 3:
+            return
+
+        # Verify header
+        if data[0] != 0x55:
+            _LOGGER.debug("Invalid Reverie notification header: %02x", data[0])
+            return
+
+        cmd_type = data[1]
+        position = data[2]
+
+        # Validate position is in range
+        if position > 100:
+            _LOGGER.debug("Invalid position value: %d", position)
+            return
+
+        # Map command type to motor name
+        motor_map = {
+            0x51: "head",
+            0x52: "feet",
+        }
+
+        motor_name = motor_map.get(cmd_type)
+        if motor_name and self._notify_callback:
+            # Convert position (0-100) to angle estimate
+            # Assume max angle of ~60 degrees for head, ~45 for feet
+            if motor_name == "head":
+                angle = position * 0.6  # 0-60 degrees
+            else:
+                angle = position * 0.45  # 0-45 degrees
+
+            _LOGGER.debug(
+                "Reverie position update: %s = %d%% (%.1f°)",
+                motor_name,
+                position,
+                angle,
+            )
+            self._notify_callback(motor_name, angle)
 
     async def stop_notify(self) -> None:
         """Stop listening for position notifications."""
@@ -329,4 +377,20 @@ class ReverieController(BedController):
         self._massage_wave_level = (self._massage_wave_level + 1) % 11
         await self.write_command(
             self._build_command(ReverieCommands.massage_wave(self._massage_wave_level))
+        )
+
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position."""
+        await self.write_command(
+            self._build_command(ReverieCommands.PRESET_ZERO_G),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
+    async def preset_anti_snore(self) -> None:
+        """Go to anti-snore position."""
+        await self.write_command(
+            self._build_command(ReverieCommands.PRESET_ANTI_SNORE),
+            repeat_count=100,
+            repeat_delay_ms=300,
         )

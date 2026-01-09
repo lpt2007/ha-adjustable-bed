@@ -39,10 +39,19 @@ from .const import (
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
     CONF_PREFERRED_ADAPTER,
+    CONF_PROTOCOL_VARIANT,
     DEFAULT_DISABLE_ANGLE_SENSING,
     DEFAULT_HAS_MASSAGE,
     DEFAULT_MOTOR_COUNT,
+    DEFAULT_PROTOCOL_VARIANT,
     DOMAIN,
+    KEESON_VARIANT_BASE,
+    KEESON_VARIANT_KSBT,
+    LEGGETT_VARIANT_GEN2,
+    LEGGETT_VARIANT_OKIN,
+    RICHMAT_VARIANT_NORDIC,
+    RICHMAT_VARIANT_WILINKE,
+    VARIANT_AUTO,
 )
 
 if TYPE_CHECKING:
@@ -76,6 +85,7 @@ class SmartBedCoordinator:
         self.entry = entry
         self._address: str = entry.data[CONF_ADDRESS].upper()
         self._bed_type: str = entry.data[CONF_BED_TYPE]
+        self._protocol_variant: str = entry.data.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
         self._name: str = entry.data.get(CONF_NAME, "Smart Bed")
         self._motor_count: int = entry.data.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT)
         self._has_massage: bool = entry.data.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE)
@@ -688,15 +698,30 @@ class SmartBedCoordinator:
         if self._bed_type == BED_TYPE_RICHMAT:
             from .beds.richmat import RichmatController, detect_richmat_variant
 
-            # Detect variant based on available services
-            is_wilinke, char_uuid = await detect_richmat_variant(self._client)
-            return RichmatController(self, is_wilinke=is_wilinke, char_uuid=char_uuid)
+            # Use configured variant or auto-detect
+            if self._protocol_variant == RICHMAT_VARIANT_NORDIC:
+                _LOGGER.debug("Using Nordic Richmat variant (configured)")
+                return RichmatController(self, is_wilinke=False)
+            elif self._protocol_variant == RICHMAT_VARIANT_WILINKE:
+                _LOGGER.debug("Using WiLinke Richmat variant (configured)")
+                return RichmatController(self, is_wilinke=True)
+            else:
+                # Auto-detect variant based on available services
+                _LOGGER.debug("Auto-detecting Richmat variant...")
+                is_wilinke, char_uuid = await detect_richmat_variant(self._client)
+                return RichmatController(self, is_wilinke=is_wilinke, char_uuid=char_uuid)
 
         if self._bed_type == BED_TYPE_KEESON:
             from .beds.keeson import KeesonController
 
-            # Default to base variant (BaseI4/I5 is more common)
-            return KeesonController(self, variant="base")
+            # Use configured variant or default to base
+            if self._protocol_variant == KEESON_VARIANT_KSBT:
+                _LOGGER.debug("Using KSBT Keeson variant (configured)")
+                return KeesonController(self, variant="ksbt")
+            else:
+                # Auto or base variant
+                _LOGGER.debug("Using Base Keeson variant")
+                return KeesonController(self, variant="base")
 
         if self._bed_type == BED_TYPE_SOLACE:
             from .beds.solace import SolaceController
@@ -711,8 +736,14 @@ class SmartBedCoordinator:
         if self._bed_type == BED_TYPE_LEGGETT_PLATT:
             from .beds.leggett_platt import LeggettPlattController
 
-            # Default to Gen2 variant (more common)
-            return LeggettPlattController(self, variant="gen2")
+            # Use configured variant or default to gen2
+            if self._protocol_variant == LEGGETT_VARIANT_OKIN:
+                _LOGGER.debug("Using Okin Leggett & Platt variant (configured)")
+                return LeggettPlattController(self, variant="okin")
+            else:
+                # Auto or gen2 variant
+                _LOGGER.debug("Using Gen2 Leggett & Platt variant")
+                return LeggettPlattController(self, variant="gen2")
 
         if self._bed_type == BED_TYPE_REVERIE:
             from .beds.reverie import ReverieController

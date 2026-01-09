@@ -63,6 +63,34 @@ BUTTON_DESCRIPTIONS: tuple[SmartBedButtonEntityDescription, ...] = (
         press_fn=lambda ctrl: ctrl.preset_memory(4),
         cancel_movement=True,
     ),
+    SmartBedButtonEntityDescription(
+        key="preset_flat",
+        translation_key="preset_flat",
+        icon="mdi:bed",
+        press_fn=lambda ctrl: ctrl.preset_flat(),
+        cancel_movement=True,
+    ),
+    SmartBedButtonEntityDescription(
+        key="preset_zero_g",
+        translation_key="preset_zero_g",
+        icon="mdi:rocket-launch",
+        press_fn=lambda ctrl: ctrl.preset_zero_g(),
+        cancel_movement=True,
+    ),
+    SmartBedButtonEntityDescription(
+        key="preset_anti_snore",
+        translation_key="preset_anti_snore",
+        icon="mdi:sleep-off",
+        press_fn=lambda ctrl: ctrl.preset_anti_snore(),
+        cancel_movement=True,
+    ),
+    SmartBedButtonEntityDescription(
+        key="preset_tv",
+        translation_key="preset_tv",
+        icon="mdi:television",
+        press_fn=lambda ctrl: ctrl.preset_tv(),
+        cancel_movement=True,
+    ),
     # Program buttons (config category)
     SmartBedButtonEntityDescription(
         key="program_memory_1",

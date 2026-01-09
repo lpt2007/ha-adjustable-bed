@@ -127,6 +127,19 @@ class BedController(ABC):
     async def program_memory(self, memory_num: int) -> None:
         """Program current position to memory."""
 
+    # Optional preset methods (may not be available on all beds)
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position."""
+        raise NotImplementedError
+
+    async def preset_anti_snore(self) -> None:
+        """Go to anti-snore position."""
+        raise NotImplementedError
+
+    async def preset_tv(self) -> None:
+        """Go to TV/lounge position."""
+        raise NotImplementedError
+
     # Feature methods (may not be available on all beds)
     async def lights_on(self) -> None:
         """Turn on under-bed lights."""

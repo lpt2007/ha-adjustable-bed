@@ -36,19 +36,25 @@ from .const import (
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
     CONF_PREFERRED_ADAPTER,
+    CONF_PROTOCOL_VARIANT,
     DEFAULT_DISABLE_ANGLE_SENSING,
     DEFAULT_HAS_MASSAGE,
     DEFAULT_MOTOR_COUNT,
+    DEFAULT_PROTOCOL_VARIANT,
     DOMAIN,
     KEESON_BASE_SERVICE_UUID,
+    KEESON_VARIANTS,
     LEGGETT_GEN2_SERVICE_UUID,
+    LEGGETT_VARIANTS,
     LINAK_CONTROL_SERVICE_UUID,
     OKIMAT_SERVICE_UUID,
     REVERIE_SERVICE_UUID,
     RICHMAT_NORDIC_SERVICE_UUID,
+    RICHMAT_VARIANTS,
     RICHMAT_WILINKE_SERVICE_UUIDS,
     SOLACE_SERVICE_UUID,
     SUPPORTED_BED_TYPES,
+    VARIANT_AUTO,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,6 +66,22 @@ MAC_ADDRESS_PATTERN = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
 def is_valid_mac_address(address: str) -> bool:
     """Validate a MAC address format."""
     return bool(MAC_ADDRESS_PATTERN.match(address))
+
+
+def get_variants_for_bed_type(bed_type: str) -> dict[str, str] | None:
+    """Get available protocol variants for a bed type, or None if no variants."""
+    if bed_type == BED_TYPE_KEESON:
+        return KEESON_VARIANTS
+    if bed_type == BED_TYPE_LEGGETT_PLATT:
+        return LEGGETT_VARIANTS
+    if bed_type == BED_TYPE_RICHMAT:
+        return RICHMAT_VARIANTS
+    return None
+
+
+def bed_type_has_variants(bed_type: str) -> bool:
+    """Check if a bed type has multiple protocol variants."""
+    return bed_type in (BED_TYPE_KEESON, BED_TYPE_LEGGETT_PLATT, BED_TYPE_RICHMAT)
 
 
 def get_available_adapters(hass) -> dict[str, str]:
@@ -289,13 +311,16 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
         """Confirm discovery."""
         assert self._discovery_info is not None
 
+        bed_type = detect_bed_type(self._discovery_info)
+
         if user_input is not None:
-            bed_type = detect_bed_type(self._discovery_info)
             preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
+            protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
             _LOGGER.info(
-                "User confirmed bed setup: name=%s, type=%s, address=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s",
+                "User confirmed bed setup: name=%s, type=%s, variant=%s, address=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s",
                 user_input.get(CONF_NAME, self._discovery_info.name or "Smart Bed"),
                 bed_type,
+                protocol_variant,
                 self._discovery_info.address,
                 user_input.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
                 user_input.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
@@ -307,6 +332,7 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_ADDRESS: self._discovery_info.address,
                     CONF_BED_TYPE: bed_type,
+                    CONF_PROTOCOL_VARIANT: protocol_variant,
                     CONF_NAME: user_input.get(CONF_NAME, self._discovery_info.name),
                     CONF_MOTOR_COUNT: user_input.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
                     CONF_HAS_MASSAGE: user_input.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
@@ -316,25 +342,31 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         _LOGGER.debug("Showing bluetooth confirmation form for %s", self._discovery_info.address)
-        
+
         # Get available Bluetooth adapters
         adapters = get_available_adapters(self.hass)
-        
+
+        # Build schema with optional variant selection
+        schema_dict = {
+            vol.Optional(
+                CONF_NAME, default=self._discovery_info.name or "Smart Bed"
+            ): str,
+            vol.Optional(CONF_MOTOR_COUNT, default=DEFAULT_MOTOR_COUNT): vol.In(
+                [2, 3, 4]
+            ),
+            vol.Optional(CONF_HAS_MASSAGE, default=DEFAULT_HAS_MASSAGE): bool,
+            vol.Optional(CONF_DISABLE_ANGLE_SENSING, default=DEFAULT_DISABLE_ANGLE_SENSING): bool,
+            vol.Optional(CONF_PREFERRED_ADAPTER, default=ADAPTER_AUTO): vol.In(adapters),
+        }
+
+        # Add variant selection if the bed type has variants
+        variants = get_variants_for_bed_type(bed_type)
+        if variants:
+            schema_dict[vol.Optional(CONF_PROTOCOL_VARIANT, default=VARIANT_AUTO)] = vol.In(variants)
+
         return self.async_show_form(
             step_id="bluetooth_confirm",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_NAME, default=self._discovery_info.name or "Smart Bed"
-                    ): str,
-                    vol.Optional(CONF_MOTOR_COUNT, default=DEFAULT_MOTOR_COUNT): vol.In(
-                        [2, 3, 4]
-                    ),
-                    vol.Optional(CONF_HAS_MASSAGE, default=DEFAULT_HAS_MASSAGE): bool,
-                    vol.Optional(CONF_DISABLE_ANGLE_SENSING, default=DEFAULT_DISABLE_ANGLE_SENSING): bool,
-                    vol.Optional(CONF_PREFERRED_ADAPTER, default=ADAPTER_AUTO): vol.In(adapters),
-                }
-            ),
+            data_schema=vol.Schema(schema_dict),
             description_placeholders={
                 "name": self._discovery_info.name or self._discovery_info.address,
             },
@@ -429,16 +461,19 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             address = user_input[CONF_ADDRESS].upper().replace("-", ":")
+            bed_type = user_input[CONF_BED_TYPE]
 
             # Validate MAC address format
             if not is_valid_mac_address(address):
                 errors["base"] = "invalid_mac_address"
             else:
                 preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
+                protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
                 _LOGGER.info(
-                    "Manual bed configuration: address=%s, type=%s, name=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s",
+                    "Manual bed configuration: address=%s, type=%s, variant=%s, name=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s",
                     address,
-                    user_input[CONF_BED_TYPE],
+                    bed_type,
+                    protocol_variant,
                     user_input.get(CONF_NAME, "Smart Bed"),
                     user_input.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
                     user_input.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
@@ -453,7 +488,8 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     title=user_input.get(CONF_NAME, "Smart Bed"),
                     data={
                         CONF_ADDRESS: address,
-                        CONF_BED_TYPE: user_input[CONF_BED_TYPE],
+                        CONF_BED_TYPE: bed_type,
+                        CONF_PROTOCOL_VARIANT: protocol_variant,
                         CONF_NAME: user_input.get(CONF_NAME, "Smart Bed"),
                         CONF_MOTOR_COUNT: user_input.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
                         CONF_HAS_MASSAGE: user_input.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
@@ -463,16 +499,23 @@ class SmartBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
 
         _LOGGER.debug("Showing manual entry form")
-        
+
         # Get available Bluetooth adapters
         adapters = get_available_adapters(self.hass)
-        
+
+        # Build bed type choices with variant info
+        bed_type_choices = {
+            bt: f"{bt} (has variants)" if bed_type_has_variants(bt) else bt
+            for bt in SUPPORTED_BED_TYPES
+        }
+
         return self.async_show_form(
             step_id="manual",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_ADDRESS): str,
                     vol.Required(CONF_BED_TYPE): vol.In(SUPPORTED_BED_TYPES),
+                    vol.Optional(CONF_PROTOCOL_VARIANT, default=VARIANT_AUTO): str,
                     vol.Optional(CONF_NAME, default="Smart Bed"): str,
                     vol.Optional(CONF_MOTOR_COUNT, default=DEFAULT_MOTOR_COUNT): vol.In(
                         [2, 3, 4]
@@ -504,33 +547,43 @@ class SmartBedOptionsFlow(OptionsFlowWithConfigEntry):
 
         # Get current values from config entry
         current_data = self.config_entry.data
+        bed_type = current_data.get(CONF_BED_TYPE)
 
         # Get available Bluetooth adapters
         adapters = get_available_adapters(self.hass)
 
+        # Build schema
+        schema_dict = {
+            vol.Optional(
+                CONF_MOTOR_COUNT,
+                default=current_data.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
+            ): vol.In([2, 3, 4]),
+            vol.Optional(
+                CONF_HAS_MASSAGE,
+                default=current_data.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
+            ): bool,
+            vol.Optional(
+                CONF_DISABLE_ANGLE_SENSING,
+                default=current_data.get(
+                    CONF_DISABLE_ANGLE_SENSING, DEFAULT_DISABLE_ANGLE_SENSING
+                ),
+            ): bool,
+            vol.Optional(
+                CONF_PREFERRED_ADAPTER,
+                default=current_data.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO),
+            ): vol.In(adapters),
+        }
+
+        # Add variant selection if the bed type has variants
+        variants = get_variants_for_bed_type(bed_type)
+        if variants:
+            schema_dict[vol.Optional(
+                CONF_PROTOCOL_VARIANT,
+                default=current_data.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT),
+            )] = vol.In(variants)
+
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_MOTOR_COUNT,
-                        default=current_data.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT),
-                    ): vol.In([2, 3, 4]),
-                    vol.Optional(
-                        CONF_HAS_MASSAGE,
-                        default=current_data.get(CONF_HAS_MASSAGE, DEFAULT_HAS_MASSAGE),
-                    ): bool,
-                    vol.Optional(
-                        CONF_DISABLE_ANGLE_SENSING,
-                        default=current_data.get(
-                            CONF_DISABLE_ANGLE_SENSING, DEFAULT_DISABLE_ANGLE_SENSING
-                        ),
-                    ): bool,
-                    vol.Optional(
-                        CONF_PREFERRED_ADAPTER,
-                        default=current_data.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO),
-                    ): vol.In(adapters),
-                }
-            ),
+            data_schema=vol.Schema(schema_dict),
         )
 

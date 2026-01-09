@@ -6,6 +6,7 @@ DOMAIN: Final = "smartbed"
 
 # Configuration keys
 CONF_BED_TYPE: Final = "bed_type"
+CONF_PROTOCOL_VARIANT: Final = "protocol_variant"
 CONF_MOTOR_COUNT: Final = "motor_count"
 CONF_HAS_MASSAGE: Final = "has_massage"
 CONF_DISABLE_ANGLE_SENSING: Final = "disable_angle_sensing"
@@ -114,8 +115,39 @@ OKIMAT_SERVICE_UUID: Final = "62741523-52f9-8864-b1ab-3b3a8d65950b"
 OKIMAT_WRITE_CHAR_UUID: Final = "62741525-52f9-8864-b1ab-3b3a8d65950b"
 OKIMAT_NOTIFY_CHAR_UUID: Final = "62741625-52f9-8864-b1ab-3b3a8d65950b"
 
+# Protocol variants
+VARIANT_AUTO: Final = "auto"
+
+# Keeson variants
+KEESON_VARIANT_BASE: Final = "base"
+KEESON_VARIANT_KSBT: Final = "ksbt"
+KEESON_VARIANTS: Final = {
+    VARIANT_AUTO: "Auto-detect",
+    KEESON_VARIANT_BASE: "BaseI4/BaseI5 (Member's Mark, Purple, ErgoMotion)",
+    KEESON_VARIANT_KSBT: "KSBT (older Keeson remotes)",
+}
+
+# Leggett & Platt variants
+LEGGETT_VARIANT_GEN2: Final = "gen2"
+LEGGETT_VARIANT_OKIN: Final = "okin"
+LEGGETT_VARIANTS: Final = {
+    VARIANT_AUTO: "Auto-detect",
+    LEGGETT_VARIANT_GEN2: "Gen2 (Richmat-based, most common)",
+    LEGGETT_VARIANT_OKIN: "Okin (requires BLE pairing)",
+}
+
+# Richmat variants (auto-detected, but can be overridden)
+RICHMAT_VARIANT_NORDIC: Final = "nordic"
+RICHMAT_VARIANT_WILINKE: Final = "wilinke"
+RICHMAT_VARIANTS: Final = {
+    VARIANT_AUTO: "Auto-detect (recommended)",
+    RICHMAT_VARIANT_NORDIC: "Nordic (single-byte commands)",
+    RICHMAT_VARIANT_WILINKE: "WiLinke (5-byte commands with checksum)",
+}
+
 # Default values
 DEFAULT_MOTOR_COUNT: Final = 2
 DEFAULT_HAS_MASSAGE: Final = False
 DEFAULT_DISABLE_ANGLE_SENSING: Final = True
+DEFAULT_PROTOCOL_VARIANT: Final = VARIANT_AUTO
 

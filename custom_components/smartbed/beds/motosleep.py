@@ -265,3 +265,27 @@ class MotoSleepController(BedController):
     async def massage_foot_down(self) -> None:
         """Decrease foot massage intensity."""
         await self.write_command(self._build_command(MotoSleepCommands.MASSAGE_FOOT_DOWN))
+
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position."""
+        await self.write_command(
+            self._build_command(MotoSleepCommands.PRESET_ZERO_G),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
+    async def preset_anti_snore(self) -> None:
+        """Go to anti-snore position."""
+        await self.write_command(
+            self._build_command(MotoSleepCommands.PRESET_ANTI_SNORE),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
+    async def preset_tv(self) -> None:
+        """Go to TV position."""
+        await self.write_command(
+            self._build_command(MotoSleepCommands.PRESET_TV),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )

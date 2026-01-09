@@ -267,6 +267,30 @@ class RichmatController(BedController):
         if command := commands.get(memory_num):
             await self.write_command(self._build_command(command))
 
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position."""
+        await self.write_command(
+            self._build_command(RichmatCommands.PRESET_ZERO_G),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
+    async def preset_anti_snore(self) -> None:
+        """Go to anti-snore position."""
+        await self.write_command(
+            self._build_command(RichmatCommands.PRESET_ANTI_SNORE),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
+    async def preset_tv(self) -> None:
+        """Go to TV/lounge position."""
+        await self.write_command(
+            self._build_command(RichmatCommands.PRESET_TV),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
     # Light methods
     async def lights_toggle(self) -> None:
         """Toggle under-bed lights."""

@@ -295,6 +295,14 @@ class KeesonController(BedController):
         """Program current position to memory (not supported on Keeson)."""
         _LOGGER.warning("Keeson beds don't support programming memory presets")
 
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position."""
+        await self.write_command(
+            self._build_command(KeesonCommands.PRESET_ZERO_G),
+            repeat_count=100,
+            repeat_delay_ms=300,
+        )
+
     # Light methods
     async def lights_toggle(self) -> None:
         """Toggle safety lights."""

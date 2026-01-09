@@ -462,3 +462,25 @@ class LeggettPlattController(BedController):
         else:
             # Toggle wave mode
             await self.write_command(LeggettPlattGen2Commands.MASSAGE_WAVE_ON)
+
+    async def preset_zero_g(self) -> None:
+        """Go to zero gravity position (Okin variant only)."""
+        if self._variant == "okin":
+            await self.write_command(
+                self._build_okin_command(LeggettPlattOkinCommands.PRESET_ZERO_G),
+                repeat_count=100,
+                repeat_delay_ms=300,
+            )
+        else:
+            _LOGGER.warning("Zero-G preset not available on Gen2 beds")
+
+    async def preset_anti_snore(self) -> None:
+        """Go to anti-snore position (Gen2 variant only)."""
+        if self._variant == "gen2":
+            await self.write_command(
+                LeggettPlattGen2Commands.PRESET_ANTI_SNORE,
+                repeat_count=100,
+                repeat_delay_ms=300,
+            )
+        else:
+            _LOGGER.warning("Anti-snore preset not available on Okin beds")

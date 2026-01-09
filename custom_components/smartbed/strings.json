@@ -16,12 +16,14 @@
           "motor_count": "Number of motors",
           "has_massage": "Has massage feature",
           "disable_angle_sensing": "Disable angle sensing",
-          "preferred_adapter": "Bluetooth adapter"
+          "preferred_adapter": "Bluetooth adapter",
+          "protocol_variant": "Protocol variant"
         },
         "data_description": {
           "motor_count": "2 motors: back and legs. 3 motors: adds head. 4 motors: adds feet.",
           "disable_angle_sensing": "When enabled, position feedback is disabled but the physical remote will continue working. Recommended for most users.",
-          "preferred_adapter": "Select a specific Bluetooth adapter or proxy, or let Home Assistant choose automatically."
+          "preferred_adapter": "Select a specific Bluetooth adapter or proxy, or let Home Assistant choose automatically.",
+          "protocol_variant": "Some beds have multiple protocol variants. Auto-detect usually works, but you can override if needed."
         }
       },
       "manual": {
@@ -30,6 +32,7 @@
         "data": {
           "address": "Bluetooth address",
           "bed_type": "Bed type",
+          "protocol_variant": "Protocol variant",
           "name": "Name",
           "motor_count": "Number of motors",
           "has_massage": "Has massage feature",
@@ -38,6 +41,7 @@
         },
         "data_description": {
           "address": "MAC address in format XX:XX:XX:XX:XX:XX (found in the bed's Bluetooth settings or on a label).",
+          "protocol_variant": "Leave as 'auto' unless you know the specific protocol. Keeson: base (Member's Mark/Purple) or ksbt (older). Leggett: gen2 (most common) or okin. Richmat: auto-detected.",
           "motor_count": "2 motors: back and legs. 3 motors: adds head. 4 motors: adds feet.",
           "disable_angle_sensing": "When enabled, position feedback is disabled but the physical remote will continue working. Recommended for most users.",
           "preferred_adapter": "Select a specific Bluetooth adapter or proxy, or let Home Assistant choose automatically."
@@ -50,7 +54,11 @@
     },
     "error": {
       "cannot_connect": "Failed to connect to bed. Check that the bed is powered on and in range.",
-      "invalid_mac_address": "Invalid Bluetooth address format. Use XX:XX:XX:XX:XX:XX."
+      "invalid_mac_address": "Invalid Bluetooth address format. Use XX:XX:XX:XX:XX:XX.",
+      "connection_timeout": "Connection timed out. The bed may be out of range or another device may be connected.",
+      "pairing_required": "This bed requires Bluetooth pairing. Pair it through your system's Bluetooth settings first.",
+      "wrong_variant": "Failed to communicate with bed. Try selecting a different protocol variant.",
+      "device_busy": "The bed is busy or another device is connected. Try disconnecting other controllers first."
     }
   },
   "options": {
@@ -62,12 +70,14 @@
           "motor_count": "Number of motors",
           "has_massage": "Has massage feature",
           "disable_angle_sensing": "Disable angle sensing",
-          "preferred_adapter": "Bluetooth adapter"
+          "preferred_adapter": "Bluetooth adapter",
+          "protocol_variant": "Protocol variant"
         },
         "data_description": {
           "motor_count": "2 motors: back and legs. 3 motors: adds head. 4 motors: adds feet.",
           "disable_angle_sensing": "When enabled, position feedback is disabled but the physical remote will continue working.",
-          "preferred_adapter": "Select a specific Bluetooth adapter or proxy, or let Home Assistant choose automatically."
+          "preferred_adapter": "Select a specific Bluetooth adapter or proxy, or let Home Assistant choose automatically.",
+          "protocol_variant": "Change the protocol variant if the bed isn't responding correctly."
         }
       }
     }
@@ -76,6 +86,15 @@
     "button": {
       "preset_flat": {
         "name": "Flat"
+      },
+      "preset_zero_g": {
+        "name": "Zero Gravity"
+      },
+      "preset_anti_snore": {
+        "name": "Anti-Snore"
+      },
+      "preset_tv": {
+        "name": "TV"
       },
       "preset_memory_1": {
         "name": "Memory 1"
