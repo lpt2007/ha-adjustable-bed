@@ -93,6 +93,9 @@ _LOGGER = logging.getLogger(__name__)
 # MAC address regex pattern (XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX)
 MAC_ADDRESS_PATTERN = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
 
+# Solace naming convention pattern (e.g., S4-Y-192-461000AD)
+SOLACE_NAME_PATTERN = re.compile(r"^s\d+-[a-z]-\d+-[a-z0-9]+$", re.IGNORECASE)
+
 # Device name patterns that should NOT be detected as beds
 # These use generic BUIDs that beds also use, but are clearly not beds
 EXCLUDED_DEVICE_PATTERNS: tuple[str, ...] = (
@@ -373,8 +376,7 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
         # Check for explicit Solace name patterns:
         # - Contains "solace"
         # - Matches Solace naming convention like "S4-Y-192-461000AD"
-        solace_pattern = re.compile(r"^s\d+-[a-z]-\d+-[a-z0-9]+$", re.IGNORECASE)
-        if "solace" in device_name or solace_pattern.match(device_name):
+        if "solace" in device_name or SOLACE_NAME_PATTERN.match(device_name):
             _LOGGER.info(
                 "Detected Solace bed at %s (name: %s)",
                 service_info.address,
