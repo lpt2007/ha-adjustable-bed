@@ -20,7 +20,9 @@ from custom_components.adjustable_bed.const import (
     DOMAIN,
 )
 from custom_components.adjustable_bed.diagnostics import (
-    TO_REDACT,
+    KEYS_TO_REDACT,
+    MAC_ADDRESS_KEYS,
+    _redact_mac_address,
     async_get_config_entry_diagnostics,
 )
 
@@ -59,10 +61,20 @@ class TestDiagnosticsRedaction:
     """Test diagnostics data redaction."""
 
     def test_redact_keys(self):
-        """Test that sensitive keys are in redaction list."""
-        assert CONF_ADDRESS in TO_REDACT
-        assert CONF_NAME in TO_REDACT
-        assert "address" in TO_REDACT
+        """Test that sensitive keys are in redaction lists."""
+        # Name and PIN should be fully redacted
+        assert CONF_NAME in KEYS_TO_REDACT
+        # MAC address should be partially redacted (OUI kept)
+        assert CONF_ADDRESS in MAC_ADDRESS_KEYS
+        assert "address" in MAC_ADDRESS_KEYS
+
+    def test_mac_address_partial_redaction(self):
+        """Test that MAC addresses are partially redacted, keeping the OUI."""
+        # Should keep first 3 bytes (OUI) and redact last 3
+        assert _redact_mac_address("AA:BB:CC:DD:EE:FF") == "AA:BB:CC:**:**:**"
+        assert _redact_mac_address("aa:bb:cc:dd:ee:ff") == "AA:BB:CC:**:**:**"
+        # Should handle dash separators
+        assert _redact_mac_address("AA-BB-CC-DD-EE-FF") == "AA-BB-CC-**-**-**"
 
 
 class TestDiagnosticsOutput:
@@ -118,7 +130,8 @@ class TestDiagnosticsOutput:
 
         # Check entry data
         assert result["entry"]["entry_id"] == "diagnostics_test_entry"
-        assert result["entry"]["title"] == "Test Bed"
+        # Title is redacted for privacy
+        assert result["entry"]["title"] == "**REDACTED**"
 
         # Check config
         assert result["config"]["bed_type"] == BED_TYPE_LINAK
@@ -153,9 +166,11 @@ class TestDiagnosticsOutput:
 
         result = await async_get_config_entry_diagnostics(hass, mock_diagnostics_config_entry)
 
-        # The address should be redacted in entry.data
+        # Check data redaction in entry.data
         entry_data = result["entry"]["data"]
-        assert entry_data.get(CONF_ADDRESS) == "**REDACTED**"
+        # MAC address should be partially redacted (OUI kept: AA:BB:CC)
+        assert entry_data.get(CONF_ADDRESS) == "AA:BB:CC:**:**:**"
+        # Name should be fully redacted
         assert entry_data.get(CONF_NAME) == "**REDACTED**"
 
     async def test_diagnostics_controller_info(
