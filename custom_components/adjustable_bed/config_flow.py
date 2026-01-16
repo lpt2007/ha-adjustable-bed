@@ -71,6 +71,7 @@ from .const import (
     LEGGETT_OKIN_NAME_PATTERNS,
     LEGGETT_VARIANTS,
     LINAK_CONTROL_SERVICE_UUID,
+    LINAK_POSITION_SERVICE_UUID,
     OCTO_NAME_PATTERNS,
     OCTO_STAR2_SERVICE_UUID,
     OCTO_VARIANTS,
@@ -195,7 +196,9 @@ def get_available_adapters(hass) -> dict[str, str]:
 
 def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
     """Detect bed type from service info."""
-    service_uuids = [str(uuid).lower() for uuid in service_info.service_uuids]
+    # Handle devices that report None for service_uuids
+    raw_uuids = service_info.service_uuids
+    service_uuids = [str(uuid).lower() for uuid in raw_uuids] if raw_uuids else []
     device_name = (service_info.name or "").lower()
 
     _LOGGER.debug(
@@ -219,7 +222,8 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
             return None
 
     # Check for Linak - most specific first
-    if LINAK_CONTROL_SERVICE_UUID.lower() in service_uuids:
+    # Some Linak beds may advertise position service but not control service
+    if LINAK_CONTROL_SERVICE_UUID.lower() in service_uuids or LINAK_POSITION_SERVICE_UUID.lower() in service_uuids:
         _LOGGER.info(
             "Detected Linak bed at %s (name: %s)",
             service_info.address,
@@ -538,9 +542,9 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
             protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
             try:
-                motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_COUNT))
-                motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS, DEFAULT_MOTOR_PULSE_DELAY_MS))
-            except ValueError:
+                motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or DEFAULT_MOTOR_PULSE_COUNT)
+                motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or DEFAULT_MOTOR_PULSE_DELAY_MS)
+            except (ValueError, TypeError):
                 _LOGGER.warning("Invalid number input for motor pulse settings")
                 motor_pulse_count = DEFAULT_MOTOR_PULSE_COUNT
                 motor_pulse_delay_ms = DEFAULT_MOTOR_PULSE_DELAY_MS
@@ -737,9 +741,9 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
                 protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
                 try:
-                    motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_COUNT))
-                    motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS, DEFAULT_MOTOR_PULSE_DELAY_MS))
-                except ValueError:
+                    motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or DEFAULT_MOTOR_PULSE_COUNT)
+                    motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or DEFAULT_MOTOR_PULSE_DELAY_MS)
+                except (ValueError, TypeError):
                     errors["base"] = "invalid_number"
 
                 if not errors:
@@ -944,10 +948,10 @@ class AdjustableBedOptionsFlow(OptionsFlowWithConfigEntry):
             # Convert text values to integers
             try:
                 if CONF_MOTOR_PULSE_COUNT in user_input:
-                    user_input[CONF_MOTOR_PULSE_COUNT] = int(user_input[CONF_MOTOR_PULSE_COUNT])
+                    user_input[CONF_MOTOR_PULSE_COUNT] = int(user_input[CONF_MOTOR_PULSE_COUNT] or DEFAULT_MOTOR_PULSE_COUNT)
                 if CONF_MOTOR_PULSE_DELAY_MS in user_input:
-                    user_input[CONF_MOTOR_PULSE_DELAY_MS] = int(user_input[CONF_MOTOR_PULSE_DELAY_MS])
-            except ValueError:
+                    user_input[CONF_MOTOR_PULSE_DELAY_MS] = int(user_input[CONF_MOTOR_PULSE_DELAY_MS] or DEFAULT_MOTOR_PULSE_DELAY_MS)
+            except (ValueError, TypeError):
                 return self.async_show_form(
                     step_id="init",
                     data_schema=vol.Schema(schema_dict),
