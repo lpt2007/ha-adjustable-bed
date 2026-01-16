@@ -85,15 +85,19 @@ body:
   - type: textarea
     id: diagnostics
     attributes:
-      label: Diagnostics File
+      label: Diagnostics / Support Report
       description: |
-        **Please attach the diagnostics file:**
-        1. Go to Settings → Integrations → Adjustable Bed
-        2. Click the ⋮ menu → Download diagnostics
-        3. Drag and drop the JSON file here
+        **Quick Method (recommended):** Generate a support report with logs included:
+        1. Go to Developer Tools → Services
+        2. Search for `adjustable_bed.generate_support_report`
+        3. Select your bed device and click "Call Service"
+        4. A notification will show the file location in your `/config/` folder
+        5. Drag and drop the JSON file here
 
-        This file contains important debugging information (MAC addresses are automatically redacted).
-      placeholder: "Drag and drop the diagnostics JSON file here"
+        **Alternative:** Download diagnostics from Settings → Integrations → Adjustable Bed → ⋮ → Download diagnostics
+
+        All files automatically redact sensitive data (MAC addresses are partially redacted, keeping the manufacturer prefix).
+      placeholder: "Drag and drop the diagnostics or support report JSON file here"
     validations:
       required: true
 

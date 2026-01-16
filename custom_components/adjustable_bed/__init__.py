@@ -274,7 +274,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             )
             _LOGGER.info("Diagnostic report saved to %s", filepath)
         except Exception as err:
-            _LOGGER.exception("Failed to run diagnostics for %s: %s", address, err)
+            _LOGGER.exception("Failed to run diagnostics for %s", address)
             async_create(
                 hass,
                 f"Failed to run BLE diagnostics for {address}:\n\n{err}",
@@ -348,7 +348,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             )
             _LOGGER.info("Support report saved to %s", filepath)
         except Exception as err:
-            _LOGGER.exception("Failed to generate support report: %s", err)
+            _LOGGER.exception("Failed to generate support report")
             async_create(
                 hass,
                 f"Failed to generate support report:\n\n{err}",

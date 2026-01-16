@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ADDRESS, CONF_NAME, __version__ as HA_VERSION
+from homeassistant.const import CONF_ADDRESS, __version__ as HA_VERSION
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -20,74 +19,20 @@ from .const import (
     CONF_DISABLE_ANGLE_SENSING,
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
-    CONF_OCTO_PIN,
     CONF_PREFERRED_ADAPTER,
     CONF_PROTOCOL_VARIANT,
     DOMAIN,
     SUPPORTED_BED_TYPES,
 )
+from .redaction import redact_data
 
 if TYPE_CHECKING:
     from .coordinator import AdjustableBedCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Keys to fully redact
-KEYS_TO_REDACT = {CONF_NAME, CONF_OCTO_PIN, "title"}
-
-# Keys containing MAC addresses (partial redaction - keep OUI)
-MAC_ADDRESS_KEYS = {CONF_ADDRESS, "address"}
-
 # Maximum number of log entries to include
 MAX_LOG_ENTRIES = 100
-
-# MAC address pattern (XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX)
-MAC_PATTERN = re.compile(r"([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}")
-
-
-def _redact_mac_address(mac: str) -> str:
-    """Redact the last 3 bytes of a MAC address, keeping the OUI (manufacturer ID).
-
-    Example: AA:BB:CC:DD:EE:FF -> AA:BB:CC:**:**:**
-    """
-    if not mac or not isinstance(mac, str):
-        return mac
-
-    # Handle both : and - separators
-    sep = ":" if ":" in mac else "-"
-    parts = mac.upper().replace("-", ":").split(":")
-
-    if len(parts) != 6:
-        return "**REDACTED**"
-
-    # Keep first 3 bytes (OUI), redact last 3
-    return f"{parts[0]}{sep}{parts[1]}{sep}{parts[2]}{sep}**{sep}**{sep}**"
-
-
-def _redact_data(data: Any, depth: int = 0) -> Any:
-    """Recursively redact sensitive data from a dictionary.
-
-    - Fully redacts name, title, PIN fields
-    - Partially redacts MAC addresses (keeps OUI for debugging)
-    """
-    if depth > 20:  # Prevent infinite recursion
-        return data
-
-    if isinstance(data, dict):
-        result = {}
-        for key, value in data.items():
-            key_lower = key.lower() if isinstance(key, str) else key
-            if key in KEYS_TO_REDACT or key_lower in KEYS_TO_REDACT:
-                result[key] = "**REDACTED**"
-            elif key in MAC_ADDRESS_KEYS or key_lower in MAC_ADDRESS_KEYS:
-                result[key] = _redact_mac_address(value) if isinstance(value, str) else value
-            else:
-                result[key] = _redact_data(value, depth + 1)
-        return result
-    elif isinstance(data, list):
-        return [_redact_data(item, depth + 1) for item in data]
-    else:
-        return data
 
 
 async def generate_support_report(
@@ -112,10 +57,10 @@ async def generate_support_report(
     }
 
     if include_logs:
-        report["recent_logs"] = _get_recent_logs(hass)
+        report["recent_logs"] = _get_recent_logs()
 
     # Redact sensitive data (partial MAC redaction - keeps OUI for debugging)
-    return _redact_data(report)
+    return redact_data(report)
 
 
 def _get_system_info(hass: HomeAssistant) -> dict[str, Any]:
@@ -201,7 +146,7 @@ async def _get_bluetooth_info(
     )
     if service_info:
         info["last_advertisement"] = {
-            "name": service_info.name,
+            "device_name": service_info.name,
             "rssi": getattr(service_info, "rssi", None),
             "service_uuids": [str(uuid) for uuid in service_info.service_uuids],
             "manufacturer_data": {
@@ -225,7 +170,7 @@ async def _get_bluetooth_info(
         info["adapters"] = [
             {
                 "address": adapter.get("address"),
-                "name": adapter.get("name"),
+                "adapter_name": adapter.get("name"),
                 "passive_scan": adapter.get("passive_scan"),
             }
             for adapter in adapters
@@ -236,7 +181,7 @@ async def _get_bluetooth_info(
     return info
 
 
-def _get_recent_logs(hass: HomeAssistant) -> list[dict[str, str]]:
+def _get_recent_logs() -> list[dict[str, str]]:
     """Get recent log entries related to the integration."""
     logs: list[dict[str, str]] = []
 

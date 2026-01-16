@@ -261,6 +261,7 @@ If you prefer to gather information manually:
    - **Tip:** If your bed isn't responding, the integration will log all discovered GATT services at INFO level.
 
 3. **Enable debug logging** for detailed information:
+
    ```yaml
    logger:
      logs:

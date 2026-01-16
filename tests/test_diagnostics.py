@@ -19,11 +19,11 @@ from custom_components.adjustable_bed.const import (
     CONF_PROTOCOL_VARIANT,
     DOMAIN,
 )
-from custom_components.adjustable_bed.diagnostics import (
+from custom_components.adjustable_bed.diagnostics import async_get_config_entry_diagnostics
+from custom_components.adjustable_bed.redaction import (
     KEYS_TO_REDACT,
     MAC_ADDRESS_KEYS,
     _redact_mac_address,
-    async_get_config_entry_diagnostics,
 )
 
 
@@ -75,6 +75,25 @@ class TestDiagnosticsRedaction:
         assert _redact_mac_address("aa:bb:cc:dd:ee:ff") == "AA:BB:CC:**:**:**"
         # Should handle dash separators
         assert _redact_mac_address("AA-BB-CC-DD-EE-FF") == "AA-BB-CC-**-**-**"
+
+    def test_mac_address_redaction_edge_cases(self):
+        """Test _redact_mac_address handles edge cases correctly."""
+        # Empty string should return as-is
+        assert _redact_mac_address("") == ""
+
+        # None should return as-is
+        assert _redact_mac_address(None) is None
+
+        # Non-string should return as-is
+        assert _redact_mac_address(12345) == 12345
+
+        # Invalid format (wrong number of parts) should be fully redacted
+        assert _redact_mac_address("AA:BB:CC:DD:EE") == "**REDACTED**"
+        assert _redact_mac_address("AA:BB:CC:DD:EE:FF:GG") == "**REDACTED**"
+        assert _redact_mac_address("not-a-mac") == "**REDACTED**"
+
+        # Single character should be fully redacted
+        assert _redact_mac_address("X") == "**REDACTED**"
 
 
 class TestDiagnosticsOutput:
