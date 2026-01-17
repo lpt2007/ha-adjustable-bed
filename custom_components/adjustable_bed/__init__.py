@@ -308,6 +308,13 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
         if not device_ids:
             _LOGGER.error("No device_id provided for generate_support_report service")
+            async_create(
+                hass,
+                "No device was selected for the generate_support_report service.\n\n"
+                "Please select an Adjustable Bed device and try again.",
+                title="Adjustable Bed Support Report Error",
+                notification_id="adjustable_bed_support_report_no_device",
+            )
             return
 
         device_id = device_ids[0]
@@ -316,6 +323,13 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             _LOGGER.error(
                 "Could not find Adjustable Bed device with ID %s for generate_support_report service",
                 device_id,
+            )
+            async_create(
+                hass,
+                f"Could not find Adjustable Bed device with ID:\n\n`{device_id}`\n\n"
+                "The device may have been removed or is no longer available.",
+                title="Adjustable Bed Support Report Error",
+                notification_id=f"adjustable_bed_support_report_not_found_{device_id[:8]}",
             )
             return
 
@@ -332,8 +346,12 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
         try:
             _LOGGER.info("Generating support report for %s", coordinator.name)
-            report = await generate_support_report(hass, entry, coordinator, include_logs)
-            filepath = save_support_report(hass, report, coordinator.address)
+            report = await generate_support_report(
+                hass, entry, coordinator, include_logs=include_logs
+            )
+            filepath = await hass.async_add_executor_job(
+                save_support_report, hass, report, coordinator.address
+            )
 
             async_create(
                 hass,

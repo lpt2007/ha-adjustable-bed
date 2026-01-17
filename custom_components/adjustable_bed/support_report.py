@@ -39,6 +39,7 @@ async def generate_support_report(
     hass: HomeAssistant,
     entry: ConfigEntry,
     coordinator: AdjustableBedCoordinator,
+    *,
     include_logs: bool = True,
 ) -> dict[str, Any]:
     """Generate a comprehensive support report."""
@@ -145,16 +146,20 @@ async def _get_bluetooth_info(
         hass, coordinator.address, connectable=True
     )
     if service_info:
+        # Guard against None values for optional BLE advertisement fields
+        service_uuids = service_info.service_uuids or []
+        manufacturer_data = service_info.manufacturer_data or {}
+        service_data = service_info.service_data or {}
+
         info["last_advertisement"] = {
             "device_name": service_info.name,
             "rssi": getattr(service_info, "rssi", None),
-            "service_uuids": [str(uuid) for uuid in service_info.service_uuids],
+            "service_uuids": [str(uuid) for uuid in service_uuids],
             "manufacturer_data": {
-                str(k): bytes(v).hex()
-                for k, v in service_info.manufacturer_data.items()
+                str(k): bytes(v).hex() for k, v in manufacturer_data.items()
             },
             "service_data": {
-                str(k): bytes(v).hex() for k, v in service_info.service_data.items()
+                str(k): bytes(v).hex() for k, v in service_data.items()
             },
             "connectable": service_info.connectable,
         }
