@@ -7,6 +7,24 @@
 - Beka
 - Some OEM beds with Octo controllers
 
+## PIN Configuration
+
+Some Octo beds require a 4-digit PIN to maintain the Bluetooth connection. Without the PIN, the bed will disconnect after ~30 seconds.
+
+### How to Configure Your PIN
+
+**During initial setup:** If your bed is detected as Octo, you'll see an "Octo PIN" field in the setup wizard.
+
+**After setup:**
+1. Go to **Settings** → **Devices & Services**
+2. Find your Adjustable Bed and click **Configure** (gear icon)
+3. Enter your 4-digit PIN in the "Octo PIN" field
+4. Click **Submit**
+
+### Finding Your PIN
+
+The PIN is typically found in your Octo physical remote's settings menu, or in the documentation that came with your bed. If you don't know your PIN and the bed works without one, leave it empty.
+
 ## Features
 | Feature | Supported |
 |---------|-----------|

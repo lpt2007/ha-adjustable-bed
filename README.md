@@ -100,6 +100,8 @@ To adjust settings after setup, click the **gear icon** on your device in Settin
 | Protocol Variant | Usually auto-detected, override if needed |
 | Motor Pulse Settings | Fine-tune movement timing |
 | Disable Angle Sensing | Keep on to allow physical remote to work |
+| Octo PIN | 4-digit PIN for Octo beds that require authentication |
+| Richmat Remote | Remote model code for Richmat beds |
 
 See the [Configuration Guide](docs/CONFIGURATION.md) for all options.
 

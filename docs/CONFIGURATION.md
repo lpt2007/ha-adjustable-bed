@@ -176,9 +176,17 @@ Okimat beds use different remote codes that determine available features and com
 
 Some Octo beds require PIN authentication to maintain the BLE connection. The bed will disconnect after ~30 seconds without re-authentication.
 
-- Find the PIN in your Octo remote's settings or documentation
-- Leave empty if your bed doesn't require a PIN
-- The integration automatically re-sends the PIN to maintain connection
+**How to configure:**
+1. Go to **Settings** → **Devices & Services**
+2. Find your Adjustable Bed and click **Configure** (gear icon)
+3. Enter your 4-digit PIN in the "Octo PIN" field
+
+**Finding your PIN:**
+- Check your Octo physical remote's settings menu
+- Look in the documentation that came with your bed
+- If your bed works without a PIN, leave this field empty
+
+The integration automatically re-sends the PIN every 25 seconds to maintain the connection.
 
 ### Richmat Remote
 

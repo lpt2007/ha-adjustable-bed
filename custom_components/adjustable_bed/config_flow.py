@@ -810,7 +810,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             for address, info in self._discovered_devices.items()
         }
         devices["diagnostic"] = "Diagnostic mode (unsupported device)"
-        devices["manual"] = "Enter address manually"
+        devices["manual"] = "Select Bed manually"
 
         return self.async_show_form(
             step_id="user",
