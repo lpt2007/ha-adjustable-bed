@@ -74,6 +74,7 @@ from .const import (
     LEGGETT_OKIN_NAME_PATTERNS,
     LEGGETT_VARIANTS,
     LINAK_CONTROL_SERVICE_UUID,
+    LINAK_NAME_PATTERNS,
     LINAK_POSITION_SERVICE_UUID,
     OCTO_NAME_PATTERNS,
     OCTO_STAR2_SERVICE_UUID,
@@ -230,6 +231,16 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
     if LINAK_CONTROL_SERVICE_UUID.lower() in service_uuids or LINAK_POSITION_SERVICE_UUID.lower() in service_uuids:
         _LOGGER.info(
             "Detected Linak bed at %s (name: %s)",
+            service_info.address,
+            service_info.name,
+        )
+        return BED_TYPE_LINAK
+
+    # Check for Linak by name pattern (e.g., "Bed 1696")
+    # Some Linak beds don't advertise service UUIDs in their BLE beacon
+    if device_name.startswith(LINAK_NAME_PATTERNS[0]) and device_name[4:].isdigit():
+        _LOGGER.info(
+            "Detected Linak bed at %s (name: %s) by name pattern",
             service_info.address,
             service_info.name,
         )

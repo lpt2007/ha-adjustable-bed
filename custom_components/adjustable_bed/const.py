@@ -226,6 +226,10 @@ LEGGETT_OKIN_NAME_PATTERNS: Final = ("leggett", "l&p")
 # Okimat devices: "Okimat", "OKIN RF", "OKIN BLE", or "OKIN-XXXXXX" (e.g., OKIN-346311)
 OKIMAT_NAME_PATTERNS: Final = ("okimat", "okin rf", "okin ble", "okin-")
 
+# Linak name patterns for devices that don't advertise service UUIDs
+# Some Linak beds only advertise "Bed XXXX" (4 digits) without service UUIDs
+LINAK_NAME_PATTERNS: Final = ("bed ",)
+
 # Keeson name patterns for devices that may not advertise the specific service UUID
 # - base-i4.XXXXXXXX (e.g., base-i4.00002574)
 # - base-i5.XXXXXXXX (e.g., base-i5.00000682)

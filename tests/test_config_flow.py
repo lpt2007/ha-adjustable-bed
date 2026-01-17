@@ -70,6 +70,14 @@ class TestDetectBedType:
         bed_type = detect_bed_type(mock_bluetooth_service_info)
         assert bed_type == BED_TYPE_LINAK
 
+    def test_detect_linak_bed_by_name(self, mock_bluetooth_service_info: BluetoothServiceInfoBleak):
+        """Test detection of Linak bed by name pattern when no service UUIDs advertised."""
+        # Some Linak beds don't advertise service UUIDs in their BLE beacon
+        mock_bluetooth_service_info.name = "Bed 1696"
+        mock_bluetooth_service_info.service_uuids = []
+        bed_type = detect_bed_type(mock_bluetooth_service_info)
+        assert bed_type == BED_TYPE_LINAK
+
     def test_detect_richmat_nordic_bed(self, mock_bluetooth_service_info_richmat):
         """Test detection of Richmat bed (Nordic variant)."""
         bed_type = detect_bed_type(mock_bluetooth_service_info_richmat)
