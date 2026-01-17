@@ -154,6 +154,11 @@ class RichmatController(BedController):
         """Return True if this bed supports under-bed lights."""
         return bool(self._features & RichmatFeatures.UNDER_BED_LIGHTS)
 
+    @property
+    def supports_memory_presets(self) -> bool:
+        """Return True - Richmat beds support memory presets (slots 1-2)."""
+        return True
+
     def _build_command(self, command_byte: int) -> bytes:
         """Build command bytes based on command protocol."""
         if self._command_protocol == RICHMAT_PROTOCOL_WILINKE:

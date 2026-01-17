@@ -202,6 +202,11 @@ class KeesonController(BedController):
     def supports_preset_tv(self) -> bool:
         return True
 
+    @property
+    def supports_memory_presets(self) -> bool:
+        """Return True - Keeson beds support memory presets."""
+        return True
+
     def _build_command(self, command_value: int) -> bytes:
         """Build command bytes based on protocol variant."""
         if self._variant == "ksbt":

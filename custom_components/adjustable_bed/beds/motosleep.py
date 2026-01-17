@@ -98,6 +98,11 @@ class MotoSleepController(BedController):
         """Return True - MotoSleep beds support under-bed lighting."""
         return True
 
+    @property
+    def supports_memory_presets(self) -> bool:
+        """Return True - MotoSleep beds support memory presets (slots 1-2)."""
+        return True
+
     def _build_command(self, char_code: int) -> bytes:
         """Build a 2-byte command: [0x24, char_code]."""
         return bytes([0x24, char_code])

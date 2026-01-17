@@ -344,6 +344,17 @@ class OctoController(BedController):
             _LOGGER.error("Cannot discover features: not connected")
             return False
 
+        # Ensure notifications are started - required for receiving feature responses
+        # This is called explicitly here because coordinator.async_start_notify() may
+        # skip notification setup when disable_angle_sensing is true, but Octo still
+        # needs notifications for feature discovery (PIN/lights detection)
+        try:
+            await self.client.start_notify(OCTO_CHAR_UUID, self._on_notification)
+            _LOGGER.debug("Started Octo notifications for feature discovery")
+        except BleakError as err:
+            _LOGGER.warning("Could not start notifications for feature discovery: %s", err)
+            return False
+
         # Reset state
         self._features_loaded.clear()
         self._features_complete.clear()

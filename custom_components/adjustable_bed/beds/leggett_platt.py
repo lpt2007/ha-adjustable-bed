@@ -174,6 +174,11 @@ class LeggettPlattController(BedController):
         """Return True - Leggett & Platt beds support lighting."""
         return True
 
+    @property
+    def supports_memory_presets(self) -> bool:
+        """Return True - Leggett & Platt beds support memory presets."""
+        return True
+
     def _build_okin_command(self, command_value: int) -> bytes:
         """Build Okin binary command by delegating to build_okin_command.
 
