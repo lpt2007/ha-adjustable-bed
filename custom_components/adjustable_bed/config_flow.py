@@ -542,13 +542,17 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             selected_bed_type = user_input.get(CONF_BED_TYPE, bed_type)
             preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
             protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
+            # Get bed-specific defaults for motor pulse settings
+            pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
+                selected_bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
+            )
             try:
-                motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or DEFAULT_MOTOR_PULSE_COUNT)
-                motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or DEFAULT_MOTOR_PULSE_DELAY_MS)
+                motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or pulse_defaults[0])
+                motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or pulse_defaults[1])
             except (ValueError, TypeError):
                 _LOGGER.warning("Invalid number input for motor pulse settings")
-                motor_pulse_count = DEFAULT_MOTOR_PULSE_COUNT
-                motor_pulse_delay_ms = DEFAULT_MOTOR_PULSE_DELAY_MS
+                motor_pulse_count = pulse_defaults[0]
+                motor_pulse_delay_ms = pulse_defaults[1]
             _LOGGER.info(
                 "User confirmed bed setup: name=%s, type=%s (detected: %s), variant=%s, address=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s, pulse_count=%s, pulse_delay=%s",
                 user_input.get(CONF_NAME, self._discovery_info.name or "Adjustable Bed"),
@@ -758,9 +762,13 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             elif not errors:
                 preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
                 protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
+                # Get bed-specific defaults for motor pulse settings
+                pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
+                    bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
+                )
                 try:
-                    motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or DEFAULT_MOTOR_PULSE_COUNT)
-                    motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or DEFAULT_MOTOR_PULSE_DELAY_MS)
+                    motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or pulse_defaults[0])
+                    motor_pulse_delay_ms = int(user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or pulse_defaults[1])
                 except (ValueError, TypeError):
                     errors["base"] = "invalid_number"
 
@@ -1038,12 +1046,16 @@ class AdjustableBedOptionsFlow(OptionsFlowWithConfigEntry):
             )] = vol.In(RICHMAT_REMOTES)
 
         if user_input is not None:
+            # Get bed-specific defaults for motor pulse settings
+            pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
+                bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
+            )
             # Convert text values to integers
             try:
                 if CONF_MOTOR_PULSE_COUNT in user_input:
-                    user_input[CONF_MOTOR_PULSE_COUNT] = int(user_input[CONF_MOTOR_PULSE_COUNT] or DEFAULT_MOTOR_PULSE_COUNT)
+                    user_input[CONF_MOTOR_PULSE_COUNT] = int(user_input[CONF_MOTOR_PULSE_COUNT] or pulse_defaults[0])
                 if CONF_MOTOR_PULSE_DELAY_MS in user_input:
-                    user_input[CONF_MOTOR_PULSE_DELAY_MS] = int(user_input[CONF_MOTOR_PULSE_DELAY_MS] or DEFAULT_MOTOR_PULSE_DELAY_MS)
+                    user_input[CONF_MOTOR_PULSE_DELAY_MS] = int(user_input[CONF_MOTOR_PULSE_DELAY_MS] or pulse_defaults[1])
             except (ValueError, TypeError):
                 return self.async_show_form(
                     step_id="init",
