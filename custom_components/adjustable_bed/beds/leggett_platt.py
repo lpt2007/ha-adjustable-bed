@@ -175,6 +175,14 @@ class LeggettPlattController(BedController):
         return True
 
     @property
+    def supports_discrete_light_control(self) -> bool:
+        """Return True only for Gen2 variant which has RGB control.
+
+        Okin variant only supports toggle, not discrete on/off.
+        """
+        return self._variant == "gen2"
+
+    @property
     def supports_memory_presets(self) -> bool:
         """Return True - Leggett & Platt beds support memory presets."""
         return True

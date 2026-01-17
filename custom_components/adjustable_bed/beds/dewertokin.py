@@ -111,6 +111,11 @@ class DewertOkinController(BedController):
         return True
 
     @property
+    def supports_discrete_light_control(self) -> bool:
+        """Return False - DewertOkin only supports toggle, not discrete on/off."""
+        return False
+
+    @property
     def supports_memory_presets(self) -> bool:
         """Return True - DewertOkin beds support memory presets (slots 1-2)."""
         return True
