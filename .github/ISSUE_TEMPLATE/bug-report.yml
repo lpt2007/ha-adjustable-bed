@@ -117,6 +117,8 @@ body:
         logger:
           logs:
             custom_components.adjustable_bed: debug
+            homeassistant.components.bluetooth: debug
+            bluetooth: debug
         ```
       render: text
       placeholder: |

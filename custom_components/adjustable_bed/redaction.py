@@ -15,13 +15,16 @@ KEYS_TO_REDACT = {CONF_NAME, CONF_OCTO_PIN, "title"}
 MAC_ADDRESS_KEYS = {CONF_ADDRESS, "address"}
 
 
-def _redact_mac_address(mac: str) -> str:
+def _redact_mac_address(mac: str | None | Any) -> str | Any:
     """Redact the last 3 bytes of a MAC address, keeping the OUI (manufacturer ID).
 
     Example: AA:BB:CC:DD:EE:FF -> AA:BB:CC:**:**:**
 
+    This function is designed to handle any input type defensively. Non-string
+    inputs (including None, integers, etc.) are returned unchanged.
+
     Args:
-        mac: The MAC address to redact.
+        mac: The MAC address to redact. Accepts str, None, or any other type.
 
     Returns:
         The partially redacted MAC address, or "**REDACTED**" for invalid formats,

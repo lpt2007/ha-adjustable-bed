@@ -21,12 +21,7 @@ from .const import (
     SUPPORTED_BED_TYPES,
 )
 from .coordinator import AdjustableBedCoordinator
-from .redaction import (
-    KEYS_TO_REDACT,
-    MAC_ADDRESS_KEYS,
-    _redact_mac_address,
-    redact_data,
-)
+from .redaction import redact_data
 
 
 async def async_get_config_entry_diagnostics(
@@ -83,7 +78,11 @@ async def async_get_config_entry_diagnostics(
             # Use "device_name" to avoid redaction (name is useful for debugging)
             "device_name": service_info.name,
             "rssi": getattr(service_info, "rssi", None),
-            "service_uuids": [str(uuid) for uuid in service_info.service_uuids],
+            "service_uuids": (
+                [str(uuid) for uuid in service_info.service_uuids]
+                if service_info.service_uuids
+                else []
+            ),
             "manufacturer_data_keys": list(service_info.manufacturer_data.keys()),
             "connectable": service_info.connectable,
         }

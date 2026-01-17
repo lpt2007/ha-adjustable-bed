@@ -246,7 +246,7 @@ The support report includes:
 - Integration configuration
 - Connection status and BLE info
 - Recent logs (if available)
-- All sensitive data (MAC address) is automatically redacted
+- All sensitive data (MAC addresses, names, PINs) is automatically redacted
 
 ### Manual Method: Download Diagnostics
 
