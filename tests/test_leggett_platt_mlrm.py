@@ -125,7 +125,7 @@ class TestLeggettPlattMlrmController:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports correct characteristic UUID."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -137,7 +137,7 @@ class TestLeggettPlattMlrmController:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test command building produces correct WiLinke 5-byte format."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -154,7 +154,7 @@ class TestLeggettPlattMlrmController:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test checksum calculation: (0x6E + 0x01 + 0x00 + cmd) & 0xFF."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -174,7 +174,7 @@ class TestLeggettPlattMlrmController:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
         mock_bleak_client: MagicMock,
     ):
         """Test writing a command to the bed."""
@@ -192,7 +192,7 @@ class TestLeggettPlattMlrmController:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
         mock_bleak_client: MagicMock,
     ):
         """Test writing command when not connected raises error."""
@@ -214,7 +214,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports zero gravity preset support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -225,7 +225,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports anti-snore preset support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -236,7 +236,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports TV preset support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -247,7 +247,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports lounge preset support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -258,7 +258,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test L&P MlRM beds don't have lumbar support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -269,7 +269,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test L&P MlRM beds don't have pillow support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -280,7 +280,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports light support."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -291,7 +291,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test lights are toggle-only (no discrete on/off)."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -302,7 +302,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports 2 memory slots."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -313,7 +313,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller supports memory programming."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -324,7 +324,7 @@ class TestLeggettPlattMlrmCapabilities:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test controller reports discrete motor control (uses buttons not covers)."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)
@@ -965,7 +965,7 @@ class TestLeggettPlattMlrmPositionNotifications:
         self,
         hass: HomeAssistant,
         mock_leggett_mlrm_config_entry,
-        mock_coordinator_connected,
+        mock_coordinator_connected,  # noqa: ARG002
     ):
         """Test read_positions does nothing (not supported)."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_mlrm_config_entry)

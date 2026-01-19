@@ -287,6 +287,7 @@ BUTTON_DESCRIPTIONS: tuple[AdjustableBedButtonEntityDescription, ...] = (
         translation_key="head_up",
         icon="mdi:arrow-up",
         press_fn=lambda ctrl: ctrl.move_head_up(),
+        cancel_movement=True,
         required_capability="has_discrete_motor_control",
     ),
     AdjustableBedButtonEntityDescription(
@@ -294,6 +295,7 @@ BUTTON_DESCRIPTIONS: tuple[AdjustableBedButtonEntityDescription, ...] = (
         translation_key="head_down",
         icon="mdi:arrow-down",
         press_fn=lambda ctrl: ctrl.move_head_down(),
+        cancel_movement=True,
         required_capability="has_discrete_motor_control",
     ),
     AdjustableBedButtonEntityDescription(
@@ -301,6 +303,7 @@ BUTTON_DESCRIPTIONS: tuple[AdjustableBedButtonEntityDescription, ...] = (
         translation_key="legs_up",
         icon="mdi:arrow-up",
         press_fn=lambda ctrl: ctrl.move_legs_up(),
+        cancel_movement=True,
         required_capability="has_discrete_motor_control",
     ),
     AdjustableBedButtonEntityDescription(
@@ -308,6 +311,7 @@ BUTTON_DESCRIPTIONS: tuple[AdjustableBedButtonEntityDescription, ...] = (
         translation_key="legs_down",
         icon="mdi:arrow-down",
         press_fn=lambda ctrl: ctrl.move_legs_down(),
+        cancel_movement=True,
         required_capability="has_discrete_motor_control",
     ),
 )
