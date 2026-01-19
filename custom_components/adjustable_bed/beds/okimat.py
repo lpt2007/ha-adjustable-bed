@@ -261,9 +261,11 @@ class OkimatController(BedController):
                 return
 
             try:
-                await self.client.write_gatt_char(
-                    OKIMAT_WRITE_CHAR_UUID, command, response=True
-                )
+                # Acquire BLE lock to prevent conflicts with concurrent position reads
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(
+                        OKIMAT_WRITE_CHAR_UUID, command, response=True
+                    )
             except BleakError:
                 _LOGGER.exception("Failed to write command")
                 raise
@@ -377,7 +379,9 @@ class OkimatController(BedController):
             return
 
         try:
-            data = await self.client.read_gatt_char(OKIN_POSITION_NOTIFY_CHAR_UUID)
+            # Acquire BLE lock to prevent conflicts with concurrent writes
+            async with self._ble_lock:
+                data = await self.client.read_gatt_char(OKIN_POSITION_NOTIFY_CHAR_UUID)
             if data:
                 _LOGGER.debug("Read Okin position data: %s", data.hex())
                 self._handle_position_notification(0, bytearray(data))  # type: ignore[arg-type]

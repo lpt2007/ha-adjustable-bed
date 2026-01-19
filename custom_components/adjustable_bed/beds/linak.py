@@ -388,7 +388,9 @@ class LinakController(BedController):
 
         for name, uuid, max_pos, max_angle in position_chars:
             try:
-                data = await self.client.read_gatt_char(uuid)
+                # Acquire BLE lock to prevent conflicts with concurrent writes
+                async with self._ble_lock:
+                    data = await self.client.read_gatt_char(uuid)
                 if data:
                     _LOGGER.debug("Read position for %s: %s", name, data.hex())
                     self._handle_position_data(name, bytearray(data), max_pos, max_angle)
