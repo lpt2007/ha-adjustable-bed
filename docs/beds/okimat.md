@@ -10,6 +10,7 @@
 - Other beds with Okin motors
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |

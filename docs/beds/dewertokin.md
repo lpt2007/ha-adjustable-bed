@@ -11,6 +11,7 @@
 - "Comfort Enhancement 2" / "Comfort Plus" app beds
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |

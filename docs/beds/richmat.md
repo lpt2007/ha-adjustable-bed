@@ -13,6 +13,7 @@
 - Some Sven & Son beds
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |

@@ -9,6 +9,7 @@
 - Serta adjustable bases (BLE-enabled, non-cloud)
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |

@@ -28,6 +28,7 @@ Some Octo beds require a 4-digit PIN to maintain the Bluetooth connection. Witho
 The PIN is typically found in your Octo physical remote's settings menu, or in the documentation that came with your bed. If you don't know your PIN and the bed works without one, leave it empty.
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |
@@ -57,6 +58,7 @@ Octo beds have at least two protocol variants. The integration auto-detects the 
 #### Motor Commands
 
 Motors are controlled via bit masks:
+
 - Head motor: `0x02`
 - Legs motor: `0x04`
 - Both motors: `0x06`

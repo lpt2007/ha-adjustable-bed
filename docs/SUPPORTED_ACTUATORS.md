@@ -19,7 +19,7 @@ This document provides an overview of supported bed brands. Click on a brand nam
 | [Mattress Firm 900](beds/mattressfirm.md) | ❓ Untested | Lumbar control, 3-level massage, built-in presets |
 | [Nectar](beds/nectar.md) | ❓ Untested | Lumbar control, massage, lights, Zero-G/Anti-Snore/Lounge |
 
-### Status Legend
+## Status Legend
 
 - ✅ **Tested** - Confirmed working by community members
 - 🔄 **Works** - Working but may have improvements in progress

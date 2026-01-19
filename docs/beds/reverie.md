@@ -9,6 +9,7 @@
 - Various Reverie adjustable bases
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ (position 0-100%) |
