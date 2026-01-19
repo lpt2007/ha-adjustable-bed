@@ -16,24 +16,12 @@ from bleak_retry_connector import establish_connection
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DEVICE_INFO_CHARS, DEVICE_INFO_SERVICE_UUID, DOMAIN
 
 if TYPE_CHECKING:
     from .coordinator import AdjustableBedCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-
-# Standard BLE Device Information Service UUIDs
-DEVICE_INFO_SERVICE_UUID = "0000180a-0000-1000-8000-00805f9b34fb"
-DEVICE_INFO_CHARS = {
-    "manufacturer_name": "00002a29-0000-1000-8000-00805f9b34fb",
-    "model_number": "00002a24-0000-1000-8000-00805f9b34fb",
-    "serial_number": "00002a25-0000-1000-8000-00805f9b34fb",
-    "hardware_revision": "00002a27-0000-1000-8000-00805f9b34fb",
-    "firmware_revision": "00002a26-0000-1000-8000-00805f9b34fb",
-    "software_revision": "00002a28-0000-1000-8000-00805f9b34fb",
-    "system_id": "00002a23-0000-1000-8000-00805f9b34fb",
-}
 
 # Connection settings
 CONNECTION_TIMEOUT = 30.0
@@ -141,15 +129,15 @@ class BLEDiagnosticRunner:
                 device_info["name"] = service_info.name
                 device_info["rssi"] = getattr(service_info, "rssi", None)
                 advertisement_info["service_uuids"] = [
-                    str(uuid) for uuid in service_info.service_uuids
+                    str(uuid) for uuid in (service_info.service_uuids or [])
                 ]
                 advertisement_info["manufacturer_data"] = {
                     str(k): bytes(v).hex()
-                    for k, v in service_info.manufacturer_data.items()
+                    for k, v in (service_info.manufacturer_data or {}).items()
                 }
                 advertisement_info["service_data"] = {
                     str(k): bytes(v).hex()
-                    for k, v in service_info.service_data.items()
+                    for k, v in (service_info.service_data or {}).items()
                 }
             else:
                 self._errors.append("No advertisement data available")
@@ -242,6 +230,9 @@ class BLEDiagnosticRunner:
                 timeout=CONNECTION_TIMEOUT,
             )
             _LOGGER.info("Connected to %s", self.address)
+            # Explicitly discover services - not all backends auto-discover on connect
+            await self._client.get_services()
+            _LOGGER.debug("Service discovery completed for %s", self.address)
         except Exception as err:
             error = f"Failed to connect: {err}"
             self._errors.append(error)

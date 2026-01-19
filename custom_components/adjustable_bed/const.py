@@ -63,6 +63,18 @@ SUPPORTED_BED_TYPES: Final = [
     BED_TYPE_NECTAR,
 ]
 
+# Standard BLE Device Information Service UUIDs
+DEVICE_INFO_SERVICE_UUID: Final = "0000180a-0000-1000-8000-00805f9b34fb"
+DEVICE_INFO_CHARS: Final = {
+    "manufacturer_name": "00002a29-0000-1000-8000-00805f9b34fb",
+    "model_number": "00002a24-0000-1000-8000-00805f9b34fb",
+    "serial_number": "00002a25-0000-1000-8000-00805f9b34fb",
+    "hardware_revision": "00002a27-0000-1000-8000-00805f9b34fb",
+    "firmware_revision": "00002a26-0000-1000-8000-00805f9b34fb",
+    "software_revision": "00002a28-0000-1000-8000-00805f9b34fb",
+    "system_id": "00002a23-0000-1000-8000-00805f9b34fb",
+}
+
 # Linak specific UUIDs
 LINAK_CONTROL_SERVICE_UUID: Final = "99fa0001-338a-1024-8a49-009c0215f78a"
 LINAK_CONTROL_CHAR_UUID: Final = "99fa0002-338a-1024-8a49-009c0215f78a"
