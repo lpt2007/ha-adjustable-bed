@@ -22,6 +22,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from .const import (
     ADAPTER_AUTO,
     BED_MOTOR_PULSE_DEFAULTS,
+    DEVICE_INFO_CHARS,
+    DEVICE_INFO_SERVICE_UUID,
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_DIAGNOSTIC,
     BED_TYPE_ERGOMOTION,
@@ -134,6 +136,10 @@ class AdjustableBedCoordinator:
         self._position_data: dict[str, float] = {}
         self._position_callbacks: set[Callable[[dict[str, float]], None]] = set()
 
+        # BLE Device Information Service data
+        self._ble_manufacturer: str | None = None
+        self._ble_model: str | None = None
+
         _LOGGER.debug(
             "Coordinator initialized for %s at %s (type: %s, motors: %d, massage: %s, disable_angle_sensing: %s, adapter: %s)",
             self._name,
@@ -227,6 +233,11 @@ class AdjustableBedCoordinator:
 
     def _get_manufacturer(self) -> str:
         """Get manufacturer name based on bed type."""
+        # Use BLE value if available and useful
+        if self._is_useful_ble_value(self._ble_manufacturer):
+            return self._ble_manufacturer  # type: ignore[return-value]
+
+        # Fall back to hardcoded values based on bed type
         manufacturers = {
             BED_TYPE_LINAK: "Linak",
             BED_TYPE_RICHMAT: "Richmat",
@@ -249,7 +260,89 @@ class AdjustableBedCoordinator:
 
     def _get_model(self) -> str:
         """Get model name based on bed type."""
+        if self._is_useful_ble_value(self._ble_model):
+            return self._ble_model  # type: ignore[return-value]
         return f"Adjustable Bed ({self._motor_count} motors)"
+
+    def _is_useful_ble_value(self, value: str | None) -> bool:
+        """Check if a BLE value is useful (not generic/unhelpful).
+
+        Some devices return generic strings like "BLE Device" or the chipset
+        manufacturer instead of the actual bed manufacturer. This filters those out.
+        """
+        if not value or not value.strip():
+            return False
+
+        normalized = value.strip().lower()
+
+        # Generic/placeholder strings
+        generic_values = {
+            "unknown", "n/a", "na", "none", "null", "undefined",
+            "ble device", "bluetooth device", "generic",
+        }
+        if normalized in generic_values:
+            return False
+
+        # Chipset manufacturers (not the actual bed manufacturer)
+        chipset_manufacturers = {
+            "nordic semiconductor", "nordic", "texas instruments", "ti",
+            "realtek", "qualcomm", "broadcom", "espressif", "silicon labs",
+            "dialog semiconductor", "cypress", "microchip", "stmicroelectronics",
+        }
+        if normalized in chipset_manufacturers:
+            return False
+
+        return True
+
+    async def _read_ble_device_info(self) -> None:
+        """Read manufacturer and model from BLE Device Information Service.
+
+        This reads the standard BLE Device Information Service (UUID 0x180A)
+        if available. Values are stored in _ble_manufacturer and _ble_model
+        for use by _get_manufacturer() and _get_model().
+        """
+        if self._client is None or not self._client.is_connected:
+            return
+
+        if not self._client.services:
+            return
+
+        # Check if Device Information Service exists
+        has_device_info = False
+        for service in self._client.services:
+            if service.uuid.lower() == DEVICE_INFO_SERVICE_UUID:
+                has_device_info = True
+                break
+
+        if not has_device_info:
+            _LOGGER.debug("Device Information Service not found on %s", self._address)
+            return
+
+        _LOGGER.debug("Reading Device Information Service from %s", self._address)
+
+        # Read manufacturer name
+        try:
+            manufacturer_uuid = DEVICE_INFO_CHARS["manufacturer_name"]
+            value = await self._client.read_gatt_char(manufacturer_uuid)
+            try:
+                self._ble_manufacturer = value.decode("utf-8").rstrip("\x00")
+                _LOGGER.debug("BLE manufacturer: %s", self._ble_manufacturer)
+            except UnicodeDecodeError:
+                _LOGGER.debug("Could not decode manufacturer name as UTF-8")
+        except Exception as err:
+            _LOGGER.debug("Could not read manufacturer name: %s", err)
+
+        # Read model number
+        try:
+            model_uuid = DEVICE_INFO_CHARS["model_number"]
+            value = await self._client.read_gatt_char(model_uuid)
+            try:
+                self._ble_model = value.decode("utf-8").rstrip("\x00")
+                _LOGGER.debug("BLE model: %s", self._ble_model)
+            except UnicodeDecodeError:
+                _LOGGER.debug("Could not decode model number as UTF-8")
+        except Exception as err:
+            _LOGGER.debug("Could not read model number: %s", err)
 
     async def async_connect(self) -> bool:
         """Connect to the bed."""
@@ -637,6 +730,9 @@ class AdjustableBedCoordinator:
                         "No BLE services discovered on %s - this may indicate a connection issue",
                         self._address,
                     )
+
+                # Read BLE Device Information Service for manufacturer/model
+                await self._read_ble_device_info()
 
                 # Create the controller
                 _LOGGER.debug("Creating %s controller...", self._bed_type)
