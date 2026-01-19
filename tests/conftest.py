@@ -325,9 +325,16 @@ def mock_coordinator_connected(
     mock_establish_connection: AsyncMock,
     mock_async_ble_device_from_address: MagicMock,
     mock_bluetooth_adapters: None,
-) -> Generator[None]:
-    """Provide all mocks needed for a connected coordinator."""
-    yield
+) -> None:
+    """Provide all mocks needed for a connected coordinator.
+
+    The fixture parameters are used for dependency injection only - pytest activates
+    these fixtures when mock_coordinator_connected is used, even though the parameters
+    aren't accessed directly in this function body.
+    """
+    # Fixtures are activated via dependency injection - no explicit usage needed
+    del mock_establish_connection, mock_async_ble_device_from_address, mock_bluetooth_adapters
+    return None
 
 
 @pytest.fixture
