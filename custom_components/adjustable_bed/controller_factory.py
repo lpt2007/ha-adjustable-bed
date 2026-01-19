@@ -12,7 +12,6 @@ from .const import (
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_PLATT,
-    BED_TYPE_LEGGETT_PLATT_RICHMAT,
     BED_TYPE_LINAK,
     BED_TYPE_MATTRESSFIRM,
     BED_TYPE_MOTOSLEEP,
@@ -25,11 +24,13 @@ from .const import (
     BED_TYPE_SOLACE,
     KEESON_VARIANT_ERGOMOTION,
     KEESON_VARIANT_KSBT,
+    LEGGETT_VARIANT_MLRM,
     LEGGETT_VARIANT_OKIN,
     OCTO_STAR2_SERVICE_UUID,
     OCTO_VARIANT_STAR2,
     RICHMAT_VARIANT_NORDIC,
     RICHMAT_VARIANT_WILINKE,
+    RICHMAT_WILINKE_SERVICE_UUIDS,
 )
 
 if TYPE_CHECKING:
@@ -123,22 +124,39 @@ async def create_controller(
         return MotoSleepController(coordinator)
 
     if bed_type == BED_TYPE_LEGGETT_PLATT:
-        from .beds.leggett_platt import LeggettPlattController
+        # Use configured variant or auto-detect
+        if protocol_variant == LEGGETT_VARIANT_MLRM:
+            from .beds.leggett_platt_mlrm import LeggettPlattMlrmController
 
-        # Use configured variant or default to gen2
-        if protocol_variant == LEGGETT_VARIANT_OKIN:
+            _LOGGER.debug("Using MlRM Leggett & Platt variant (configured)")
+            return LeggettPlattMlrmController(coordinator)
+        elif protocol_variant == LEGGETT_VARIANT_OKIN:
+            from .beds.leggett_platt import LeggettPlattController
+
             _LOGGER.debug("Using Okin Leggett & Platt variant (configured)")
             return LeggettPlattController(coordinator, variant="okin")
-        else:
-            # Auto or gen2 variant
+        elif protocol_variant in (None, "", "auto"):
+            # Auto-detect: check if WiLinke service UUID is available (indicates MlRM)
+            if client and client.services:
+                for service in client.services:
+                    if service.uuid.lower() in [
+                        uuid.lower() for uuid in RICHMAT_WILINKE_SERVICE_UUIDS
+                    ]:
+                        from .beds.leggett_platt_mlrm import LeggettPlattMlrmController
+
+                        _LOGGER.debug("Using MlRM Leggett & Platt variant (auto-detected)")
+                        return LeggettPlattMlrmController(coordinator)
+            # Default to gen2 variant
+            from .beds.leggett_platt import LeggettPlattController
+
             _LOGGER.debug("Using Gen2 Leggett & Platt variant")
             return LeggettPlattController(coordinator, variant="gen2")
+        else:
+            # Explicit gen2 variant
+            from .beds.leggett_platt import LeggettPlattController
 
-    if bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT:
-        from .beds.leggett_platt_richmat import LeggettPlattRichmatController
-
-        _LOGGER.debug("Using Leggett & Platt Richmat controller")
-        return LeggettPlattRichmatController(coordinator)
+            _LOGGER.debug("Using Gen2 Leggett & Platt variant (configured)")
+            return LeggettPlattController(coordinator, variant="gen2")
 
     if bed_type == BED_TYPE_REVERIE:
         from .beds.reverie import ReverieController

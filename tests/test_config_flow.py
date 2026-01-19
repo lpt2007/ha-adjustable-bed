@@ -20,7 +20,6 @@ from custom_components.adjustable_bed.const import (
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_PLATT,
-    BED_TYPE_LEGGETT_PLATT_RICHMAT,
     BED_TYPE_LINAK,
     BED_TYPE_MOTOSLEEP,
     BED_TYPE_OCTO,
@@ -346,15 +345,19 @@ class TestDetectBedType:
         bed_type = detect_bed_type(mock_bluetooth_service_info_octo_star2)
         assert bed_type == BED_TYPE_OCTO
 
-    def test_detect_leggett_platt_richmat_bed(
+    def test_detect_leggett_platt_mlrm_bed(
         self, mock_bluetooth_service_info_leggett_platt_richmat
     ):
-        """Test detection of Leggett & Platt Richmat bed (MlRM prefix)."""
-        bed_type = detect_bed_type(mock_bluetooth_service_info_leggett_platt_richmat)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+        """Test detection of Leggett & Platt MlRM variant bed (MlRM prefix).
 
-    def test_detect_leggett_platt_richmat_case_insensitive(self):
-        """Test L&P Richmat detection is case-insensitive (name is lowercased)."""
+        MlRM beds are now detected as BED_TYPE_LEGGETT_PLATT; variant detection
+        happens at controller instantiation time.
+        """
+        bed_type = detect_bed_type(mock_bluetooth_service_info_leggett_platt_richmat)
+        assert bed_type == BED_TYPE_LEGGETT_PLATT
+
+    def test_detect_leggett_platt_mlrm_case_insensitive(self):
+        """Test L&P MlRM detection is case-insensitive (name is lowercased)."""
         # Test with uppercase MLRM
         service_info = MagicMock()
         service_info.name = "MLRM123456"
@@ -363,13 +366,13 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+        assert bed_type == BED_TYPE_LEGGETT_PLATT
 
-    def test_detect_leggett_richmat_vs_generic_richmat(self):
-        """Test L&P Richmat takes precedence over generic Richmat for mlrm prefix.
+    def test_detect_leggett_mlrm_vs_generic_richmat(self):
+        """Test L&P MlRM takes precedence over generic Richmat for mlrm prefix.
 
-        Both L&P Richmat and generic Richmat use WiLinke UUIDs, but beds with
-        'mlrm' prefix should be detected as L&P Richmat.
+        Both L&P MlRM and generic Richmat use WiLinke UUIDs, but beds with
+        'mlrm' prefix should be detected as L&P (variant detection at controller time).
         """
         # Same UUID as generic Richmat WiLinke, but with mlrm prefix
         service_info = MagicMock()
@@ -379,17 +382,17 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+        assert bed_type == BED_TYPE_LEGGETT_PLATT
 
         # Verify generic Richmat still works for non-mlrm names
         service_info.name = "Generic WiLinke Bed"
         bed_type = detect_bed_type(service_info)
         assert bed_type == BED_TYPE_RICHMAT
 
-    def test_detect_leggett_richmat_without_service_uuid(self):
-        """Test L&P Richmat needs both name pattern AND WiLinke service UUID.
+    def test_detect_leggett_mlrm_without_service_uuid(self):
+        """Test L&P MlRM needs both name pattern AND WiLinke service UUID.
 
-        If the name matches but UUID doesn't, it should not be detected as L&P Richmat.
+        If the name matches but UUID doesn't, it should not be detected as L&P MlRM.
         """
         service_info = MagicMock()
         service_info.name = "MlRM157052"
@@ -398,8 +401,8 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        # Should NOT detect as L&P Richmat without UUID
-        assert bed_type != BED_TYPE_LEGGETT_PLATT_RICHMAT
+        # Should NOT detect as L&P MlRM without UUID
+        assert bed_type is None
 
 
 class TestPinValidation:

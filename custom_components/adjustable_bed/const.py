@@ -43,7 +43,6 @@ BED_TYPE_SERTA: Final = "serta"
 BED_TYPE_OCTO: Final = "octo"
 BED_TYPE_MATTRESSFIRM: Final = "mattressfirm"
 BED_TYPE_NECTAR: Final = "nectar"
-BED_TYPE_LEGGETT_PLATT_RICHMAT: Final = "leggett_platt_richmat"
 BED_TYPE_DIAGNOSTIC: Final = "diagnostic"
 
 SUPPORTED_BED_TYPES: Final = [
@@ -62,7 +61,6 @@ SUPPORTED_BED_TYPES: Final = [
     BED_TYPE_OCTO,
     BED_TYPE_MATTRESSFIRM,
     BED_TYPE_NECTAR,
-    BED_TYPE_LEGGETT_PLATT_RICHMAT,
 ]
 
 # Standard BLE Device Information Service UUIDs
@@ -285,10 +283,12 @@ KEESON_VARIANTS: Final = {
 # Leggett & Platt variants
 LEGGETT_VARIANT_GEN2: Final = "gen2"
 LEGGETT_VARIANT_OKIN: Final = "okin"
+LEGGETT_VARIANT_MLRM: Final = "mlrm"
 LEGGETT_VARIANTS: Final = {
     VARIANT_AUTO: "Auto-detect",
     LEGGETT_VARIANT_GEN2: "Gen2 (Richmat-based, most common)",
     LEGGETT_VARIANT_OKIN: "Okin (requires BLE pairing)",
+    LEGGETT_VARIANT_MLRM: "MlRM (WiLinke protocol, discrete massage control)",
 }
 
 # Richmat protocol variants (auto-detected, but can be overridden)
@@ -496,6 +496,7 @@ ALL_PROTOCOL_VARIANTS: Final = [
     KEESON_VARIANT_ERGOMOTION,
     LEGGETT_VARIANT_GEN2,
     LEGGETT_VARIANT_OKIN,
+    LEGGETT_VARIANT_MLRM,
     RICHMAT_VARIANT_NORDIC,
     RICHMAT_VARIANT_WILINKE,
     OCTO_VARIANT_STANDARD,
