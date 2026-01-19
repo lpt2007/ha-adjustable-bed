@@ -144,13 +144,14 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
 
     # Check for Linak by name pattern (e.g., "Bed 1696")
     # Some Linak beds don't advertise service UUIDs in their BLE beacon
-    if device_name.startswith(LINAK_NAME_PATTERNS[0]) and device_name[4:].isdigit():
-        _LOGGER.info(
-            "Detected Linak bed at %s (name: %s) by name pattern",
-            service_info.address,
-            service_info.name,
-        )
-        return BED_TYPE_LINAK
+    for pattern in LINAK_NAME_PATTERNS:
+        if device_name.startswith(pattern) and device_name[len(pattern):].isdigit():
+            _LOGGER.info(
+                "Detected Linak bed at %s (name: %s) by name pattern",
+                service_info.address,
+                service_info.name,
+            )
+            return BED_TYPE_LINAK
 
     # Check for Leggett & Platt Gen2 (must check before generic UUIDs)
     if LEGGETT_GEN2_SERVICE_UUID.lower() in service_uuids:

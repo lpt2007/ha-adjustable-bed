@@ -61,7 +61,7 @@ async def select_adapter(
         # Log all sources that can see this device
         try:
             for service_info in bluetooth.async_discovered_service_info(hass, connectable=True):
-                if service_info.address.upper() == address:
+                if service_info.address.upper() == address.upper():
                     svc_source = getattr(service_info, 'source', 'unknown')
                     svc_rssi = getattr(service_info, 'rssi', 'N/A')
                     available_sources.append(f"{svc_source} (RSSI: {svc_rssi})")

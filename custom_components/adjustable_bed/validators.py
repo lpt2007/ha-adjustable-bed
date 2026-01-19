@@ -45,26 +45,26 @@ def is_valid_octo_pin(pin: str) -> bool:
     return pin == "" or (len(pin) == 4 and pin.isdigit())
 
 
+# Single source of truth for bed types with variants
+VARIANTS_BY_BED_TYPE: dict[str, dict[str, str]] = {
+    BED_TYPE_KEESON: KEESON_VARIANTS,
+    BED_TYPE_LEGGETT_PLATT: LEGGETT_VARIANTS,
+    BED_TYPE_RICHMAT: RICHMAT_VARIANTS,
+    BED_TYPE_OCTO: OCTO_VARIANTS,
+    BED_TYPE_OKIMAT: OKIMAT_VARIANTS,
+}
+
+
 def get_variants_for_bed_type(bed_type: str | None) -> dict[str, str] | None:
     """Get available protocol variants for a bed type, or None if no variants."""
     if bed_type is None:
         return None
-    if bed_type == BED_TYPE_KEESON:
-        return KEESON_VARIANTS
-    if bed_type == BED_TYPE_LEGGETT_PLATT:
-        return LEGGETT_VARIANTS
-    if bed_type == BED_TYPE_RICHMAT:
-        return RICHMAT_VARIANTS
-    if bed_type == BED_TYPE_OCTO:
-        return OCTO_VARIANTS
-    if bed_type == BED_TYPE_OKIMAT:
-        return OKIMAT_VARIANTS
-    return None
+    return VARIANTS_BY_BED_TYPE.get(bed_type)
 
 
 def bed_type_has_variants(bed_type: str) -> bool:
     """Check if a bed type has multiple protocol variants."""
-    return bed_type in (BED_TYPE_KEESON, BED_TYPE_LEGGETT_PLATT, BED_TYPE_OCTO, BED_TYPE_OKIMAT, BED_TYPE_RICHMAT)
+    return bed_type in VARIANTS_BY_BED_TYPE
 
 
 def get_available_adapters(hass: HomeAssistant) -> dict[str, str]:
@@ -72,32 +72,23 @@ def get_available_adapters(hass: HomeAssistant) -> dict[str, str]:
     adapters: dict[str, str] = {ADAPTER_AUTO: "Automatic (let Home Assistant choose)"}
 
     try:
-        # Use the official API to get all active scanners with their names
-        # Populate adapters directly from registered scanners so they're always
-        # available even when no devices are currently visible
-        try:
-            from homeassistant.components.bluetooth import async_current_scanners
-            for scanner in async_current_scanners(hass):
-                source = getattr(scanner, "source", None)
-                name = getattr(scanner, "name", None)
-                if not source:
-                    continue
-                if source not in adapters:
-                    if name and name != source:
-                        adapters[source] = f"{name} ({source})"
-                    elif ":" in source:
-                        # Looks like a MAC address - probably an ESPHome proxy
-                        adapters[source] = f"Bluetooth Proxy ({source})"
-                    else:
-                        # Might be a local adapter name like "hci0"
-                        adapters[source] = f"Local Adapter ({source})"
-        except ImportError:
-            _LOGGER.debug("async_current_scanners not available")
-        except Exception as err:
-            _LOGGER.debug("Could not get scanner names: %s", err)
-
+        from homeassistant.components.bluetooth import async_current_scanners
+        for scanner in async_current_scanners(hass):
+            source = getattr(scanner, "source", None)
+            name = getattr(scanner, "name", None)
+            if not source:
+                continue
+            if source not in adapters:
+                if name and name != source:
+                    adapters[source] = f"{name} ({source})"
+                elif ":" in source:
+                    adapters[source] = f"Bluetooth Proxy ({source})"
+                else:
+                    adapters[source] = f"Local Adapter ({source})"
+    except ImportError:
+        _LOGGER.debug("async_current_scanners not available")
     except Exception as err:
-        _LOGGER.debug("Error getting Bluetooth adapters: %s", err)
+        _LOGGER.debug("Could not get scanner names: %s", err)
 
     _LOGGER.debug("Available Bluetooth adapters: %s", adapters)
     return adapters
