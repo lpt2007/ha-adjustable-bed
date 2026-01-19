@@ -7,7 +7,6 @@ import logging
 import time
 import traceback
 from collections.abc import Callable, Coroutine
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
@@ -21,11 +20,16 @@ from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 
+from .adapter import (
+    detect_esphome_proxy,
+    discover_services,
+    read_ble_device_info,
+    select_adapter,
+)
+from .controller_factory import create_controller
 from .const import (
     ADAPTER_AUTO,
     BED_MOTOR_PULSE_DEFAULTS,
-    DEVICE_INFO_CHARS,
-    DEVICE_INFO_SERVICE_UUID,
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_DIAGNOSTIC,
     BED_TYPE_ERGOMOTION,
@@ -66,31 +70,14 @@ from .const import (
     DEFAULT_POSITION_MODE,
     DEFAULT_PROTOCOL_VARIANT,
     DOMAIN,
-    KEESON_VARIANT_ERGOMOTION,
-    KEESON_VARIANT_KSBT,
-    LEGGETT_VARIANT_OKIN,
-    OCTO_STAR2_SERVICE_UUID,
-    OCTO_VARIANT_STAR2,
     POSITION_MODE_ACCURACY,
     RICHMAT_REMOTE_AUTO,
-    RICHMAT_VARIANT_NORDIC,
-    RICHMAT_VARIANT_WILINKE,
 )
 
 if TYPE_CHECKING:
     from .beds.base import BedController
 
 _LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class AdapterSelectionResult:
-    """Result from adapter selection process."""
-
-    device: BLEDevice | None
-    source: str | None
-    rssi: int | None
-    available_sources: list[str]
 
 # Retry settings
 MAX_RETRIES = 3
@@ -142,6 +129,7 @@ class AdjustableBedCoordinator:
         self._connecting: bool = False  # Track if we're actively connecting
         self._intentional_disconnect: bool = False  # Track intentional disconnects to skip auto-reconnect
         self._cancel_command = asyncio.Event()  # Signal to cancel current command
+        self._cancel_counter: int = 0  # Track cancellation requests to handle queued commands
         self._stop_keepalive_task: asyncio.Task[None] | None = None  # Track keepalive stop task
 
         # Position data from notifications
@@ -335,268 +323,6 @@ class AdjustableBedCoordinator:
 
         return True
 
-    async def _select_adapter(self) -> AdapterSelectionResult:
-        """Select the best Bluetooth adapter for connection.
-
-        This method handles adapter discovery and selection logic:
-        - If a preferred adapter is configured, looks for device from that adapter
-        - Otherwise, selects the adapter with the best RSSI (strongest signal)
-        - Falls back to default Home Assistant lookup if needed
-
-        Returns:
-            AdapterSelectionResult with device, source, rssi, and available sources
-        """
-        device: BLEDevice | None = None
-        source: str | None = None
-        rssi: int | None = None
-        available_sources: list[str] = []
-
-        if self._preferred_adapter and self._preferred_adapter != ADAPTER_AUTO:
-            # Look for device from specific adapter/source
-            _LOGGER.info(
-                "Looking for device %s from preferred adapter: %s",
-                self._address,
-                self._preferred_adapter,
-            )
-
-            # Log all sources that can see this device
-            try:
-                for service_info in bluetooth.async_discovered_service_info(self.hass, connectable=True):
-                    if service_info.address.upper() == self._address:
-                        svc_source = getattr(service_info, 'source', 'unknown')
-                        svc_rssi = getattr(service_info, 'rssi', 'N/A')
-                        available_sources.append(f"{svc_source} (RSSI: {svc_rssi})")
-
-                        if svc_source == self._preferred_adapter:
-                            device = service_info.device
-                            source = svc_source
-                            rssi = svc_rssi if isinstance(svc_rssi, int) else None
-                            _LOGGER.info(
-                                "✓ Found device %s via preferred adapter %s (RSSI: %s)",
-                                self._address,
-                                self._preferred_adapter,
-                                svc_rssi,
-                            )
-
-                if available_sources:
-                    _LOGGER.info(
-                        "Adapters that can see device %s: %s",
-                        self._address,
-                        ", ".join(available_sources),
-                    )
-
-                if device is None and available_sources:
-                    _LOGGER.warning(
-                        "⚠ Device %s not found via preferred adapter %s, falling back to automatic selection",
-                        self._address,
-                        self._preferred_adapter,
-                    )
-            except Exception as err:
-                _LOGGER.debug("Error looking up device from specific adapter: %s", err)
-
-        # Fall back to auto selection if no preferred adapter or device not found
-        # Auto mode: pick the adapter with the best RSSI (strongest signal)
-        if device is None:
-            best_rssi = -999
-            best_source: str | None = None
-            # Capture discovery snapshot once and reuse for both RSSI selection and device lookup
-            try:
-                discovered_services = list(bluetooth.async_discovered_service_info(self.hass, connectable=True))
-            except Exception as err:
-                _LOGGER.debug("Error during auto adapter selection: %s", err)
-                discovered_services = []
-
-            # Find the adapter with best RSSI
-            for svc_info in discovered_services:
-                if svc_info.address.upper() == self._address.upper():
-                    svc_rssi = getattr(svc_info, 'rssi', None)
-                    # Safely coerce RSSI to int, handling None/malformed values
-                    try:
-                        rssi_value = int(svc_rssi) if svc_rssi is not None else -999
-                    except (ValueError, TypeError):
-                        rssi_value = -999
-                    svc_source = getattr(svc_info, 'source', 'unknown')
-                    _LOGGER.debug(
-                        "Auto-select candidate: source=%s, rssi=%s",
-                        svc_source, rssi_value
-                    )
-                    if rssi_value > best_rssi:
-                        best_rssi = rssi_value
-                        best_source = svc_source
-
-            if best_source:
-                _LOGGER.info(
-                    "Auto-selected adapter %s with best RSSI %d",
-                    best_source, best_rssi
-                )
-                # Get device from the best adapter using the same snapshot
-                for svc_info in discovered_services:
-                    if (svc_info.address.upper() == self._address.upper() and
-                        getattr(svc_info, 'source', None) == best_source):
-                        device = svc_info.device
-                        source = best_source
-                        rssi = best_rssi if best_rssi != -999 else None
-                        break
-
-            # Final fallback to default lookup
-            if device is None:
-                device = bluetooth.async_ble_device_from_address(
-                    self.hass, self._address, connectable=True
-                )
-                if device:
-                    fallback_source = "unknown"
-                    if hasattr(device, 'details') and isinstance(device.details, dict):
-                        fallback_source = device.details.get('source', 'unknown')
-                    source = fallback_source
-                    _LOGGER.info(
-                        "Using fallback adapter selection, device found via: %s",
-                        fallback_source,
-                    )
-
-        return AdapterSelectionResult(
-            device=device,
-            source=source,
-            rssi=rssi,
-            available_sources=available_sources,
-        )
-
-    def _detect_esphome_proxy(self) -> bool:
-        """Detect if connection is through an ESPHome Bluetooth proxy.
-
-        Returns:
-            True if ESPHome proxy detected, False otherwise
-        """
-        try:
-            service_info = bluetooth.async_last_service_info(
-                self.hass, self._address, connectable=True
-            )
-            if service_info:
-                _LOGGER.debug(
-                    "Service info: source=%s, rssi=%s, connectable=%s, service_uuids=%s",
-                    getattr(service_info, 'source', 'N/A'),
-                    getattr(service_info, 'rssi', 'N/A'),
-                    getattr(service_info, 'connectable', 'N/A'),
-                    getattr(service_info, 'service_uuids', []),
-                )
-                # Check if this is from an ESPHome proxy
-                info_source = getattr(service_info, 'source', '')
-                if info_source and 'esphome' in info_source.lower():
-                    _LOGGER.info(
-                        "Device discovered via ESPHome Bluetooth proxy: %s",
-                        info_source,
-                    )
-                    return True
-        except Exception as err:
-            _LOGGER.debug("Could not get detailed service info: %s", err)
-
-        return False
-
-    async def _discover_services(self) -> bool:
-        """Explicitly discover BLE services and log the hierarchy.
-
-        Some backends don't auto-discover services, so this ensures
-        services are available before we try to use them.
-
-        Returns:
-            True if services were discovered successfully, False otherwise
-        """
-        if self._client is None:
-            return False
-
-        # Explicitly discover services
-        _LOGGER.debug("Discovering BLE services...")
-        # Note: In recent Bleak versions, service discovery is automatic on connection.
-        # Only call get_services as fallback if services aren't populated.
-        if not self._client.services and hasattr(self._client, 'get_services'):
-            # Fallback for older bleak versions if needed (though we require >=0.21)
-            await self._client.get_services()  # type: ignore[attr-defined]
-
-        # Log discovered services in detail
-        if self._client.services:
-            services_list = list(self._client.services)
-            _LOGGER.debug(
-                "Discovered %d BLE services on %s:",
-                len(services_list),
-                self._address,
-            )
-            for service in self._client.services:
-                _LOGGER.debug(
-                    "  Service: %s (handle: %s)",
-                    service.uuid,
-                    getattr(service, 'handle', 'N/A'),
-                )
-                for char in service.characteristics:
-                    props = ", ".join(char.properties)
-                    _LOGGER.debug(
-                        "    Characteristic: %s [%s] (handle: %s)",
-                        char.uuid,
-                        props,
-                        getattr(char, 'handle', 'N/A'),
-                    )
-                    for desc in char.descriptors:
-                        _LOGGER.debug(
-                            "      Descriptor: %s (handle: %s)",
-                            desc.uuid,
-                            getattr(desc, 'handle', 'N/A'),
-                        )
-            return True
-        else:
-            _LOGGER.warning(
-                "No BLE services discovered on %s - this may indicate a connection issue",
-                self._address,
-            )
-            return False
-
-    async def _read_ble_device_info(self) -> None:
-        """Read manufacturer and model from BLE Device Information Service.
-
-        This reads the standard BLE Device Information Service (UUID 0x180A)
-        if available. Values are stored in _ble_manufacturer and _ble_model
-        for use by _get_manufacturer() and _get_model().
-        """
-        if self._client is None or not self._client.is_connected:
-            return
-
-        if not self._client.services:
-            return
-
-        # Check if Device Information Service exists
-        has_device_info = False
-        for service in self._client.services:
-            if service.uuid.lower() == DEVICE_INFO_SERVICE_UUID:
-                has_device_info = True
-                break
-
-        if not has_device_info:
-            _LOGGER.debug("Device Information Service not found on %s", self._address)
-            return
-
-        _LOGGER.debug("Reading Device Information Service from %s", self._address)
-
-        # Read manufacturer name
-        try:
-            manufacturer_uuid = DEVICE_INFO_CHARS["manufacturer_name"]
-            value = await self._client.read_gatt_char(manufacturer_uuid)
-            try:
-                self._ble_manufacturer = value.decode("utf-8").rstrip("\x00")
-                _LOGGER.debug("BLE manufacturer: %s", self._ble_manufacturer)
-            except UnicodeDecodeError:
-                _LOGGER.debug("Could not decode manufacturer name as UTF-8")
-        except Exception as err:
-            _LOGGER.debug("Could not read manufacturer name: %s", err)
-
-        # Read model number
-        try:
-            model_uuid = DEVICE_INFO_CHARS["model_number"]
-            value = await self._client.read_gatt_char(model_uuid)
-            try:
-                self._ble_model = value.decode("utf-8").rstrip("\x00")
-                _LOGGER.debug("BLE model: %s", self._ble_model)
-            except UnicodeDecodeError:
-                _LOGGER.debug("Could not decode model number as UTF-8")
-        except Exception as err:
-            _LOGGER.debug("Could not read model number: %s", err)
-
     async def async_connect(self) -> bool:
         """Connect to the bed."""
         _LOGGER.debug("async_connect called for %s", self._address)
@@ -652,7 +378,9 @@ class AdjustableBedCoordinator:
                     _LOGGER.debug("Could not get scanner count: %s", err)
 
                 # Select best adapter and get device
-                adapter_result = await self._select_adapter()
+                adapter_result = await select_adapter(
+                    self.hass, self._address, self._preferred_adapter
+                )
                 device = adapter_result.device
 
                 if device is None:
@@ -724,7 +452,7 @@ class AdjustableBedCoordinator:
                         )
 
                 # Detect ESPHome proxy (logs info if detected)
-                self._detect_esphome_proxy()
+                detect_esphome_proxy(self.hass, self._address)
 
                 # Use bleak-retry-connector for reliable connection establishment
                 # This handles ESPHome Bluetooth proxy connections properly
@@ -827,14 +555,25 @@ class AdjustableBedCoordinator:
                 )
 
                 # Discover services and log hierarchy
-                await self._discover_services()
+                await discover_services(self._client, self._address)
 
                 # Read BLE Device Information Service for manufacturer/model
-                await self._read_ble_device_info()
+                ble_manufacturer, ble_model = await read_ble_device_info(
+                    self._client, self._address
+                )
+                self._ble_manufacturer = ble_manufacturer
+                self._ble_model = ble_model
 
                 # Create the controller
                 _LOGGER.debug("Creating %s controller...", self._bed_type)
-                self._controller = await self._async_create_controller()
+                self._controller = await create_controller(
+                    coordinator=self,
+                    bed_type=self._bed_type,
+                    protocol_variant=self._protocol_variant,
+                    client=self._client,
+                    octo_pin=self._octo_pin,
+                    richmat_remote=self._richmat_remote,
+                )
                 _LOGGER.debug("Controller created successfully")
 
                 if reset_timer:
@@ -1002,145 +741,6 @@ class AdjustableBedCoordinator:
             lambda: asyncio.create_task(self._async_auto_reconnect()),
         )
 
-    async def _async_create_controller(self) -> BedController:
-        """Create the appropriate bed controller."""
-        if self._bed_type == BED_TYPE_LINAK:
-            from .beds.linak import LinakController
-
-            return LinakController(self)
-
-        if self._bed_type == BED_TYPE_RICHMAT:
-            from .beds.richmat import RichmatController, detect_richmat_variant
-
-            # Use configured variant or auto-detect
-            if self._protocol_variant == RICHMAT_VARIANT_NORDIC:
-                _LOGGER.debug("Using Nordic Richmat variant (configured)")
-                return RichmatController(self, is_wilinke=False, remote_code=self._richmat_remote)
-            elif self._protocol_variant == RICHMAT_VARIANT_WILINKE:
-                _LOGGER.debug("Using WiLinke Richmat variant (configured)")
-                return RichmatController(self, is_wilinke=True, remote_code=self._richmat_remote)
-            else:
-                # Auto-detect variant based on available services
-                _LOGGER.debug("Auto-detecting Richmat variant...")
-                if self._client is None:
-                    raise ConnectionError("Cannot detect variant: no client")
-                is_wilinke, char_uuid = await detect_richmat_variant(self._client)
-                return RichmatController(
-                    self,
-                    is_wilinke=is_wilinke,
-                    char_uuid=char_uuid,
-                    remote_code=self._richmat_remote,
-                )
-
-        if self._bed_type == BED_TYPE_KEESON:
-            from .beds.keeson import KeesonController
-
-            # Use configured variant or default to base
-            if self._protocol_variant == KEESON_VARIANT_KSBT:
-                _LOGGER.debug("Using KSBT Keeson variant (configured)")
-                return KeesonController(self, variant="ksbt")
-            elif self._protocol_variant == KEESON_VARIANT_ERGOMOTION:
-                _LOGGER.debug("Using Ergomotion Keeson variant (with position feedback)")
-                return KeesonController(self, variant="ergomotion")
-            else:
-                # Auto or base variant
-                _LOGGER.debug("Using Base Keeson variant")
-                return KeesonController(self, variant="base")
-
-        if self._bed_type == BED_TYPE_SOLACE:
-            from .beds.solace import SolaceController
-
-            return SolaceController(self)
-
-        if self._bed_type == BED_TYPE_MOTOSLEEP:
-            from .beds.motosleep import MotoSleepController
-
-            return MotoSleepController(self)
-
-        if self._bed_type == BED_TYPE_LEGGETT_PLATT:
-            from .beds.leggett_platt import LeggettPlattController
-
-            # Use configured variant or default to gen2
-            if self._protocol_variant == LEGGETT_VARIANT_OKIN:
-                _LOGGER.debug("Using Okin Leggett & Platt variant (configured)")
-                return LeggettPlattController(self, variant="okin")
-            else:
-                # Auto or gen2 variant
-                _LOGGER.debug("Using Gen2 Leggett & Platt variant")
-                return LeggettPlattController(self, variant="gen2")
-
-        if self._bed_type == BED_TYPE_REVERIE:
-            from .beds.reverie import ReverieController
-
-            return ReverieController(self)
-
-        if self._bed_type == BED_TYPE_OKIMAT:
-            from .beds.okimat import OkimatController
-
-            # Pass the configured variant (remote code) to the controller
-            _LOGGER.debug("Using Okimat variant: %s", self._protocol_variant)
-            return OkimatController(self, variant=self._protocol_variant)
-
-        if self._bed_type == BED_TYPE_ERGOMOTION:
-            # Ergomotion uses the same protocol as Keeson with position feedback
-            from .beds.keeson import KeesonController
-
-            return KeesonController(self, variant="ergomotion")
-
-        if self._bed_type == BED_TYPE_JIECANG:
-            from .beds.jiecang import JiecangController
-
-            return JiecangController(self)
-
-        if self._bed_type == BED_TYPE_DEWERTOKIN:
-            from .beds.dewertokin import DewertOkinController
-
-            return DewertOkinController(self)
-
-        if self._bed_type == BED_TYPE_SERTA:
-            from .beds.serta import SertaController
-
-            return SertaController(self)
-
-        if self._bed_type == BED_TYPE_OCTO:
-            from .beds.octo import OctoController, OctoStar2Controller
-
-            # Use configured variant or auto-detect
-            if self._protocol_variant == OCTO_VARIANT_STAR2:
-                _LOGGER.debug("Using Star2 Octo variant (configured)")
-                return OctoStar2Controller(self)
-            elif self._protocol_variant in (None, "", "auto"):
-                # Auto-detect: check if Star2 service UUID is available
-                if self._client and self._client.services:
-                    for service in self._client.services:
-                        if service.uuid.lower() == OCTO_STAR2_SERVICE_UUID.lower():
-                            _LOGGER.debug("Using Star2 Octo variant (auto-detected)")
-                            return OctoStar2Controller(self)
-                # Default to standard Octo
-                _LOGGER.debug("Using standard Octo variant")
-                return OctoController(self, pin=self._octo_pin)
-            else:
-                # Explicit standard variant
-                _LOGGER.debug("Using standard Octo variant (configured)")
-                return OctoController(self, pin=self._octo_pin)
-
-        if self._bed_type == BED_TYPE_MATTRESSFIRM:
-            from .beds.mattressfirm import MattressFirmController
-
-            return MattressFirmController(self)
-
-        if self._bed_type == BED_TYPE_NECTAR:
-            from .beds.nectar import NectarController
-
-            return NectarController(self)
-
-        if self._bed_type == BED_TYPE_DIAGNOSTIC:
-            from .beds.diagnostic import DiagnosticBedController
-
-            return DiagnosticBedController(self)
-
-        raise ValueError(f"Unknown bed type: {self._bed_type}")
-
     async def _async_auto_reconnect(self) -> None:
         """Attempt automatic reconnection after unexpected disconnect."""
         # Timer has fired, clear the reference
@@ -1306,11 +906,23 @@ class AdjustableBedCoordinator:
         """
         if cancel_running:
             # Cancel any running command immediately
+            self._cancel_counter += 1
             self._cancel_command.set()
+
+        # Capture cancel count at entry to detect if we get cancelled while waiting
+        entry_cancel_count = self._cancel_counter
 
         async with self._command_lock:
             # Cancel disconnect timer while command is in progress to prevent mid-command disconnect
             self._cancel_disconnect_timer()
+
+            # Check if we were cancelled while waiting for the lock
+            if self._cancel_counter > entry_cancel_count:
+                _LOGGER.debug("Command %s cancelled while waiting for lock", command.hex())
+                # Reset disconnect timer since we're bailing out
+                if self._client is not None and self._client.is_connected:
+                    self._reset_disconnect_timer()
+                return
 
             try:
                 # Clear cancel signal for this command
@@ -1371,11 +983,18 @@ class AdjustableBedCoordinator:
         _LOGGER.info("Stop requested - cancelling current command")
 
         # Signal cancellation to any running command
+        self._cancel_counter += 1
         self._cancel_command.set()
+        entry_cancel_count = self._cancel_counter
 
         # Acquire the command lock to wait for any in-flight GATT write to complete
         # This prevents concurrent BLE writes which cause "operation in progress" errors
         async with self._command_lock:
+            # Check if we were cancelled while waiting (unlikely for stop, but possible)
+            if self._cancel_counter > entry_cancel_count:
+                _LOGGER.debug("Stop command cancelled while waiting for lock")
+                return
+
             # Cancel disconnect timer while command is in progress
             self._cancel_disconnect_timer()
             try:
@@ -1422,11 +1041,23 @@ class AdjustableBedCoordinator:
         """
         if cancel_running:
             # Cancel any running command immediately
+            self._cancel_counter += 1
             self._cancel_command.set()
+
+        # Capture cancel count at entry
+        entry_cancel_count = self._cancel_counter
 
         async with self._command_lock:
             # Cancel disconnect timer while command is in progress to prevent mid-command disconnect
             self._cancel_disconnect_timer()
+
+            # Check if we were cancelled while waiting for the lock
+            if self._cancel_counter > entry_cancel_count:
+                _LOGGER.debug("Controller command cancelled while waiting for lock")
+                # Reset disconnect timer since we're bailing out
+                if self._client is not None and self._client.is_connected and not self._disconnect_after_command:
+                    self._reset_disconnect_timer()
+                return
 
             try:
                 # Clear cancel signal for this command

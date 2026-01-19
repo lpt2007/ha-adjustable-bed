@@ -12,10 +12,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.setup import async_setup_component
 
-from custom_components.adjustable_bed.config_flow import (
-    detect_bed_type,
-    is_valid_mac_address,
-)
+from custom_components.adjustable_bed.detection import detect_bed_type
+from custom_components.adjustable_bed.validators import is_valid_mac_address
 from custom_components.adjustable_bed.const import (
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_ERGOMOTION,
