@@ -2,7 +2,7 @@
 
 **Status:** ⚠️ Untested
 
-**Credit:** Reverse engineering by MarcusW and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+**Credit:** Reverse engineering by MarcusW and [Richard Hopton/smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
 
 ## Known Models
 - Leggett & Platt Prodigy 2.0 / S-Cape 2.0

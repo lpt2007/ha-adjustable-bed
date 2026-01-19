@@ -2,7 +2,7 @@
 
 **Status:** ⚠️ Untested
 
-**Credit:** Reverse engineering by Vitaliy and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+**Credit:** Reverse engineering by Vitaliy and [Richard Hopton/smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
 
 ## Known Models
 - Reverie 9T / 8Q / 7S
