@@ -132,6 +132,16 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                         coordinator.name,
                     )
                     continue
+                # Validate preset against controller's memory slot count
+                slot_count = getattr(controller, "memory_slot_count", 4)
+                if preset > slot_count:
+                    _LOGGER.warning(
+                        "Device %s only supports %d memory slots, preset %d is invalid",
+                        coordinator.name,
+                        slot_count,
+                        preset,
+                    )
+                    continue
                 await coordinator.async_execute_controller_command(
                     lambda ctrl, p=preset: ctrl.preset_memory(p)
                 )
@@ -157,6 +167,16 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                     _LOGGER.warning(
                         "Device %s does not support programming memory presets",
                         coordinator.name,
+                    )
+                    continue
+                # Validate preset against controller's memory slot count
+                slot_count = getattr(controller, "memory_slot_count", 4)
+                if preset > slot_count:
+                    _LOGGER.warning(
+                        "Device %s only supports %d memory slots, preset %d is invalid",
+                        coordinator.name,
+                        slot_count,
+                        preset,
                     )
                     continue
                 await coordinator.async_execute_controller_command(

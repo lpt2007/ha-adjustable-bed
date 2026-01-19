@@ -16,21 +16,28 @@
 | Massage | ✅ |
 | Under-bed Lights | ✅ |
 
-## Detection & Related Protocols
+> [!NOTE]
+> **Okin Protocol Family**
+>
+> This bed type is part of the Okin protocol family - several bed brands that use Okin-based BLE protocols with the same service UUID (`62741523-...`). While they share common roots, each has implementation differences requiring separate code:
+>
+> | Bed Type | Protocol Difference |
+> |----------|-------------------|
+> | [DewertOkin](dewertokin.md) | Same 6-byte format, uses handle-based writes |
+> | [Nectar](nectar.md) | Different 7-byte command format |
+> | [Leggett & Platt](leggett-platt.md) | Has an Okin variant option |
+>
+> Common functionality is shared via `okin_protocol.py`. See [Okin Protocol Family](../SUPPORTED_ACTUATORS.md#okin-protocol-family) for the full overview.
 
-Okimat shares the same BLE service UUID (`62741523-...`) with:
-- **Nectar** - Different 7-byte command format, detected by name "nectar"
-- **Leggett & Platt Okin** - Same 6-byte format, detected by name patterns
+## Detection
 
-Detection priority:
+Okimat is the fallback for beds using the Okin service UUID. Detection priority:
 1. Device name contains "nectar" → Nectar
 2. Device name contains "leggett", "l&p", or "adjustable base" → Leggett & Platt
 3. Device name contains "okimat", "okin rf", or "okin ble" → Okimat
 4. Fallback → Okimat (with warning)
 
 **If your bed is misidentified:** Change the bed type in integration settings.
-
-See also: [Okin Protocol Family](../SUPPORTED_ACTUATORS.md#okin-protocol-family)
 
 ## Protocol Details
 

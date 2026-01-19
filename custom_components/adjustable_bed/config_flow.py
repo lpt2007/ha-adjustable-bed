@@ -966,6 +966,10 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
         # Get available Bluetooth adapters
         adapters = get_available_adapters(self.hass)
 
+        # Ensure discovery_source is valid - it may refer to a proxy that disappeared
+        if discovery_source not in adapters:
+            discovery_source = ADAPTER_AUTO
+
         # Build base schema with bed type selector (alphabetically sorted)
         schema_dict: dict[vol.Marker, Any] = {
             vol.Required(CONF_BED_TYPE): SelectSelector(
