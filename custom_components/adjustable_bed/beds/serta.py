@@ -1,5 +1,7 @@
 """Serta Motion Perfect III bed controller implementation.
 
+Reverse engineering by Richard Hopton (smartbed-mqtt).
+
 Serta beds use handle-based writes with a specific command format.
 Commands are 8 bytes written to handle 0x0020.
 All commands have the prefix e5fe16.

@@ -2,6 +2,8 @@
 
 **Status:** ❓ Untested
 
+**Credit:** Reverse engineering by david_nagy, corne, PT, and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - Okimat beds
 - Lucid L600

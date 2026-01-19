@@ -1,4 +1,7 @@
-"""Linak bed controller implementation."""
+"""Linak bed controller implementation.
+
+Reverse engineering by jascdk and Richard Hopton (smartbed-mqtt).
+"""
 
 from __future__ import annotations
 

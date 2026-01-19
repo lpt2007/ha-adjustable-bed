@@ -1,5 +1,7 @@
 """Keeson bed controller implementation.
 
+Reverse engineering by alanbixby and Richard Hopton (smartbed-mqtt).
+
 Keeson beds (Member's Mark, Purple, Ergomotion, GhostBed) have several protocol variants:
 - KSBT: Simple 6-byte commands [0x04, 0x02, ...int_to_bytes(command)]
 - BaseI4: 8-byte commands with XOR checksum

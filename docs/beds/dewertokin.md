@@ -2,6 +2,8 @@
 
 **Status:** ⚠️ Untested
 
+**Credit:** Reverse engineering by [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - A H Beard adjustable beds
 - HankookGallery beds

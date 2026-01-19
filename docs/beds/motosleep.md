@@ -2,6 +2,8 @@
 
 **Status:** 🔄 Works, improvements in progress
 
+**Credit:** Reverse engineering by waynebowie99 and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - Beds with HHC (Hangzhou Huaci) controllers
 - Device names start with "HHC" (e.g., `HHC3611243CDEF`)

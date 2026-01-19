@@ -1,5 +1,7 @@
 """MotoSleep bed controller implementation.
 
+Reverse engineering by waynebowie99 and Richard Hopton (smartbed-mqtt).
+
 MotoSleep beds (HHC controllers) use simple 2-byte ASCII commands: [0x24, ASCII_CHAR]
 The 0x24 is the '$' character followed by a command letter.
 

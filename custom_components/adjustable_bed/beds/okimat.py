@@ -1,5 +1,7 @@
 """Okimat bed controller implementation.
 
+Reverse engineering by david_nagy, corne, PT, and Richard Hopton (smartbed-mqtt).
+
 Okimat beds use the Okin protocol with 6-byte commands: [0x04, 0x02, ...int_to_bytes(command)]
 They require BLE pairing before use.
 

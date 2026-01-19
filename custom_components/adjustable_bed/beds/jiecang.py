@@ -1,5 +1,7 @@
 """Jiecang bed controller implementation.
 
+Reverse engineering by Richard Hopton (smartbed-mqtt).
+
 Jiecang beds (Glide beds, Dream Motion app) use simple hex command packets.
 Commands are sent to characteristic UUID 0000ff01-0000-1000-8000-00805f9b34fb.
 

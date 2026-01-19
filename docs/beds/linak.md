@@ -2,6 +2,8 @@
 
 **Status:** ✅ Tested
 
+**Credit:** Reverse engineering by jascdk and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - Linak DPG1M (OEM controller used in many beds)
 - IKEA PRAKTVÄDD / VARDÖ

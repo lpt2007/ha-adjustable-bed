@@ -1,5 +1,7 @@
 """Solace bed controller implementation.
 
+Reverse engineering by Bonopaws and Richard Hopton (smartbed-mqtt).
+
 Solace beds use 11-byte command packets with pre-defined command arrays.
 These are typically hospital/care beds.
 """

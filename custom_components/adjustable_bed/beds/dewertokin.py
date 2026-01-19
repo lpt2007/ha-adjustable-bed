@@ -1,5 +1,7 @@
 """DewertOkin bed controller implementation.
 
+Reverse engineering by Richard Hopton (smartbed-mqtt).
+
 DewertOkin beds (A H Beard, HankookGallery) use handle-based BLE writes.
 
 Protocol details:

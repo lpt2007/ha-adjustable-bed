@@ -1,5 +1,11 @@
 """Octo bed controller implementation.
 
+Reverse engineering by _pm, goedh452, Murp, and Brokkert.
+
+References:
+- https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790
+- https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790/10
+
 Octo beds use a packet-based BLE protocol with the following format:
 [0x40, cmd[0], cmd[1], len_hi, len_lo, checksum, ...data, 0x40]
 

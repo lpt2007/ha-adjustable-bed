@@ -1,5 +1,7 @@
 """Richmat bed controller implementation.
 
+Reverse engineering by getrav and Richard Hopton (smartbed-mqtt).
+
 Richmat beds have two protocol variants:
 - Nordic: Simple single-byte commands
 - WiLinke: 5-byte commands with checksum [110, 1, 0, command, command + 111]

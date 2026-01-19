@@ -2,6 +2,8 @@
 
 **Status:** ⚠️ Untested
 
+**Credit:** Reverse engineering by getrav and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - Richmat HJA5 series
 - Saatva

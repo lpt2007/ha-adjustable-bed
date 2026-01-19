@@ -2,6 +2,8 @@
 
 **Status:** ✅ Works
 
+**Credit:** Reverse engineering by [_pm](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790), [goedh452](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790/10), Murp, and [Brokkert](https://github.com/Brokkert)
+
 ## Known Models
 - Octo-branded adjustable beds
 - Beka

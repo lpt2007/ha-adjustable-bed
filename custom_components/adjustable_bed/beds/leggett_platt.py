@@ -1,5 +1,7 @@
 """Leggett & Platt bed controller implementation.
 
+Reverse engineering by MarcusW and Richard Hopton (smartbed-mqtt).
+
 Leggett & Platt beds have two protocol variants:
 
 Gen2 (Richmat-based, ASCII commands):

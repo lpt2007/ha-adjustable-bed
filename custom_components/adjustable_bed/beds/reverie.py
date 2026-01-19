@@ -1,5 +1,7 @@
 """Reverie bed controller implementation.
 
+Reverse engineering by Vitaliy and Richard Hopton (smartbed-mqtt).
+
 Reverie beds use a protocol with XOR checksum:
 Command format: [0x55, ...bytes, XOR_checksum]
 where checksum = bytes XOR'd together XOR 0x55

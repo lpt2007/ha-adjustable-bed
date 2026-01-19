@@ -2,6 +2,8 @@
 
 **Status:** ✅ Tested
 
+**Credit:** Reverse engineering by [alanbixby](https://github.com/alanbixby) and [Richard Hopton](https://github.com/richardhopton) - [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
+
 ## Known Models
 - Purple adjustable bases
 - GhostBed

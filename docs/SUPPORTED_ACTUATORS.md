@@ -103,3 +103,26 @@ Will not be implemented. Use the [SleepIQ](https://www.home-assistant.io/integra
    - Service `0000aa5c-...` → Octo Star2 variant
 
 If your bed isn't auto-detected, use manual configuration and try different bed types.
+
+---
+
+## Credits
+
+This integration relies heavily on protocol research from the [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt) project by [Richard Hopton](https://github.com/richardhopton), which documented BLE protocols for many adjustable bed brands.
+
+Community contributors who helped reverse-engineer specific protocols:
+
+| Protocol | Contributors |
+|----------|-------------|
+| Richmat | getrav |
+| Linak | jascdk |
+| Solace | Bonopaws |
+| MotoSleep | waynebowie99 |
+| Reverie | Vitaliy |
+| Leggett & Platt | MarcusW |
+| Okimat | david_nagy, corne, PT |
+
+Additional contributions:
+- **Mattress Firm 900**: [David Delahoz](https://github.com/daviddelahoz) - [BLEAdjustableBase](https://github.com/daviddelahoz/BLEAdjustableBase)
+- **Nectar**: [MaximumWorf](https://github.com/MaximumWorf) - [homeassistant-nectar](https://github.com/MaximumWorf/homeassistant-nectar)
+- **Octo**: [_pm](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790), [goedh452](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790/10), Murp, [Brokkert](https://github.com/Brokkert)
