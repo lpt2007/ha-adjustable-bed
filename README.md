@@ -41,6 +41,7 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 | **[Keeson](docs/beds/keeson.md)** | ✅ Fully tested | Used in Member's Mark, Purple, Ergomotion beds |
 | **[Richmat](docs/beds/richmat.md)** | ✅ Works | Improvements in progress |
 | **[MotoSleep](docs/beds/motosleep.md)** | ✅ Works | Improvements in progress |
+| **[Octo](docs/beds/octo.md)** | ✅ Works | Improvements in progress |
 
 ### Implemented, Need Testers
 
@@ -51,7 +52,6 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 [Jiecang](docs/beds/jiecang.md) ·
 [DewertOkin](docs/beds/dewertokin.md) ·
 [Serta](docs/beds/serta.md) ·
-[Octo](docs/beds/octo.md) ·
 [Mattress Firm 900](docs/beds/mattressfirm.md) ·
 [Nectar](docs/beds/nectar.md)
 

@@ -5,17 +5,17 @@ This document provides an overview of supported bed brands. Click on a brand nam
 | Brand | Status | Key Features |
 |-------|--------|--------------|
 | [Linak](beds/linak.md) | ✅ Tested | Position feedback, 4 memory presets, massage, lights |
-| [Richmat](beds/richmat.md) | ❓ Untested | 2 memory presets, massage, lights, Zero-G |
 | [Keeson](beds/keeson.md) | ✅ Tested | Position feedback (Ergomotion), 4 presets, massage, lights |
-| [Solace](beds/solace.md) | ❓ Untested | 5 memory presets, lift/tilt, Zero-G |
 | [MotoSleep](beds/motosleep.md) | 🔄 Works | 2 memory presets, massage, lights, Zero-G |
+| [Richmat](beds/richmat.md) | 🔄 Works | 2 memory presets, massage, lights, Zero-G |
+| [Octo](beds/octo.md) | 🔄 Works | Two protocol variants, optional PIN auth, lights |
+| [Solace](beds/solace.md) | ❓ Untested | 5 memory presets, lift/tilt, Zero-G |
 | [Leggett & Platt](beds/leggett-platt.md) | ❓ Untested | 4 memory presets, massage (0-10), RGB lighting |
 | [Reverie](beds/reverie.md) | ❓ Untested | Position control (0-100%), 4 presets, wave massage |
 | [Okimat/Okin](beds/okimat.md) | ❓ Untested | 4 memory presets, massage, lights (requires pairing) |
 | [Jiecang](beds/jiecang.md) | ❓ Untested | Presets only (no direct motor), 2 memory slots |
 | [DewertOkin](beds/dewertokin.md) | ❓ Untested | 2 memory presets, wave massage, lights |
 | [Serta](beds/serta.md) | ❓ Untested | Massage intensity control, Zero-G/TV/Lounge |
-| [Octo](beds/octo.md) | ❓ Untested | Two protocol variants, optional PIN auth, lights |
 | [Mattress Firm 900](beds/mattressfirm.md) | ❓ Untested | Lumbar control, 3-level massage, built-in presets |
 | [Nectar](beds/nectar.md) | ❓ Untested | Lumbar control, massage, lights, Zero-G/Anti-Snore/Lounge |
 
