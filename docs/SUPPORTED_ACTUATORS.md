@@ -2,8 +2,6 @@
 
 This document provides an overview of supported bed brands. Click on a brand name for detailed protocol information and command references.
 
-## Supported Beds
-
 | Brand | Status | Key Features |
 |-------|--------|--------------|
 | [Linak](beds/linak.md) | ✅ Tested | Position feedback, 4 memory presets, massage, lights |
