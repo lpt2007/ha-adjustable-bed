@@ -20,6 +20,7 @@ from custom_components.adjustable_bed.const import (
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_PLATT,
+    BED_TYPE_LEGGETT_PLATT_RICHMAT,
     BED_TYPE_LINAK,
     BED_TYPE_MOTOSLEEP,
     BED_TYPE_OCTO,
@@ -34,6 +35,7 @@ from custom_components.adjustable_bed.const import (
     CONF_MOTOR_COUNT,
     CONF_PREFERRED_ADAPTER,
     DOMAIN,
+    RICHMAT_WILINKE_SERVICE_UUIDS,
 )
 
 
@@ -343,6 +345,61 @@ class TestDetectBedType:
         """Test detection of Octo Star2 bed by service UUID (not by name)."""
         bed_type = detect_bed_type(mock_bluetooth_service_info_octo_star2)
         assert bed_type == BED_TYPE_OCTO
+
+    def test_detect_leggett_platt_richmat_bed(
+        self, mock_bluetooth_service_info_leggett_platt_richmat
+    ):
+        """Test detection of Leggett & Platt Richmat bed (MlRM prefix)."""
+        bed_type = detect_bed_type(mock_bluetooth_service_info_leggett_platt_richmat)
+        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+
+    def test_detect_leggett_platt_richmat_case_insensitive(self):
+        """Test L&P Richmat detection is case-insensitive (name is lowercased)."""
+        # Test with uppercase MLRM
+        service_info = MagicMock()
+        service_info.name = "MLRM123456"
+        service_info.address = "AA:BB:CC:DD:EE:FF"
+        service_info.service_uuids = [RICHMAT_WILINKE_SERVICE_UUIDS[1]]
+        service_info.manufacturer_data = {}
+
+        bed_type = detect_bed_type(service_info)
+        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+
+    def test_detect_leggett_richmat_vs_generic_richmat(self):
+        """Test L&P Richmat takes precedence over generic Richmat for mlrm prefix.
+
+        Both L&P Richmat and generic Richmat use WiLinke UUIDs, but beds with
+        'mlrm' prefix should be detected as L&P Richmat.
+        """
+        # Same UUID as generic Richmat WiLinke, but with mlrm prefix
+        service_info = MagicMock()
+        service_info.name = "mlrm157052"
+        service_info.address = "AA:BB:CC:DD:EE:FF"
+        service_info.service_uuids = [RICHMAT_WILINKE_SERVICE_UUIDS[0]]  # First WiLinke UUID
+        service_info.manufacturer_data = {}
+
+        bed_type = detect_bed_type(service_info)
+        assert bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT
+
+        # Verify generic Richmat still works for non-mlrm names
+        service_info.name = "Generic WiLinke Bed"
+        bed_type = detect_bed_type(service_info)
+        assert bed_type == BED_TYPE_RICHMAT
+
+    def test_detect_leggett_richmat_without_service_uuid(self):
+        """Test L&P Richmat needs both name pattern AND WiLinke service UUID.
+
+        If the name matches but UUID doesn't, it should not be detected as L&P Richmat.
+        """
+        service_info = MagicMock()
+        service_info.name = "MlRM157052"
+        service_info.address = "AA:BB:CC:DD:EE:FF"
+        service_info.service_uuids = []  # No service UUIDs
+        service_info.manufacturer_data = {}
+
+        bed_type = detect_bed_type(service_info)
+        # Should NOT detect as L&P Richmat without UUID
+        assert bed_type != BED_TYPE_LEGGETT_PLATT_RICHMAT
 
 
 class TestPinValidation:

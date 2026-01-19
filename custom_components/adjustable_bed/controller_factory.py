@@ -12,6 +12,7 @@ from .const import (
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_PLATT,
+    BED_TYPE_LEGGETT_PLATT_RICHMAT,
     BED_TYPE_LINAK,
     BED_TYPE_MATTRESSFIRM,
     BED_TYPE_MOTOSLEEP,
@@ -132,6 +133,12 @@ async def create_controller(
             # Auto or gen2 variant
             _LOGGER.debug("Using Gen2 Leggett & Platt variant")
             return LeggettPlattController(coordinator, variant="gen2")
+
+    if bed_type == BED_TYPE_LEGGETT_PLATT_RICHMAT:
+        from .beds.leggett_platt_richmat import LeggettPlattRichmatController
+
+        _LOGGER.debug("Using Leggett & Platt Richmat controller")
+        return LeggettPlattRichmatController(coordinator)
 
     if bed_type == BED_TYPE_REVERIE:
         from .beds.reverie import ReverieController
