@@ -71,6 +71,7 @@ from .const import (
     DOMAIN,
     POSITION_CHECK_INTERVAL,
     POSITION_MODE_ACCURACY,
+    POSITION_OVERSHOOT_TOLERANCE,
     POSITION_SEEK_TIMEOUT,
     POSITION_STALL_COUNT,
     POSITION_STALL_THRESHOLD,
@@ -1276,11 +1277,10 @@ class AdjustableBedCoordinator:
     async def async_seek_position(
         self,
         position_key: str,
-        target_percentage: float,
+        target_angle: float,
         move_up_fn: Callable[[BedController], Coroutine[Any, Any, None]],
         move_down_fn: Callable[[BedController], Coroutine[Any, Any, None]],
         move_stop_fn: Callable[[BedController], Coroutine[Any, Any, None]],
-        max_angle: float,
     ) -> None:
         """Seek to a target position using feedback loop control.
 
@@ -1293,11 +1293,10 @@ class AdjustableBedCoordinator:
 
         Args:
             position_key: Key in position_data (e.g., "back", "legs")
-            target_percentage: Target position as 0-100 percentage
+            target_angle: Target position in degrees (or percentage for Keeson/Ergomotion)
             move_up_fn: Async function to move motor up
             move_down_fn: Async function to move motor down
             move_stop_fn: Async function to stop motor
-            max_angle: Maximum angle for this motor (for angle-to-percentage conversion)
         """
         # Cancel any running command FIRST (before tolerance check)
         # This ensures any in-flight seek is cancelled even if new target is already satisfied
@@ -1321,22 +1320,13 @@ class AdjustableBedCoordinator:
                 )
                 return
 
-        # Convert current angle to percentage
-        controller = self._controller
-        if controller is not None and getattr(controller, "reports_percentage_position", False):
-            # Position is already in percentage
-            current_percentage = current_angle
-        else:
-            # Convert angle to percentage
-            current_percentage = (current_angle / max_angle) * 100 if max_angle > 0 else 0
-
         # Check if already at target (within tolerance)
-        if abs(current_percentage - target_percentage) <= POSITION_TOLERANCE:
+        if abs(current_angle - target_angle) <= POSITION_TOLERANCE:
             _LOGGER.debug(
-                "Position %s already at target: %.1f%% (target: %.1f%%)",
+                "Position %s already at target: %.1f (target: %.1f)",
                 position_key,
-                current_percentage,
-                target_percentage,
+                current_angle,
+                target_angle,
             )
             # Handle disconnect timer/command same as other exit paths
             if self._client is not None and self._client.is_connected:
@@ -1347,10 +1337,10 @@ class AdjustableBedCoordinator:
             return
 
         _LOGGER.info(
-            "Seeking position %s from %.1f%% to %.1f%%",
+            "Seeking position %s from %.1f to %.1f",
             position_key,
-            current_percentage,
-            target_percentage,
+            current_angle,
+            target_angle,
         )
 
         async with self._command_lock:
@@ -1377,7 +1367,7 @@ class AdjustableBedCoordinator:
                     raise NoControllerError("No controller available")
 
                 # Determine initial direction
-                moving_up = target_percentage > current_percentage
+                moving_up = target_angle > current_angle
 
                 # Start movement in try-finally to guarantee stop is sent
                 try:
@@ -1389,7 +1379,7 @@ class AdjustableBedCoordinator:
                     # Tracking variables
                     start_time = time.monotonic()
                     stall_count = 0
-                    last_percentage = current_percentage
+                    last_angle = current_angle
 
                     # Position seeking loop
                     while True:
@@ -1422,40 +1412,35 @@ class AdjustableBedCoordinator:
                             )
                             break
 
-                        # Convert to percentage
-                        if controller is not None and getattr(controller, "reports_percentage_position", False):
-                            current_percentage = current_angle
-                        else:
-                            current_percentage = (current_angle / max_angle) * 100 if max_angle > 0 else 0
-
                         _LOGGER.debug(
-                            "Position seek %s: current=%.1f%%, target=%.1f%%",
+                            "Position seek %s: current=%.1f, target=%.1f",
                             position_key,
-                            current_percentage,
-                            target_percentage,
+                            current_angle,
+                            target_angle,
                         )
 
                         # Check if at target
-                        if abs(current_percentage - target_percentage) <= POSITION_TOLERANCE:
+                        if abs(current_angle - target_angle) <= POSITION_TOLERANCE:
                             _LOGGER.info(
-                                "Position %s reached target: %.1f%% (target: %.1f%%)",
+                                "Position %s reached target: %.1f (target: %.1f)",
                                 position_key,
-                                current_percentage,
-                                target_percentage,
+                                current_angle,
+                                target_angle,
                             )
                             break
 
                         # Check for overshoot (passed the target)
                         # Overshoot reversal is a safety correction - clear cancel event
                         # to ensure reversal completes even if user cancelled
-                        if moving_up and current_percentage > target_percentage + POSITION_TOLERANCE:
+                        # Use larger overshoot tolerance to prevent oscillation
+                        if moving_up and current_angle > target_angle + POSITION_OVERSHOOT_TOLERANCE:
                             _LOGGER.debug("Position %s overshot target (up), reversing", position_key)
                             await move_stop_fn(self._controller)
                             await asyncio.sleep(0.3)  # Ensure stop completes before reversal
                             self._cancel_command.clear()  # Ensure reversal isn't cancelled
                             await move_down_fn(self._controller)
                             moving_up = False
-                        elif not moving_up and current_percentage < target_percentage - POSITION_TOLERANCE:
+                        elif not moving_up and current_angle < target_angle - POSITION_OVERSHOOT_TOLERANCE:
                             _LOGGER.debug("Position %s overshot target (down), reversing", position_key)
                             await move_stop_fn(self._controller)
                             await asyncio.sleep(0.3)  # Ensure stop completes before reversal
@@ -1464,16 +1449,16 @@ class AdjustableBedCoordinator:
                             moving_up = True
 
                         # Stall detection - re-issue movement if motor stopped prematurely
-                        movement = abs(current_percentage - last_percentage)
+                        movement = abs(current_angle - last_angle)
                         if movement < POSITION_STALL_THRESHOLD:
                             stall_count += 1
                             if stall_count >= POSITION_STALL_COUNT:
                                 # Motor appears stalled - re-issue movement command
                                 # This handles pulse-based protocols where motors auto-stop
                                 _LOGGER.debug(
-                                    "Position %s stalled at %.1f%%, re-issuing movement command",
+                                    "Position %s stalled at %.1f, re-issuing movement command",
                                     position_key,
-                                    current_percentage,
+                                    current_angle,
                                 )
                                 if moving_up:
                                     await move_up_fn(self._controller)
@@ -1483,7 +1468,7 @@ class AdjustableBedCoordinator:
                         else:
                             stall_count = 0
 
-                        last_percentage = current_percentage
+                        last_angle = current_angle
                 finally:
                     # Stop the motor unless it auto-stops on idle
                     # Some controllers (e.g., Linak) auto-stop and sending explicit

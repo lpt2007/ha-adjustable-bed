@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.number import (
-    NumberDeviceClass,
     NumberEntity,
     NumberEntityDescription,
     NumberMode,
@@ -61,10 +60,9 @@ NUMBER_DESCRIPTIONS: tuple[AdjustableBedNumberEntityDescription, ...] = (
         translation_key="back_position",
         icon="mdi:human-handsup",
         native_min_value=0,
-        native_max_value=100,
+        native_max_value=68,
         native_step=1,
-        native_unit_of_measurement="%",
-        device_class=NumberDeviceClass.POWER_FACTOR,
+        native_unit_of_measurement="°",
         mode=NumberMode.SLIDER,
         position_key="back",
         move_up_fn=lambda ctrl: ctrl.move_back_up(),
@@ -78,10 +76,9 @@ NUMBER_DESCRIPTIONS: tuple[AdjustableBedNumberEntityDescription, ...] = (
         translation_key="legs_position",
         icon="mdi:human-handsdown",
         native_min_value=0,
-        native_max_value=100,
+        native_max_value=45,
         native_step=1,
-        native_unit_of_measurement="%",
-        device_class=NumberDeviceClass.POWER_FACTOR,
+        native_unit_of_measurement="°",
         mode=NumberMode.SLIDER,
         position_key="legs",
         move_up_fn=lambda ctrl: ctrl.move_legs_up(),
@@ -95,10 +92,9 @@ NUMBER_DESCRIPTIONS: tuple[AdjustableBedNumberEntityDescription, ...] = (
         translation_key="head_position",
         icon="mdi:head",
         native_min_value=0,
-        native_max_value=100,
+        native_max_value=68,
         native_step=1,
-        native_unit_of_measurement="%",
-        device_class=NumberDeviceClass.POWER_FACTOR,
+        native_unit_of_measurement="°",
         mode=NumberMode.SLIDER,
         position_key="head",
         move_up_fn=lambda ctrl: ctrl.move_head_up(),
@@ -112,10 +108,9 @@ NUMBER_DESCRIPTIONS: tuple[AdjustableBedNumberEntityDescription, ...] = (
         translation_key="feet_position",
         icon="mdi:foot-print",
         native_min_value=0,
-        native_max_value=100,
+        native_max_value=45,
         native_step=1,
-        native_unit_of_measurement="%",
-        device_class=NumberDeviceClass.POWER_FACTOR,
+        native_unit_of_measurement="°",
         mode=NumberMode.SLIDER,
         position_key="feet",
         move_up_fn=lambda ctrl: ctrl.move_feet_up(),
@@ -168,43 +163,43 @@ async def async_setup_entry(
         descriptions_by_key = {d.key: d for d in NUMBER_DESCRIPTIONS}
 
         # Create head position (maps to "back" position data)
+        # Keeson/Ergomotion report percentage positions (0-100), not angles
         head_desc = descriptions_by_key["head_position"]
         keeson_head_desc = AdjustableBedNumberEntityDescription(
             key=head_desc.key,
             translation_key=head_desc.translation_key,
             icon=head_desc.icon,
-            native_min_value=head_desc.native_min_value,
-            native_max_value=head_desc.native_max_value,
-            native_step=head_desc.native_step,
-            native_unit_of_measurement=head_desc.native_unit_of_measurement,
-            device_class=head_desc.device_class,
+            native_min_value=0,
+            native_max_value=100,
+            native_step=1,
+            native_unit_of_measurement="%",
             mode=head_desc.mode,
             position_key="back",  # Map to "back" in position_data
             move_up_fn=head_desc.move_up_fn,
             move_down_fn=head_desc.move_down_fn,
             move_stop_fn=head_desc.move_stop_fn,
-            max_angle=head_desc.max_angle,
+            max_angle=100.0,  # Use 100 as max for percentage-based beds
             min_motors=2,
         )
         entities.append(AdjustableBedPositionNumber(coordinator, keeson_head_desc))
 
         # Create feet position (maps to "legs" position data)
+        # Keeson/Ergomotion report percentage positions (0-100), not angles
         feet_desc = descriptions_by_key["feet_position"]
         keeson_feet_desc = AdjustableBedNumberEntityDescription(
             key=feet_desc.key,
             translation_key=feet_desc.translation_key,
             icon=feet_desc.icon,
-            native_min_value=feet_desc.native_min_value,
-            native_max_value=feet_desc.native_max_value,
-            native_step=feet_desc.native_step,
-            native_unit_of_measurement=feet_desc.native_unit_of_measurement,
-            device_class=feet_desc.device_class,
+            native_min_value=0,
+            native_max_value=100,
+            native_step=1,
+            native_unit_of_measurement="%",
             mode=feet_desc.mode,
             position_key="legs",  # Map to "legs" in position_data
             move_up_fn=feet_desc.move_up_fn,
             move_down_fn=feet_desc.move_down_fn,
             move_stop_fn=feet_desc.move_stop_fn,
-            max_angle=feet_desc.max_angle,
+            max_angle=100.0,  # Use 100 as max for percentage-based beds
             min_motors=2,
         )
         entities.append(AdjustableBedPositionNumber(coordinator, keeson_feet_desc))
@@ -253,39 +248,34 @@ class AdjustableBedPositionNumber(AdjustableBedEntity, NumberEntity):
 
     @property
     def native_value(self) -> float | None:
-        """Return the current position as a percentage."""
+        """Return the current position (angle in degrees, or percentage for Keeson/Ergomotion)."""
         position = self._coordinator.position_data.get(
             self.entity_description.position_key
         )
         if position is None:
             return None
 
-        # Check if controller reports percentage directly (e.g., Keeson/Ergomotion)
-        controller = self._coordinator.controller
-        if controller is not None and getattr(
-            controller, "reports_percentage_position", False
-        ):
-            # Position is already 0-100 percentage
-            return min(100.0, max(0.0, float(position)))
-
-        # Convert angle to percentage (0-100) using the description's max_angle
+        # Return position clamped to valid range
+        # For standard beds: angle (0 to max_angle degrees)
+        # For Keeson/Ergomotion: percentage (0-100, max_angle is set to 100)
         max_angle = self.entity_description.max_angle
-        return min(100.0, (position / max_angle) * 100)
+        return min(max_angle, max(0.0, float(position)))
 
     async def async_set_native_value(self, value: float) -> None:
-        """Set the position by seeking to the target percentage."""
+        """Set the position by seeking to the target angle (or percentage for Keeson/Ergomotion)."""
+        unit = self.entity_description.native_unit_of_measurement or "°"
         _LOGGER.info(
-            "Position set requested: %s to %.1f%% (device: %s)",
+            "Position set requested: %s to %.1f%s (device: %s)",
             self.entity_description.key,
             value,
+            unit,
             self._coordinator.name,
         )
 
         await self._coordinator.async_seek_position(
             position_key=self.entity_description.position_key,
-            target_percentage=value,
+            target_angle=value,
             move_up_fn=self.entity_description.move_up_fn,
             move_down_fn=self.entity_description.move_down_fn,
             move_stop_fn=self.entity_description.move_stop_fn,
-            max_angle=self.entity_description.max_angle,
         )
