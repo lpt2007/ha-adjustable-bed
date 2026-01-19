@@ -122,12 +122,14 @@ custom_components/adjustable_bed/
    - Define command bytes as a class (see existing controllers)
 
 4. **Add detection to `config_flow.py`** in `detect_bed_type()`:
+
    ```python
    if NEWBED_SERVICE_UUID.lower() in service_uuids:
        return BED_TYPE_NEWBED
    ```
 
 5. **Update `coordinator.py`** `_create_controller()`:
+
    ```python
    if self._bed_type == BED_TYPE_NEWBED:
        from .beds.newbed import NewbedController

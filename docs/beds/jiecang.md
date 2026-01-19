@@ -10,6 +10,7 @@
 - Jiecang-branded controllers
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ❌ (presets only) |

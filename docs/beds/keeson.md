@@ -17,6 +17,7 @@
 - Some Costco beds
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |
@@ -47,6 +48,7 @@ Same protocol as Base variant but with real-time position updates via BLE notifi
 **Notify Characteristic:** `0000ffe4-0000-1000-8000-00805f9b34fb`
 
 Position data formats (by header byte):
+
 | Header | Length | Description |
 |--------|--------|-------------|
 | `0xED` | 16 bytes | Basic position data |

@@ -9,6 +9,7 @@
 - Some medical adjustable beds
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ |

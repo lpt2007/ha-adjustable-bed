@@ -9,6 +9,7 @@
 - iFlex-branded adjustable beds
 
 ## Features
+
 | Feature | Supported |
 |---------|-----------|
 | Motor Control | ✅ (Head, Foot, Lumbar) |
