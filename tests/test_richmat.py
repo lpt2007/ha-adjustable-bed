@@ -22,6 +22,8 @@ from custom_components.adjustable_bed.const import (
     CONF_PREFERRED_ADAPTER,
     DOMAIN,
     RICHMAT_NORDIC_CHAR_UUID,
+    RICHMAT_PROTOCOL_PREFIX55,
+    RICHMAT_PROTOCOL_PREFIXAA,
 )
 from custom_components.adjustable_bed.coordinator import AdjustableBedCoordinator
 
@@ -153,6 +155,58 @@ class TestRichmatController:
         assert command[3] == RichmatCommands.PRESET_FLAT
         # checksum = (cmd + 111) & 0xFF
         expected_checksum = (RichmatCommands.PRESET_FLAT + 111) & 0xFF
+        assert command[4] == expected_checksum
+
+    async def test_build_command_prefix55(
+        self,
+        hass: HomeAssistant,
+        mock_richmat_config_entry,
+        mock_coordinator_connected,
+    ):
+        """Test Prefix55 variant builds 5-byte commands with 0x55 prefix."""
+        coordinator = AdjustableBedCoordinator(hass, mock_richmat_config_entry)
+        await coordinator.async_connect()
+
+        # Create a Prefix55 controller directly
+        controller = RichmatController(
+            coordinator, command_protocol=RICHMAT_PROTOCOL_PREFIX55
+        )
+
+        # Prefix55: [0x55, 0x01, 0x00, cmd, (cmd + 0x56) & 0xFF]
+        command = controller._build_command(RichmatCommands.PRESET_FLAT)
+        assert len(command) == 5
+        assert command[0] == 0x55
+        assert command[1] == 0x01
+        assert command[2] == 0x00
+        assert command[3] == RichmatCommands.PRESET_FLAT
+        # checksum = (cmd + 0x56) & 0xFF
+        expected_checksum = (RichmatCommands.PRESET_FLAT + 0x56) & 0xFF
+        assert command[4] == expected_checksum
+
+    async def test_build_command_prefixaa(
+        self,
+        hass: HomeAssistant,
+        mock_richmat_config_entry,
+        mock_coordinator_connected,
+    ):
+        """Test PrefixAA variant builds 5-byte commands with 0xAA prefix."""
+        coordinator = AdjustableBedCoordinator(hass, mock_richmat_config_entry)
+        await coordinator.async_connect()
+
+        # Create a PrefixAA controller directly
+        controller = RichmatController(
+            coordinator, command_protocol=RICHMAT_PROTOCOL_PREFIXAA
+        )
+
+        # PrefixAA: [0xAA, 0x01, 0x00, cmd, (cmd + 0xAB) & 0xFF]
+        command = controller._build_command(RichmatCommands.PRESET_FLAT)
+        assert len(command) == 5
+        assert command[0] == 0xAA
+        assert command[1] == 0x01
+        assert command[2] == 0x00
+        assert command[3] == RichmatCommands.PRESET_FLAT
+        # checksum = (cmd + 0xAB) & 0xFF
+        expected_checksum = (RichmatCommands.PRESET_FLAT + 0xAB) & 0xFF
         assert command[4] == expected_checksum
 
     async def test_write_command(

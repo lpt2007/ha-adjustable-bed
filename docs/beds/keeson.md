@@ -5,15 +5,24 @@
 **Credit:** Reverse engineering by [alanbixby](https://github.com/alanbixby) and [Richard Hopton/smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
 
 ## Known Models
+
+Brands using Keeson/Ergomotion actuators:
+
+- Serta
+- Ergomotion
+- Tempur Zero G / Tempur Curve
+- Beautyrest Black
+- ENSO
+- Dawn House
+- Restonic
+- Omazz Adjusto
+- King Koil
+- SomosBeds
 - Purple adjustable bases
 - GhostBed
 - Member's Mark (Sam's Club) adjustable beds
 - South Bay International MMKD
-- Ergomotion beds
-- Tempur-Pedic (some newer models)
 - Sealy Ease
-- Serta (some models)
-- Beautyrest (some models)
 - Some Costco beds
 
 ## Features
@@ -39,8 +48,12 @@
 - `0000ffb0-0000-1000-8000-00805f9b34fb` (characteristic: `0000ffb2`)
 
 ### KSBT Variant (Older Remotes)
-**Service UUID:** `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
+**Primary Service UUID:** `6e400001-b5a3-f393-e0a9-e50e24dcca9e` (Nordic UART Service)
 **Format:** 6 bytes `[0x04, 0x02, ...int_bytes]` (big-endian)
+
+**Fallback Service UUIDs:** Some KSBT devices use different service UUIDs. The integration automatically tries these if the primary isn't found:
+- `0000ffe5-0000-1000-8000-00805f9b34fb` (characteristic: `0000ffe9`)
+- `0000ffe0-0000-1000-8000-00805f9b34fb` (characteristic: `0000ffe1`)
 
 ### Ergomotion Variant (with Position Feedback)
 Same protocol as Base variant but with real-time position updates via BLE notifications.

@@ -27,6 +27,8 @@ from ..const import (
     KEESON_BASE_WRITE_CHAR_UUID,
     KEESON_FALLBACK_GATT_PAIRS,
     KEESON_KSBT_CHAR_UUID,
+    KEESON_KSBT_FALLBACK_GATT_PAIRS,
+    KEESON_KSBT_SERVICE_UUID,
     KEESON_VARIANT_ERGOMOTION,
 )
 from .base import BedController
@@ -111,7 +113,8 @@ class KeesonController(BedController):
         if char_uuid:
             self._char_uuid = char_uuid
         elif variant == "ksbt":
-            self._char_uuid = KEESON_KSBT_CHAR_UUID
+            # For KSBT variant, try to find a working characteristic UUID
+            self._char_uuid = self._detect_ksbt_characteristic_uuid()
         else:
             # For base/ergomotion variant, try to find a working characteristic UUID
             self._char_uuid = self._detect_characteristic_uuid()
@@ -178,6 +181,59 @@ class KeesonController(BedController):
         )
         self.log_discovered_services(level=logging.INFO)
         return KEESON_BASE_WRITE_CHAR_UUID
+
+    def _detect_ksbt_characteristic_uuid(self) -> str:
+        """Detect the correct write characteristic UUID for KSBT variant.
+
+        Tries the primary Nordic UART service first, then falls back to alternative
+        UUIDs if the primary service is not available.
+        """
+        client = self.client
+        if client is None or client.services is None:
+            _LOGGER.debug("No BLE services available, using default KSBT UUID")
+            return KEESON_KSBT_CHAR_UUID
+
+        # Build a map of service UUID -> service object for efficient lookup
+        services_map = {str(service.uuid).lower(): service for service in client.services}
+        _LOGGER.debug("Available KSBT services: %s", list(services_map.keys()))
+
+        # Check if primary KSBT service (Nordic UART) is available
+        primary_service = services_map.get(KEESON_KSBT_SERVICE_UUID.lower())
+        if primary_service is not None:
+            char = primary_service.get_characteristic(KEESON_KSBT_CHAR_UUID)
+            if char is not None:
+                _LOGGER.debug("Found primary KSBT service with expected characteristic")
+                return KEESON_KSBT_CHAR_UUID
+            _LOGGER.debug(
+                "Primary KSBT service found but characteristic %s not present",
+                KEESON_KSBT_CHAR_UUID,
+            )
+
+        # Try fallback service/characteristic pairs
+        for fallback_service, fallback_char in KEESON_KSBT_FALLBACK_GATT_PAIRS:
+            service = services_map.get(fallback_service.lower())
+            if service is not None:
+                char = service.get_characteristic(fallback_char)
+                if char is not None:
+                    _LOGGER.info(
+                        "Using KSBT fallback service/characteristic: %s/%s",
+                        fallback_service,
+                        fallback_char,
+                    )
+                    return fallback_char
+                _LOGGER.debug(
+                    "KSBT fallback service %s found but characteristic %s not present",
+                    fallback_service,
+                    fallback_char,
+                )
+
+        # No matching service/characteristic found, log all services for debugging
+        _LOGGER.warning(
+            "No recognized KSBT service/characteristic found. "
+            "Please report this to help add support for your device."
+        )
+        self.log_discovered_services(level=logging.INFO)
+        return KEESON_KSBT_CHAR_UUID
 
     @property
     def control_characteristic_uuid(self) -> str:

@@ -2,9 +2,11 @@
 
 Reverse engineering by getrav and Richard Hopton (smartbed-mqtt).
 
-Richmat beds have two protocol variants:
-- Nordic: Simple single-byte commands
-- WiLinke: 5-byte commands with checksum [110, 1, 0, command, command + 111]
+Richmat beds have several protocol variants:
+- Nordic/Single: Simple single-byte commands
+- WiLinke: 5-byte commands [0x6E, 0x01, 0x00, cmd, (cmd + 111) & 0xFF]
+- Prefix55: 5-byte commands [0x55, 0x01, 0x00, cmd, (cmd + 0x56) & 0xFF]
+- PrefixAA: 5-byte commands [0xAA, 0x01, 0x00, cmd, (cmd + 0xAB) & 0xFF]
 """
 
 from __future__ import annotations
@@ -19,6 +21,8 @@ from bleak.exc import BleakError
 
 from ..const import (
     RICHMAT_NORDIC_CHAR_UUID,
+    RICHMAT_PROTOCOL_PREFIX55,
+    RICHMAT_PROTOCOL_PREFIXAA,
     RICHMAT_PROTOCOL_SINGLE,
     RICHMAT_PROTOCOL_WILINKE,
     RICHMAT_REMOTE_AUTO,
@@ -87,6 +91,7 @@ class RichmatController(BedController):
         is_wilinke: bool = False,
         char_uuid: str | None = None,
         remote_code: str | None = None,
+        command_protocol: str | None = None,
     ) -> None:
         """Initialize the Richmat controller.
 
@@ -95,6 +100,7 @@ class RichmatController(BedController):
             is_wilinke: Whether this is a WiLinke variant (uses 5-byte commands)
             char_uuid: The characteristic UUID to use for writing commands
             remote_code: The remote code for feature detection (e.g., "VIRM", "I7RM")
+            command_protocol: Override the command protocol (single, wilinke, prefix55, prefixaa)
         """
         super().__init__(coordinator)
         self._is_wilinke = is_wilinke
@@ -105,14 +111,16 @@ class RichmatController(BedController):
             self._remote_code, RICHMAT_REMOTE_FEATURES[RICHMAT_REMOTE_AUTO]
         )
 
-        # Determine command protocol based on variant
-        self._command_protocol = (
-            RICHMAT_PROTOCOL_WILINKE if is_wilinke else RICHMAT_PROTOCOL_SINGLE
-        )
+        # Determine command protocol: explicit override > is_wilinke flag > default
+        if command_protocol:
+            self._command_protocol = command_protocol
+        elif is_wilinke:
+            self._command_protocol = RICHMAT_PROTOCOL_WILINKE
+        else:
+            self._command_protocol = RICHMAT_PROTOCOL_SINGLE
 
         _LOGGER.debug(
-            "RichmatController initialized (wilinke: %s, char: %s, protocol: %s, remote: %s)",
-            is_wilinke,
+            "RichmatController initialized (char: %s, protocol: %s, remote: %s)",
             self._char_uuid,
             self._command_protocol,
             self._remote_code,
@@ -186,9 +194,17 @@ class RichmatController(BedController):
     def _build_command(self, command_byte: int) -> bytes:
         """Build command bytes based on command protocol."""
         if self._command_protocol == RICHMAT_PROTOCOL_WILINKE:
-            # WiLinke: [110, 1, 0, command, checksum]
-            # checksum = command + 111
-            return bytes([110, 1, 0, command_byte, (command_byte + 111) & 0xFF])
+            # WiLinke: [0x6E, 0x01, 0x00, command, checksum]
+            # checksum = (command + 0x6E + 0x01) & 0xFF = (command + 111) & 0xFF
+            return bytes([0x6E, 0x01, 0x00, command_byte, (command_byte + 111) & 0xFF])
+        elif self._command_protocol == RICHMAT_PROTOCOL_PREFIX55:
+            # Prefix55: [0x55, 0x01, 0x00, command, checksum]
+            # checksum = (command + 0x55 + 0x01) & 0xFF = (command + 0x56) & 0xFF
+            return bytes([0x55, 0x01, 0x00, command_byte, (command_byte + 0x56) & 0xFF])
+        elif self._command_protocol == RICHMAT_PROTOCOL_PREFIXAA:
+            # PrefixAA: [0xAA, 0x01, 0x00, command, checksum]
+            # checksum = (command + 0xAA + 0x01) & 0xFF = (command + 0xAB) & 0xFF
+            return bytes([0xAA, 0x01, 0x00, command_byte, (command_byte + 0xAB) & 0xFF])
         else:
             # Single/Nordic: just the command byte
             return bytes([command_byte])

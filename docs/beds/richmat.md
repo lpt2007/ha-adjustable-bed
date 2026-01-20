@@ -5,12 +5,38 @@
 **Credit:** Reverse engineering by getrav and [Richard Hopton/smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt)
 
 ## Known Models
+
+Brands using Richmat actuators:
+
+- L&P Adjustable Base (Leggett & Platt)
+- SVEN & SON
+- Casper Base
+- MLILY
+- Luuna / Luuna Rise
+- Bed Tech
+- Jerome's
+- Revive
+- Idealbed
+- Maxprime
+- Milemont
+- Hush Base
+- FLEXX MOTION
+- Likimio
+- Lunio Smart+
+- Good Vibe Sleep
+- Best Mattress Power Base
+- Easy Rest
+- Coaster Sleep
+- Avocado Eco Base
+- ENSO Sleep
+- Dynasty DM9000
+- Thomas Cole Sleep
+- Forty Winks ActivFlex
+- Power Bob
 - Richmat HJA5 series
 - Saatva
 - Lucid L300
 - Classic Brands
-- Rize / Mantua (some models)
-- Some Sven & Son beds
 
 ## Features
 
@@ -29,10 +55,18 @@
 **Service UUID:** `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
 **Format:** Single byte commands
 
-### WiLinke Variant
+### WiLinke Variant (Most Common)
 **Service UUIDs:** `8ebd4f76-...` or `0000fee9-...`
 **Format:** 5 bytes `[0x6E, 0x01, 0x00, command, checksum]`
 **Checksum:** `(command + 111) & 0xFF`
+
+### Prefix55 Variant
+**Format:** 5 bytes `[0x55, 0x01, 0x00, command, checksum]`
+**Checksum:** `(command + 0x56) & 0xFF`
+
+### PrefixAA Variant
+**Format:** 5 bytes `[0xAA, 0x01, 0x00, command, checksum]`
+**Checksum:** `(command + 0xAB) & 0xFF`
 
 ### Commands (Single Byte)
 

@@ -29,7 +29,11 @@ from .const import (
     LEGGETT_VARIANT_OKIN,
     OCTO_STAR2_SERVICE_UUID,
     OCTO_VARIANT_STAR2,
+    RICHMAT_PROTOCOL_PREFIX55,
+    RICHMAT_PROTOCOL_PREFIXAA,
     RICHMAT_VARIANT_NORDIC,
+    RICHMAT_VARIANT_PREFIX55,
+    RICHMAT_VARIANT_PREFIXAA,
     RICHMAT_VARIANT_WILINKE,
     RICHMAT_WILINKE_SERVICE_UUIDS,
 )
@@ -86,6 +90,20 @@ async def create_controller(
         elif protocol_variant == RICHMAT_VARIANT_WILINKE:
             _LOGGER.debug("Using WiLinke Richmat variant (configured)")
             return RichmatController(coordinator, is_wilinke=True, remote_code=richmat_remote)
+        elif protocol_variant == RICHMAT_VARIANT_PREFIX55:
+            _LOGGER.debug("Using Prefix55 Richmat variant (configured)")
+            return RichmatController(
+                coordinator,
+                remote_code=richmat_remote,
+                command_protocol=RICHMAT_PROTOCOL_PREFIX55,
+            )
+        elif protocol_variant == RICHMAT_VARIANT_PREFIXAA:
+            _LOGGER.debug("Using PrefixAA Richmat variant (configured)")
+            return RichmatController(
+                coordinator,
+                remote_code=richmat_remote,
+                command_protocol=RICHMAT_PROTOCOL_PREFIXAA,
+            )
         else:
             # Auto-detect variant based on available services
             _LOGGER.debug("Auto-detecting Richmat variant...")

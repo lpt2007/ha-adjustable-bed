@@ -115,9 +115,18 @@ RICHMAT_WILINKE_CHAR_UUIDS: Final = [
 ]
 
 # Keeson specific UUIDs
-# KSBT variant
+# KSBT variant - primary UUIDs (Nordic UART Service)
 KEESON_KSBT_SERVICE_UUID: Final = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 KEESON_KSBT_CHAR_UUID: Final = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+
+# KSBT fallback service/characteristic UUIDs
+# Some KSBT devices advertise with different service UUIDs but still use KSBT protocol
+KEESON_KSBT_FALLBACK_GATT_PAIRS: Final = [
+    # Fallback 1: FFE5/FFE9 (same as Base service)
+    ("0000ffe5-0000-1000-8000-00805f9b34fb", "0000ffe9-0000-1000-8000-00805f9b34fb"),
+    # Fallback 2: FFE0/FFE1
+    ("0000ffe0-0000-1000-8000-00805f9b34fb", "0000ffe1-0000-1000-8000-00805f9b34fb"),
+]
 
 # BaseI4/BaseI5 variant - primary UUIDs
 KEESON_BASE_SERVICE_UUID: Final = "0000ffe5-0000-1000-8000-00805f9b34fb"
@@ -294,10 +303,14 @@ LEGGETT_VARIANTS: Final = {
 # Richmat protocol variants (auto-detected, but can be overridden)
 RICHMAT_VARIANT_NORDIC: Final = "nordic"
 RICHMAT_VARIANT_WILINKE: Final = "wilinke"
+RICHMAT_VARIANT_PREFIX55: Final = "prefix55"
+RICHMAT_VARIANT_PREFIXAA: Final = "prefixaa"
 RICHMAT_VARIANTS: Final = {
     VARIANT_AUTO: "Auto-detect (recommended)",
     RICHMAT_VARIANT_NORDIC: "Nordic (single-byte commands)",
-    RICHMAT_VARIANT_WILINKE: "WiLinke (5-byte commands with checksum)",
+    RICHMAT_VARIANT_WILINKE: "WiLinke (5-byte commands with 0x6E prefix)",
+    RICHMAT_VARIANT_PREFIX55: "Prefix55 (5-byte commands with 0x55 prefix)",
+    RICHMAT_VARIANT_PREFIXAA: "PrefixAA (5-byte commands with 0xAA prefix)",
 }
 
 
@@ -345,6 +358,7 @@ class RichmatFeatures(IntFlag):
 # Reference: https://github.com/richardhopton/smartbed-mqtt/blob/main/src/Richmat/remoteFeatures.ts
 RICHMAT_REMOTE_AUTO: Final = "auto"
 RICHMAT_REMOTE_AZRN: Final = "AZRN"
+RICHMAT_REMOTE_BURM: Final = "BURM"
 RICHMAT_REMOTE_BVRM: Final = "BVRM"
 RICHMAT_REMOTE_VIRM: Final = "VIRM"
 RICHMAT_REMOTE_V1RM: Final = "V1RM"
@@ -359,6 +373,7 @@ RICHMAT_REMOTE_190_0055: Final = "190-0055"
 RICHMAT_REMOTES: Final = {
     RICHMAT_REMOTE_AUTO: "Auto (all features enabled)",
     RICHMAT_REMOTE_AZRN: "AZRN (Head, Pillow, Feet)",
+    RICHMAT_REMOTE_BURM: "BURM (Head, Feet, Massage, Lights)",
     RICHMAT_REMOTE_BVRM: "BVRM (Head, Feet, Massage)",
     RICHMAT_REMOTE_VIRM: "VIRM (Head, Feet, Pillow, Lumbar, Massage, Lights)",
     RICHMAT_REMOTE_V1RM: "V1RM (Head, Feet)",
@@ -389,6 +404,14 @@ RICHMAT_REMOTE_FEATURES: Final = {
         _F.PROGRAM_ANTI_SNORE | _F.PROGRAM_LOUNGE | _F.PROGRAM_MEMORY_1 |
         _F.PROGRAM_TV | _F.PROGRAM_ZERO_G |
         _F.MOTOR_HEAD | _F.MOTOR_PILLOW | _F.MOTOR_FEET
+    ),
+    RICHMAT_REMOTE_BURM: (
+        _F.PRESET_FLAT | _F.PRESET_MEMORY_1 | _F.PRESET_MEMORY_2 |
+        _F.PRESET_TV | _F.PRESET_ZERO_G |
+        _F.PROGRAM_LOUNGE | _F.PROGRAM_MEMORY_1 | _F.PROGRAM_MEMORY_2 | _F.PROGRAM_TV |
+        _F.UNDER_BED_LIGHTS |
+        _F.MASSAGE_HEAD_STEP | _F.MASSAGE_FOOT_STEP | _F.MASSAGE_MODE | _F.MASSAGE_TOGGLE |
+        _F.MOTOR_HEAD | _F.MOTOR_FEET
     ),
     RICHMAT_REMOTE_BVRM: (
         _F.PRESET_FLAT | _F.PRESET_ANTI_SNORE | _F.PRESET_MEMORY_1 | _F.PRESET_MEMORY_2 |
@@ -464,6 +487,8 @@ OCTO_VARIANTS: Final = {
 # Richmat command protocols (how command bytes are encoded - used internally)
 RICHMAT_PROTOCOL_WILINKE: Final = "wilinke"  # [110, 1, 0, cmd, cmd+111]
 RICHMAT_PROTOCOL_SINGLE: Final = "single"  # [cmd]
+RICHMAT_PROTOCOL_PREFIX55: Final = "prefix55"  # [0x55, 1, 0, cmd, (cmd+0x56)&0xFF]
+RICHMAT_PROTOCOL_PREFIXAA: Final = "prefixaa"  # [0xAA, 1, 0, cmd, (cmd+0xAB)&0xFF]
 
 # Okimat remote code variants
 # Different remotes have different command values and motor configurations
@@ -499,6 +524,8 @@ ALL_PROTOCOL_VARIANTS: Final = [
     LEGGETT_VARIANT_MLRM,
     RICHMAT_VARIANT_NORDIC,
     RICHMAT_VARIANT_WILINKE,
+    RICHMAT_VARIANT_PREFIX55,
+    RICHMAT_VARIANT_PREFIXAA,
     OCTO_VARIANT_STANDARD,
     OCTO_VARIANT_STAR2,
     OKIMAT_VARIANT_80608,
