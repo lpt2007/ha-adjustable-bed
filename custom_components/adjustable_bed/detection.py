@@ -37,6 +37,7 @@ from .const import (
     BED_TYPE_REVERIE,
     BED_TYPE_REVERIE_NIGHTSTAND,
     BED_TYPE_RICHMAT,
+    BED_TYPE_SERTA,
     BED_TYPE_SOLACE,
     # Detection constants
     COMFORT_MOTION_SERVICE_UUID,
@@ -289,7 +290,7 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
                 service_info.address,
                 service_info.name,
             )
-            return BED_TYPE_LEGGETT_PLATT
+            return BED_TYPE_LEGGETT_OKIN
 
         # Check for Okimat-specific name patterns
         if any(pattern in device_name for pattern in OKIMAT_NAME_PATTERNS):
