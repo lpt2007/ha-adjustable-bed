@@ -748,11 +748,18 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             }
 
-        # Determine smart default for angle sensing based on preselected bed type
+        # Determine smart defaults based on preselected bed type
         if preselected_bed_type:
             default_disable_angle = preselected_bed_type not in BEDS_WITH_POSITION_FEEDBACK
+            # Use bed-specific motor pulse defaults if available
+            pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
+                preselected_bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
+            )
+            default_pulse_count, default_pulse_delay = pulse_defaults
         else:
             default_disable_angle = DEFAULT_DISABLE_ANGLE_SENSING
+            default_pulse_count = DEFAULT_MOTOR_PULSE_COUNT
+            default_pulse_delay = DEFAULT_MOTOR_PULSE_DELAY_MS
 
         # Add remaining fields
         schema_dict.update(
@@ -767,10 +774,10 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ): bool,
                 vol.Optional(CONF_PREFERRED_ADAPTER, default=discovery_source): vol.In(adapters),
                 vol.Optional(
-                    CONF_MOTOR_PULSE_COUNT, default=str(DEFAULT_MOTOR_PULSE_COUNT)
+                    CONF_MOTOR_PULSE_COUNT, default=str(default_pulse_count)
                 ): TextSelector(TextSelectorConfig()),
                 vol.Optional(
-                    CONF_MOTOR_PULSE_DELAY_MS, default=str(DEFAULT_MOTOR_PULSE_DELAY_MS)
+                    CONF_MOTOR_PULSE_DELAY_MS, default=str(default_pulse_delay)
                 ): TextSelector(TextSelectorConfig()),
                 vol.Optional(
                     CONF_DISCONNECT_AFTER_COMMAND, default=DEFAULT_DISCONNECT_AFTER_COMMAND
@@ -920,11 +927,18 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             }
 
-        # Determine smart default for angle sensing based on preselected bed type
+        # Determine smart defaults based on preselected bed type
         if preselected_bed_type:
             default_disable_angle = preselected_bed_type not in BEDS_WITH_POSITION_FEEDBACK
+            # Use bed-specific motor pulse defaults if available
+            pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
+                preselected_bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
+            )
+            default_pulse_count, default_pulse_delay = pulse_defaults
         else:
             default_disable_angle = DEFAULT_DISABLE_ANGLE_SENSING
+            default_pulse_count = DEFAULT_MOTOR_PULSE_COUNT
+            default_pulse_delay = DEFAULT_MOTOR_PULSE_DELAY_MS
 
         # Add remaining fields
         schema_dict.update(
@@ -937,10 +951,10 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ): bool,
                 vol.Optional(CONF_PREFERRED_ADAPTER, default=ADAPTER_AUTO): vol.In(adapters),
                 vol.Optional(
-                    CONF_MOTOR_PULSE_COUNT, default=str(DEFAULT_MOTOR_PULSE_COUNT)
+                    CONF_MOTOR_PULSE_COUNT, default=str(default_pulse_count)
                 ): TextSelector(TextSelectorConfig()),
                 vol.Optional(
-                    CONF_MOTOR_PULSE_DELAY_MS, default=str(DEFAULT_MOTOR_PULSE_DELAY_MS)
+                    CONF_MOTOR_PULSE_DELAY_MS, default=str(default_pulse_delay)
                 ): TextSelector(TextSelectorConfig()),
                 vol.Optional(
                     CONF_DISCONNECT_AFTER_COMMAND, default=DEFAULT_DISCONNECT_AFTER_COMMAND

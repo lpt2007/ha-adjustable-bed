@@ -26,6 +26,7 @@ from .const import (
     BED_TYPE_OKIN_NORDIC,
     BED_TYPE_OKIN_UUID,
     BED_TYPE_REVERIE,
+    BED_TYPE_REVERIE_NIGHTSTAND,
     BED_TYPE_RICHMAT,
     BED_TYPE_SOLACE,
     KEESON_VARIANT_BASE,
@@ -162,8 +163,21 @@ ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
     },
     "reverie": {
         "display": "Reverie",
-        "description": "Reverie Nightstand beds",
-        "variants": None,  # Single protocol
+        "description": "Reverie adjustable bases",
+        "variants": [
+            {
+                "type": BED_TYPE_REVERIE_NIGHTSTAND,
+                "label": "Nightstand (Protocol 110)",
+                "description": "Beds using the Reverie Nightstand app",
+                "hint": "Device name contains 'RV' - try this first",
+            },
+            {
+                "type": BED_TYPE_REVERIE,
+                "label": "Legacy (Protocol 108)",
+                "description": "Older Reverie beds",
+                "hint": "Try 'Nightstand' first, use this if it doesn't work",
+            },
+        ],
     },
     "solace": {
         "display": "Solace",
@@ -210,7 +224,6 @@ SINGLE_TYPE_GROUPS: Final[dict[str, str]] = {
     "richmat": BED_TYPE_RICHMAT,
     "linak": BED_TYPE_LINAK,
     "ergomotion": BED_TYPE_ERGOMOTION,
-    "reverie": BED_TYPE_REVERIE,
     "solace": BED_TYPE_SOLACE,
     "motosleep": BED_TYPE_MOTOSLEEP,
     "jiecang": BED_TYPE_JIECANG,

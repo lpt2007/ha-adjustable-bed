@@ -35,6 +35,7 @@ from .const import (
     BED_TYPE_REVERIE,
     BED_TYPE_REVERIE_NIGHTSTAND,
     BED_TYPE_RICHMAT,
+    BED_TYPE_SERTA,
     BED_TYPE_SOLACE,
     # Variants and UUIDs
     KEESON_VARIANT_ERGOMOTION,
@@ -293,6 +294,12 @@ async def create_controller(
         from .beds.keeson import KeesonController
 
         return KeesonController(coordinator, variant="ergomotion")
+
+    if bed_type == BED_TYPE_SERTA:
+        # Serta Motion Perfect uses the Keeson protocol with serta variant
+        from .beds.keeson import KeesonController
+
+        return KeesonController(coordinator, variant="serta")
 
     if bed_type == BED_TYPE_JIECANG:
         from .beds.jiecang import JiecangController
