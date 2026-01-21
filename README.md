@@ -33,29 +33,22 @@
 
 The names below refer to motor/actuator manufacturers. Your bed might use one of these internally - check the [Supported Actuators guide](docs/SUPPORTED_ACTUATORS.md) to find your bed brand.
 
-### Tested & Working
+✅ [Linak](docs/beds/linak.md) ·
+✅ [Keeson](docs/beds/keeson.md) ·
+✅ [Richmat](docs/beds/richmat.md) ·
+✅ [MotoSleep](docs/beds/motosleep.md) ·
+✅ [Octo](docs/beds/octo.md) ·
+✅ [Solace](docs/beds/solace.md) ·
+✅ [Leggett & Platt](docs/beds/leggett-platt.md) ·
+✅ [Reverie](docs/beds/reverie.md) ·
+✅ [Okimat/Okin](docs/beds/okimat.md) ·
+✅ [Jiecang](docs/beds/jiecang.md) ·
+✅ [DewertOkin](docs/beds/dewertokin.md) ·
+✅ [Serta](docs/beds/serta.md) ·
+✅ [Mattress Firm 900](docs/beds/mattressfirm.md) ·
+✅ [Nectar](docs/beds/nectar.md)
 
-| Actuator | Status | Notes |
-|----------|--------|-------|
-| **[Linak](docs/beds/linak.md)** | ✅ Fully tested | Full feature support including position feedback |
-| **[Keeson](docs/beds/keeson.md)** | ✅ Fully tested | Used in Member's Mark, Purple, Ergomotion beds |
-| **[Richmat](docs/beds/richmat.md)** | ✅ Works | Improvements in progress |
-| **[MotoSleep](docs/beds/motosleep.md)** | ✅ Works | Improvements in progress |
-| **[Octo](docs/beds/octo.md)** | ✅ Works | Improvements in progress |
-
-### Implemented, Need Testers
-
-[Solace](docs/beds/solace.md) ·
-[Leggett & Platt](docs/beds/leggett-platt.md) ·
-[Reverie](docs/beds/reverie.md) ·
-[Okimat/Okin](docs/beds/okimat.md) ·
-[Jiecang](docs/beds/jiecang.md) ·
-[DewertOkin](docs/beds/dewertokin.md) ·
-[Serta](docs/beds/serta.md) ·
-[Mattress Firm 900](docs/beds/mattressfirm.md) ·
-[Nectar](docs/beds/nectar.md)
-
-**Have one of these?** [Let us know](https://github.com/kristofferR/ha-adjustable-bed/issues) if it works!
+**Have one of these?** [Let us know](https://github.com/kristofferR/ha-adjustable-bed/issues) how well it works!
 
 ## Will This Work With My Bed?
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Home Assistant custom integration for controlling smart adjustable beds via Bluetooth Low Energy (BLE). It replaces the broken `smartbed-mqtt` addon with a native HA integration that uses Home Assistant's Bluetooth stack directly.
 
-**Current status:** 16 bed types implemented. Linak, Keeson, Richmat, and MotoSleep tested. Other brands need community testing.
+**Current status:** 18 bed types implemented. Linak, Keeson, Richmat, and MotoSleep tested. Other brands need community testing.
 
 ## Architecture
 
@@ -39,6 +39,7 @@ custom_components/adjustable_bed/
 │   ├── okin_7byte.py    # Okin 7-byte protocol
 │   ├── okin_nordic.py   # Okin 7-byte via Nordic UART
 │   ├── okin_protocol.py # Shared Okin protocol utilities
+│   ├── malouf.py        # Malouf NEW_OKIN/LEGACY_OKIN protocols
 │   ├── jiecang.py       # Jiecang/Glide protocol
 │   ├── serta.py         # Serta Motion Perfect III protocol
 │   ├── octo.py          # Octo standard/Star2 protocols (PIN auth)
@@ -107,6 +108,8 @@ custom_components/adjustable_bed/
 | Serta | `SertaController` | Handle-based writes (0x0020) | Name patterns | Needs testing |
 | Jiecang | `JiecangController` | Glide beds, Dream Motion app | Char UUID `0000ff01-...` | Needs testing |
 | Octo | `OctoController` | Standard or Star2 variant, PIN auth | Service UUID `0000ffe0-...` or `0000aa5c-...` | Needs testing |
+| Malouf NEW_OKIN | `MaloufController` | NEW_OKIN 6-byte protocol | Name patterns (Malouf, Lucid, CVB) | Needs testing |
+| Malouf LEGACY_OKIN | `MaloufController` | LEGACY_OKIN 7-byte protocol | Name patterns (Malouf, Lucid, CVB) | Needs testing |
 | Diagnostic | `DiagnosticController` | Debug mode for unsupported beds | Manual selection only | Debug |
 
 ## Adding a New Bed Type
@@ -125,19 +128,19 @@ custom_components/adjustable_bed/
    - Implement all abstract methods
    - Define command bytes as a class (see existing controllers)
 
-4. **Add detection to `config_flow.py`** in `detect_bed_type()`:
+4. **Add detection to `detection.py`** in `detect_bed_type()`:
 
    ```python
    if NEWBED_SERVICE_UUID.lower() in service_uuids:
        return BED_TYPE_NEWBED
    ```
 
-5. **Update `coordinator.py`** `_create_controller()`:
+5. **Update `controller_factory.py`** `create_controller()`:
 
    ```python
-   if self._bed_type == BED_TYPE_NEWBED:
+   if bed_type == BED_TYPE_NEWBED:
        from .beds.newbed import NewbedController
-       return NewbedController(self)
+       return NewbedController(coordinator)
    ```
 
 6. **Add to `const.py`** `SUPPORTED_BED_TYPES` list
@@ -175,65 +178,19 @@ custom_components/adjustable_bed/
 | `adjustable_bed.run_diagnostics` | Capture BLE protocol data for debugging |
 | `adjustable_bed.generate_support_report` | Generate JSON support report with diagnostics (params: device_id, include_logs) |
 
-## Linak BLE Protocol Reference
-
-```
-Control Service:   99fa0001-338a-1024-8a49-009c0215f78a
-  Write Char:      99fa0002-338a-1024-8a49-009c0215f78a
-  Write Mode:      WITH RESPONSE (response=True) - bed expects acknowledgment
-
-Command format: [command_byte, 0x00]
-
-Motor commands:
-  0x0B/0x0A = back up/down
-  0x09/0x08 = legs up/down
-  0x03/0x02 = head up/down
-  0x05/0x04 = feet up/down
-  0x00 = stop all
-
-Motor timing:
-  - 15 repeats at 100ms intervals (1.5 seconds total movement)
-  - Send STOP (0x00) after movement using try/finally with fresh asyncio.Event()
-
-Presets:
-  0x0E, 0x0F, 0x0C, 0x44 = Memory 1-4
-  0x38, 0x39, 0x3A, 0x45 = Program Memory 1-4
-
-Preset timing:
-  - 100 repeats at 300ms intervals (30 seconds for full preset movement)
-  - NO stop command needed after presets
-
-Single-shot commands (1 write, no repeat):
-  - Lights: 0x92 (on), 0x93 (off), 0x94 (toggle)
-  - Program memory: 0x38-0x3A, 0x45
-  - Massage controls: all massage commands
-
-Position Service: 99fa0020-338a-1024-8a49-009c0215f78a
-  Back:  99fa0028 (max 820 raw = 68°)
-  Legs:  99fa0027 (max 548 raw = 45°)
-  Head:  99fa0026 (3+ motors)
-  Feet:  99fa0025 (4 motors)
-
-Position data format:
-  - Little-endian 16-bit: raw = data[0] | (data[1] << 8)
-  - Angle = max_angle * (raw / max_raw)
-```
-
 ## Critical Implementation Details
 
-1. **Write with response** - Use `response=True` for all GATT writes. The bed expects write-with-response.
+**IMPORTANT: Protocol values are hardware-specific.** Timing values (repeat counts, delays), command bytes, and packet formats vary between bed types. Do NOT copy values from one bed's protocol documentation to another. Each bed type's parameters must come from actual device testing or reverse engineering - never guess or extrapolate from other implementations.
 
-2. **Always send STOP after movement** - Movement methods use `try/finally` to guarantee STOP is sent even if cancelled. The STOP command uses a fresh `asyncio.Event()` so it's not affected by the cancel signal.
+1. **Always send STOP after movement** - Movement methods use `try/finally` to guarantee STOP is sent even if cancelled. The STOP command uses a fresh `asyncio.Event()` so it's not affected by the cancel signal.
 
-3. **Command serialization** - All entities must use `coordinator.async_execute_controller_command()` instead of calling controller methods directly. This ensures proper locking and prevents concurrent BLE writes.
+2. **Command serialization** - All entities must use `coordinator.async_execute_controller_command()` instead of calling controller methods directly. This ensures proper locking and prevents concurrent BLE writes.
 
-4. **Cancel event handling** - `write_command()` checks `coordinator._cancel_command` by default. When stop is requested, the cancel event is set, the running command exits early, then STOP is sent.
+3. **Cancel event handling** - `write_command()` checks `coordinator._cancel_command` by default. When stop is requested, the cancel event is set, the running command exits early, then STOP is sent.
 
-5. **Disconnect timer management** - Timer is cancelled when a command starts (inside the lock) and reset when it ends. This prevents mid-command disconnects for long operations.
+4. **Disconnect timer management** - Timer is cancelled when a command starts (inside the lock) and reset when it ends. This prevents mid-command disconnects for long operations.
 
-6. **Presets are long operations** - 100 repeats × 300ms = 30 seconds max. Idle timeout is 40s.
-
-7. **Intentional disconnect flag** - Set before `client.disconnect()`, checked in `_on_disconnect` to skip auto-reconnect. Cleared in finally block since callback may not fire on clean disconnects.
+5. **Intentional disconnect flag** - Set before `client.disconnect()`, checked in `_on_disconnect` to skip auto-reconnect. Cleared in finally block since callback may not fire on clean disconnects.
 
 ## Development
 

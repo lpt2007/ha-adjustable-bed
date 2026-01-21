@@ -7,4 +7,7 @@ smartbed-mqtt-discord-chats/
 __pycache__/
 
 # Lock files
-uv.lockdisassembly/
+uv.lock
+
+# Disassembly/reverse engineering artifacts
+disassembly/
