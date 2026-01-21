@@ -17,13 +17,14 @@ from homeassistant.helpers import device_registry as dr
 from .const import (
     BED_TYPE_ERGOMOTION,
     BED_TYPE_KEESON,
-    BEDS_REQUIRING_PAIRING,
     BEDS_WITH_POSITION_FEEDBACK,
     CONF_BED_TYPE,
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
+    CONF_PROTOCOL_VARIANT,
     DEFAULT_MOTOR_COUNT,
     DOMAIN,
+    requires_pairing,
 )
 from .coordinator import AdjustableBedCoordinator
 from .unsupported import create_pairing_required_issue
@@ -79,7 +80,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Helper to create pairing issue for beds that require it
     async def _maybe_create_pairing_issue() -> None:
-        if entry.data.get(CONF_BED_TYPE) in BEDS_REQUIRING_PAIRING:
+        bed_type = entry.data.get(CONF_BED_TYPE)
+        protocol_variant = entry.data.get(CONF_PROTOCOL_VARIANT)
+        if requires_pairing(bed_type, protocol_variant):
             await create_pairing_required_issue(
                 hass, entry.data.get(CONF_ADDRESS, "Unknown"), entry.data.get("name", entry.title)
             )

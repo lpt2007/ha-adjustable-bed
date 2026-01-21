@@ -37,8 +37,8 @@ from .const import (
     BED_TYPE_DIAGNOSTIC,
     BED_TYPE_OCTO,
     BED_TYPE_RICHMAT,
-    BEDS_REQUIRING_PAIRING,
     BEDS_WITH_POSITION_FEEDBACK,
+    requires_pairing,
     CONF_BED_TYPE,
     CONF_DISABLE_ANGLE_SENSING,
     CONF_DISCONNECT_AFTER_COMMAND,
@@ -189,6 +189,11 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors[CONF_OCTO_PIN] = "invalid_pin"
             preferred_adapter = user_input.get(CONF_PREFERRED_ADAPTER, ADAPTER_AUTO)
             protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
+
+            # Validate protocol variant is valid for selected bed type
+            if not is_valid_variant_for_bed_type(selected_bed_type, protocol_variant):
+                errors[CONF_PROTOCOL_VARIANT] = "invalid_variant_for_bed_type"
+
             # Get bed-specific defaults for motor pulse settings
             pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
                 str(selected_bed_type) if selected_bed_type else "",
@@ -267,7 +272,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     else:
                         entry_data[CONF_RICHMAT_REMOTE] = user_selected_remote
                 # If bed requires pairing, show pairing instructions
-                if selected_bed_type in BEDS_REQUIRING_PAIRING:
+                if requires_pairing(selected_bed_type, protocol_variant):
                     self._manual_data = entry_data
                     return await self.async_step_bluetooth_pairing()
                 return self.async_create_entry(
@@ -323,12 +328,12 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             ): vol.All(vol.Coerce(int), vol.Range(min=10, max=300)),
         }
 
-        # Add variant selection if the bed type has variants
-        variants = get_variants_for_bed_type(bed_type)
-        if variants:
-            schema_dict[vol.Optional(CONF_PROTOCOL_VARIANT, default=VARIANT_AUTO)] = vol.In(
-                variants
-            )
+        # Always show variant selection - user may change bed type to one with variants
+        # If user changes bed type, they can select the appropriate variant
+        # Validation on submission ensures only valid variants are accepted
+        schema_dict[vol.Optional(CONF_PROTOCOL_VARIANT, default=VARIANT_AUTO)] = vol.In(
+            ALL_PROTOCOL_VARIANTS
+        )
 
         # Add PIN field for Octo beds
         if bed_type == BED_TYPE_OCTO:
@@ -698,7 +703,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     self._manual_data = entry_data
                     return await self.async_step_manual_richmat()
                 # If bed requires pairing, show pairing instructions
-                if bed_type in BEDS_REQUIRING_PAIRING:
+                if requires_pairing(bed_type, protocol_variant):
                     self._manual_data = entry_data
                     return await self.async_step_manual_pairing()
                 return self.async_create_entry(
@@ -882,7 +887,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                         self._manual_data = entry_data
                         return await self.async_step_manual_richmat()
                     # If bed requires pairing, show pairing instructions
-                    if bed_type in BEDS_REQUIRING_PAIRING:
+                    if requires_pairing(bed_type, protocol_variant):
                         self._manual_data = entry_data
                         return await self.async_step_manual_pairing()
                     return self.async_create_entry(

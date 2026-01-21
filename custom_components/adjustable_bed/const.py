@@ -832,6 +832,29 @@ ALL_PROTOCOL_VARIANTS: Final = [
 # These beds use encrypted connections and must be paired at the OS level
 BEDS_REQUIRING_PAIRING: Final[set[str]] = {BED_TYPE_OKIN_UUID, BED_TYPE_LEGGETT_OKIN, BED_TYPE_OKIMAT}
 
+# Protocol variants that require BLE pairing (for bed types with variants like leggett_platt)
+# When a bed type has a variant that uses the Okin protocol, it also requires pairing
+PROTOCOL_VARIANTS_REQUIRING_PAIRING: Final[set[str]] = {"okin"}
+
+
+def requires_pairing(bed_type: str, protocol_variant: str | None = None) -> bool:
+    """Check if a bed configuration requires BLE pairing.
+
+    Args:
+        bed_type: The bed type constant (e.g., BED_TYPE_LEGGETT_PLATT)
+        protocol_variant: Optional protocol variant (e.g., "okin", "gen2")
+
+    Returns:
+        True if this bed/variant combination requires OS-level BLE pairing
+    """
+    # Direct bed type match
+    if bed_type in BEDS_REQUIRING_PAIRING:
+        return True
+    # Check protocol variant for beds with multiple protocols
+    if protocol_variant and protocol_variant in PROTOCOL_VARIANTS_REQUIRING_PAIRING:
+        return True
+    return False
+
 # Bed types that support angle sensing (position feedback)
 BEDS_WITH_ANGLE_SENSING: Final = frozenset(
     {
@@ -839,6 +862,7 @@ BEDS_WITH_ANGLE_SENSING: Final = frozenset(
         BED_TYPE_OKIMAT,
         BED_TYPE_OKIN_UUID,  # Same protocol as Okimat
         BED_TYPE_REVERIE,
+        BED_TYPE_REVERIE_NIGHTSTAND,
     }
 )
 
@@ -850,6 +874,7 @@ BEDS_WITH_POSITION_FEEDBACK: Final = frozenset(
         BED_TYPE_OKIMAT,
         BED_TYPE_OKIN_UUID,  # Same protocol as Okimat
         BED_TYPE_REVERIE,
+        BED_TYPE_REVERIE_NIGHTSTAND,
         BED_TYPE_KEESON,
         BED_TYPE_ERGOMOTION,
     }
