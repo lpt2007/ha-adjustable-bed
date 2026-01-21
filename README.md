@@ -33,20 +33,24 @@
 
 The names below refer to motor/actuator manufacturers. Your bed might use one of these internally - check the [Supported Actuators guide](docs/SUPPORTED_ACTUATORS.md) to find your bed brand.
 
-✅ [Linak](docs/beds/linak.md) ·
-✅ [Keeson](docs/beds/keeson.md) ·
-✅ [Richmat](docs/beds/richmat.md) ·
-✅ [MotoSleep](docs/beds/motosleep.md) ·
-✅ [Octo](docs/beds/octo.md) ·
-✅ [Solace](docs/beds/solace.md) ·
-✅ [Leggett & Platt](docs/beds/leggett-platt.md) ·
-✅ [Reverie](docs/beds/reverie.md) ·
-✅ [Okimat/Okin](docs/beds/okimat.md) ·
-✅ [Jiecang](docs/beds/jiecang.md) ·
-✅ [DewertOkin](docs/beds/dewertokin.md) ·
-✅ [Serta](docs/beds/serta.md) ·
-✅ [Mattress Firm 900](docs/beds/mattressfirm.md) ·
-✅ [Nectar](docs/beds/nectar.md)
+| Actuator | Example Brands |
+|----------|----------------|
+| ✅ [Linak](docs/beds/linak.md) | IKEA Malm, Tempur-Pedic |
+| ✅ [Keeson](docs/beds/keeson.md) | Member's Mark, Purple, GhostBed, ErgoSportive |
+| ✅ [Richmat](docs/beds/richmat.md) | Casper, MLILY, Sven & Son, Avocado, Luuna, Jerome's |
+| ✅ [MotoSleep](docs/beds/motosleep.md) | HHC |
+| ✅ [Octo](docs/beds/octo.md) | Octo |
+| ✅ [Solace](docs/beds/solace.md) | Solace |
+| ✅ [Leggett & Platt](docs/beds/leggett-platt.md) | Leggett & Platt |
+| ✅ [Reverie](docs/beds/reverie.md) | Reverie |
+| ✅ [Okimat/Okin](docs/beds/okimat.md) | Lucid, CVB, Smartbed |
+| ✅ [Ergomotion](docs/beds/ergomotion.md) | Serta, Tempur, Beautyrest, King Koil |
+| ✅ [Jiecang](docs/beds/jiecang.md) | Glideaway, Dream Motion |
+| ✅ [DewertOkin](docs/beds/dewertokin.md) | Rize, Simmons, Nectar, Resident, Symphony |
+| ✅ [Serta](docs/beds/serta.md) | Serta Motion Perfect |
+| ✅ [Mattress Firm 900](docs/beds/mattressfirm.md) | Mattress Firm, iFlex |
+| ✅ [Nectar](docs/beds/nectar.md) | Nectar |
+| ✅ [Malouf](docs/beds/malouf.md) | Malouf, Structures |
 
 **Have one of these?** [Let us know](https://github.com/kristofferR/ha-adjustable-bed/issues) how well it works!
 
