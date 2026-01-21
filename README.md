@@ -120,9 +120,12 @@ See the [Connection Guide](docs/CONNECTION_GUIDE.md) for setup help.
 | **[Getting Help](docs/GETTING_HELP.md)** | Bug reports, support requests, diagnostics |
 | **[Connection Guide](docs/CONNECTION_GUIDE.md)** | ESPHome proxy setup, finding your bed's address |
 | **[Supported Actuators](docs/SUPPORTED_ACTUATORS.md)** | Protocol details, bed brand lookup |
-| **[Ask a Question](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a)** | Get help from the community |
-| **[Suggest an Idea](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=ideas)** | Feature requests and improvements |
-| **[Praise and Feedback](https://github.com/kristofferR/ha-adjustable-bed/discussions/131)** | Share your experience or say thanks |
+
+| | |
+|---|---|
+| 💬 **[Ask a Question](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a)** | Get help from the community |
+| 💡 **[Suggest an Idea](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=ideas)** | Feature requests and improvements |
+| ❤️ **[Praise and Feedback](https://github.com/kristofferR/ha-adjustable-bed/discussions/131)** | Share your experience or say thanks |
 
 <details>
 <summary><b>Quick troubleshooting</b></summary>
