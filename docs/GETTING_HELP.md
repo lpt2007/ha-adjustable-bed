@@ -6,11 +6,27 @@ Need help with the Adjustable Bed integration? This guide explains how to get su
 
 | I need to... | Go here |
 |--------------|---------|
+| Get help with setup | [Ask a Question](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a) |
 | Report a bug | [Bug Report](https://github.com/kristofferR/ha-adjustable-bed/issues/new?template=bug-report.yml) |
 | Request support for a new bed | [New Bed Support Request](https://github.com/kristofferR/ha-adjustable-bed/issues/new?template=new-bed-support.yml) |
+| Suggest a feature | [Ideas & Suggestions](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=ideas) |
 | Fix a common issue | [Troubleshooting Guide](TROUBLESHOOTING.md) |
 | Set up Bluetooth | [Connection Guide](CONNECTION_GUIDE.md) |
 | Find my bed's actuator brand | [Supported Actuators](SUPPORTED_ACTUATORS.md) |
+
+---
+
+## Need Help with Setup?
+
+For setup questions, configuration help, or general "how do I..." questions, the best place to ask is the **[Q&A Discussions](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a)**. The community can help with:
+
+- Identifying which bed type or actuator brand to select
+- Bluetooth connection and pairing issues
+- ESPHome proxy configuration
+- Automations and scripts using the integration
+- General Home Assistant integration questions
+
+**Tip:** Search [existing discussions](https://github.com/kristofferR/ha-adjustable-bed/discussions) first - someone may have already answered your question!
 
 ---
 
