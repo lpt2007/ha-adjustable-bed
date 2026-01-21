@@ -1,4 +1,4 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
   - name: Troubleshooting Guide
     url: https://github.com/kristofferR/ha-adjustable-bed/blob/master/docs/TROUBLESHOOTING.md
