@@ -199,14 +199,25 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 str(selected_bed_type) if selected_bed_type else "",
                 (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS),
             )
-            try:
-                motor_pulse_count = int(user_input.get(CONF_MOTOR_PULSE_COUNT) or pulse_defaults[0])
-                motor_pulse_delay_ms = int(
-                    user_input.get(CONF_MOTOR_PULSE_DELAY_MS) or pulse_defaults[1]
-                )
-            except (ValueError, TypeError):
-                _LOGGER.warning("Invalid number input for motor pulse settings")
+            # Validate motor pulse count
+            pulse_count_input = user_input.get(CONF_MOTOR_PULSE_COUNT)
+            if pulse_count_input is not None and pulse_count_input != "":
+                try:
+                    motor_pulse_count = int(pulse_count_input)
+                except (ValueError, TypeError):
+                    errors[CONF_MOTOR_PULSE_COUNT] = "invalid_number"
+                    motor_pulse_count = pulse_defaults[0]
+            else:
                 motor_pulse_count = pulse_defaults[0]
+            # Validate motor pulse delay
+            pulse_delay_input = user_input.get(CONF_MOTOR_PULSE_DELAY_MS)
+            if pulse_delay_input is not None and pulse_delay_input != "":
+                try:
+                    motor_pulse_delay_ms = int(pulse_delay_input)
+                except (ValueError, TypeError):
+                    errors[CONF_MOTOR_PULSE_DELAY_MS] = "invalid_number"
+                    motor_pulse_delay_ms = pulse_defaults[1]
+            else:
                 motor_pulse_delay_ms = pulse_defaults[1]
             _LOGGER.info(
                 "User confirmed bed setup: name=%s, type=%s (detected: %s), variant=%s, address=%s, motors=%s, massage=%s, disable_angle_sensing=%s, adapter=%s, pulse_count=%s, pulse_delay=%s",

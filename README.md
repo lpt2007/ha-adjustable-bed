@@ -116,8 +116,9 @@ See the [Connection Guide](docs/CONNECTION_GUIDE.md) for setup help.
 
 | Guide | What's Inside |
 |-------|---------------|
-| **[Connection Guide](docs/CONNECTION_GUIDE.md)** | ESPHome proxy setup, finding your bed's address |
 | **[Troubleshooting](docs/TROUBLESHOOTING.md)** | Connection issues, commands not working |
+| **[Getting Help](docs/GETTING_HELP.md)** | Bug reports, support requests, diagnostics |
+| **[Connection Guide](docs/CONNECTION_GUIDE.md)** | ESPHome proxy setup, finding your bed's address |
 | **[Supported Actuators](docs/SUPPORTED_ACTUATORS.md)** | Protocol details, bed brand lookup |
 
 <details>

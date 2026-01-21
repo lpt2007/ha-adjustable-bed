@@ -419,7 +419,7 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
             service_info.address,
             service_info.name,
         )
-        return BED_TYPE_KEESON
+        return BED_TYPE_SERTA
 
     # Check for Octo by name pattern (e.g., DA1458x BLE chip used in some receivers)
     if any(device_name.startswith(pattern) for pattern in OCTO_NAME_PATTERNS):
@@ -445,11 +445,11 @@ def detect_bed_type(service_info: BluetoothServiceInfoBleak) -> str | None:
         # Check for Serta name patterns (uses Keeson protocol with serta variant)
         if any(pattern in device_name for pattern in SERTA_NAME_PATTERNS):
             _LOGGER.info(
-                "Detected Serta bed at %s (name: %s) - uses Keeson protocol",
+                "Detected Serta bed at %s (name: %s) - uses Keeson protocol with serta variant",
                 service_info.address,
                 service_info.name,
             )
-            return BED_TYPE_KEESON
+            return BED_TYPE_SERTA
         # Check for OKIN FFE name patterns (0xE6 prefix variant)
         if any(pattern in device_name for pattern in OKIN_FFE_NAME_PATTERNS):
             _LOGGER.info(

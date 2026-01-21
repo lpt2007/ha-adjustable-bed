@@ -22,8 +22,10 @@ from .const import (
     BEDS_WITH_POSITION_FEEDBACK,
     CONF_BED_TYPE,
     CONF_MOTOR_COUNT,
+    CONF_PROTOCOL_VARIANT,
     DEFAULT_MOTOR_COUNT,
     DOMAIN,
+    KEESON_VARIANT_ERGOMOTION,
 )
 from .coordinator import AdjustableBedCoordinator
 from .entity import AdjustableBedEntity
@@ -140,11 +142,19 @@ async def async_setup_entry(
         )
         return
 
+    # Check if bed supports position feedback
+    # Special case: BED_TYPE_KEESON only supports position feedback with ergomotion variant
+    protocol_variant = entry.data.get(CONF_PROTOCOL_VARIANT)
+    has_position_feedback = bed_type in BEDS_WITH_POSITION_FEEDBACK or (
+        bed_type == BED_TYPE_KEESON and protocol_variant == KEESON_VARIANT_ERGOMOTION
+    )
+
     # Skip number entities for beds without position feedback
-    if bed_type not in BEDS_WITH_POSITION_FEEDBACK:
+    if not has_position_feedback:
         _LOGGER.debug(
-            "Bed type %s does not support position feedback, skipping position number entities",
+            "Bed type %s (variant=%s) does not support position feedback, skipping position number entities",
             bed_type,
+            protocol_variant,
         )
         return
 

@@ -60,6 +60,11 @@ class DiagnosticBedController(BedController):
         """Return False - no presets for diagnostic devices."""
         return False
 
+    @property
+    def supports_stop_all(self) -> bool:
+        """Return False - no motor control means no stop button needed."""
+        return False
+
     async def write_command(
         self,
         command: bytes,

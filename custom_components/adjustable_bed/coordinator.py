@@ -1149,13 +1149,14 @@ class AdjustableBedCoordinator:
                 _LOGGER.debug("Controller command cancelled while waiting for lock")
                 # Handle disconnect timer since we're bailing out without executing
                 if self._client is not None and self._client.is_connected:
-                    if self._disconnect_after_command:
-                        # Configured to disconnect after commands - disconnect now since
-                        # no command was executed (avoids leaving connection open indefinitely)
+                    if self._disconnect_after_command and not skip_disconnect:
+                        # Configured to disconnect after commands and not a keep-alive command -
+                        # disconnect now since no command was executed (avoids leaving connection open)
                         _LOGGER.debug("Disconnecting after cancelled command (disconnect_after_command=True)")
                         await self.async_disconnect()
                     else:
-                        # Not configured for immediate disconnect - reset idle timer
+                        # Not configured for immediate disconnect or skip_disconnect is True
+                        # (e.g., keep-alive commands) - reset idle timer instead
                         self._reset_disconnect_timer()
                 return
 

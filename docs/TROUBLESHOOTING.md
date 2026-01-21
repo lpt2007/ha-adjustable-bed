@@ -10,8 +10,8 @@ This guide covers common issues and their solutions when using the Adjustable Be
 - [Physical Remote Conflicts](#physical-remote-conflicts)
 - [Protocol/Variant Issues](#protocolvariant-issues)
 - [Pairing Required (Okimat/Leggett Okin)](#pairing-required-okimatleggett-okin)
-- [Getting Help](#getting-help)
 - [Quick Reference: Service UUIDs](#quick-reference-service-uuids)
+- [Still Need Help?](#still-need-help)
 
 ---
 
@@ -250,70 +250,6 @@ Some beds require Bluetooth pairing before they can be controlled.
 
 ---
 
-## Getting Help
-
-### Quick Method: Generate Support Report
-
-The easiest way to collect all the information needed for a bug report:
-
-1. **Go to Developer Tools → Services** in Home Assistant
-2. **Search for** `adjustable_bed.generate_support_report`
-3. **Select your bed device** and click "Call Service"
-4. **A notification will appear** with the file location (in your `/config/` folder)
-5. **Attach this file** to your GitHub issue
-
-The support report includes:
-- System info (HA version, Python version)
-- Integration configuration
-- Connection status and BLE info
-- Recent logs (if available)
-- All sensitive data (MAC addresses, names, PINs) is automatically redacted
-
-### Manual Method: Download Diagnostics
-
-If you prefer to gather information manually:
-
-1. **Download diagnostics:**
-   - Settings → Integrations → Adjustable Bed → ⋮ → Download diagnostics
-   - This includes config and connection info (MAC address is redacted)
-
-2. **Check logs:** Look at Home Assistant logs for error messages
-   - Settings → System → Logs → Filter by "adjustable_bed"
-   - **Tip:** If your bed isn't responding, the integration will log all discovered GATT services at INFO level.
-
-3. **Enable debug logging** for detailed information:
-
-   ```yaml
-   logger:
-     logs:
-       custom_components.adjustable_bed: debug
-   ```
-
-4. **Test with BLE scanner:**
-   - Use an app like "nRF Connect" to verify your bed is advertising
-   - Note the service UUIDs - these help identify the correct bed type
-
-### Submitting a Bug Report
-
-1. **Go to:** [GitHub Issues - Bug Report](https://github.com/kristofferR/ha-adjustable-bed/issues/new?template=bug-report.yml)
-
-2. **Fill out the form** with:
-   - Description of the problem
-   - Steps to reproduce
-   - Your bed type and HA version
-
-3. **Attach the diagnostics file** (from either method above)
-
-4. **Include relevant log entries** if you have them
-
-### Where to Get Help
-
-- **Bug Reports:** [GitHub Issues](https://github.com/kristofferR/ha-adjustable-bed/issues/new?template=bug-report.yml)
-- **New Bed Requests:** [Request New Bed Support](https://github.com/kristofferR/ha-adjustable-bed/issues/new?template=new-bed-support.yml)
-- **Home Assistant Community:** Search for "adjustable bed" discussions
-
----
-
 ## Quick Reference: Service UUIDs
 
 Use these to identify your bed type in a BLE scanner:
@@ -330,3 +266,14 @@ Use these to identify your bed type in a BLE scanner:
 | `62741523-52f9-8864-b1ab-3b3a8d65950b` | Okimat / Leggett Okin |
 | `1b1d9641-b942-4da8-89cc-98e6a58fbd93` | Reverie |
 | `8ebd4f76-da9d-4b5a-a96e-8ebfbeb622e7` | Richmat WiLinke |
+
+---
+
+## Still Need Help?
+
+If you've tried the troubleshooting steps above and still have issues, see the **[Getting Help Guide](GETTING_HELP.md)** for:
+
+- How to generate a support report with all the info we need
+- Filing a bug report on GitHub
+- Requesting support for a new bed
+- Capturing BLE protocol data for debugging

@@ -832,9 +832,12 @@ ALL_PROTOCOL_VARIANTS: Final = [
 # These beds use encrypted connections and must be paired at the OS level
 BEDS_REQUIRING_PAIRING: Final[set[str]] = {BED_TYPE_OKIN_UUID, BED_TYPE_LEGGETT_OKIN, BED_TYPE_OKIMAT}
 
-# Protocol variants that require BLE pairing (for bed types with variants like leggett_platt)
-# When a bed type has a variant that uses the Okin protocol, it also requires pairing
-PROTOCOL_VARIANTS_REQUIRING_PAIRING: Final[set[str]] = {"okin"}
+# Bed type + variant combinations that require BLE pairing
+# Maps bed type to set of variants that require pairing for that specific bed type
+# Note: Keeson's "okin" variant (OKIN FFE) does NOT require pairing - it's a different protocol
+BED_TYPE_VARIANTS_REQUIRING_PAIRING: Final[dict[str, set[str]]] = {
+    BED_TYPE_LEGGETT_PLATT: {LEGGETT_VARIANT_OKIN},
+}
 
 
 def requires_pairing(bed_type: str, protocol_variant: str | None = None) -> bool:
@@ -850,9 +853,10 @@ def requires_pairing(bed_type: str, protocol_variant: str | None = None) -> bool
     # Direct bed type match
     if bed_type in BEDS_REQUIRING_PAIRING:
         return True
-    # Check protocol variant for beds with multiple protocols
-    if protocol_variant and protocol_variant in PROTOCOL_VARIANTS_REQUIRING_PAIRING:
-        return True
+    # Check if this specific bed type + variant combination requires pairing
+    if protocol_variant and bed_type in BED_TYPE_VARIANTS_REQUIRING_PAIRING:
+        if protocol_variant in BED_TYPE_VARIANTS_REQUIRING_PAIRING[bed_type]:
+            return True
     return False
 
 # Bed types that support angle sensing (position feedback)
@@ -868,6 +872,8 @@ BEDS_WITH_ANGLE_SENSING: Final = frozenset(
 
 # Bed types that support position feedback (for Number entities with position seeking)
 # Includes all angle sensing beds plus beds that report percentage positions
+# Note: BED_TYPE_KEESON is NOT included here because only the ergomotion variant supports
+# position feedback - this is handled specially in number.py with variant checking
 BEDS_WITH_POSITION_FEEDBACK: Final = frozenset(
     {
         BED_TYPE_LINAK,
@@ -875,7 +881,6 @@ BEDS_WITH_POSITION_FEEDBACK: Final = frozenset(
         BED_TYPE_OKIN_UUID,  # Same protocol as Okimat
         BED_TYPE_REVERIE,
         BED_TYPE_REVERIE_NIGHTSTAND,
-        BED_TYPE_KEESON,
         BED_TYPE_ERGOMOTION,
     }
 )

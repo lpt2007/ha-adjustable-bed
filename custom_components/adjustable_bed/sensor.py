@@ -17,8 +17,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    BED_TYPE_ERGOMOTION,
-    BED_TYPE_KEESON,
+    BEDS_WITH_PERCENTAGE_POSITIONS,
     CONF_BED_TYPE,
     CONF_MOTOR_COUNT,
     DEFAULT_MOTOR_COUNT,
@@ -101,8 +100,8 @@ async def async_setup_entry(
         return
 
     # Skip angle sensors for beds that report percentage instead of angles
-    # (Keeson/Ergomotion report 0-100% position, not degrees)
-    if bed_type in (BED_TYPE_KEESON, BED_TYPE_ERGOMOTION):
+    # (Keeson/Ergomotion/Serta report 0-100% position, not degrees)
+    if bed_type in BEDS_WITH_PERCENTAGE_POSITIONS:
         _LOGGER.debug("Skipping angle sensors for %s - reports percentage, not angle", bed_type)
         return
 

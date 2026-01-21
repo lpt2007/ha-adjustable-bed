@@ -8,14 +8,16 @@ body:
       value: |
         Thanks for taking the time to request support for a new bed! The information you provide helps us implement the protocol correctly.
 
-        **Before submitting:** Check the [Supported Actuators guide](https://github.com/kristofferR/ha-adjustable-bed/blob/master/docs/SUPPORTED_ACTUATORS.md) to see if your bed might already be supported under a different actuator brand name.
+        **Before submitting:**
+        - Check the [Supported Actuators guide](https://github.com/kristofferR/ha-adjustable-bed/blob/master/docs/SUPPORTED_ACTUATORS.md) to see if your bed might already be supported under a different actuator brand name
+        - See the [Getting Help Guide](https://github.com/kristofferR/ha-adjustable-bed/blob/master/docs/GETTING_HELP.md#requesting-support-for-a-new-bed) for more details
 
   - type: input
     id: manufacturer
     attributes:
       label: Bed Manufacturer/Brand
-      description: The brand name of your bed (e.g., Tempur-Pedic, Sleep Number, Nectar)
-      placeholder: "e.g., Tempur-Pedic"
+      description: The brand name of your bed
+      placeholder: "e.g., Tempur-Pedic, Sleep Number, Nectar"
     validations:
       required: true
 
@@ -29,49 +31,38 @@ body:
       required: true
 
   - type: input
-    id: remote_model
+    id: mobile_app
     attributes:
-      label: Remote Control Model Number
-      description: Check the back of your remote for a model number
-      placeholder: "e.g., RF TOPLINE 82417"
+      label: Official Mobile App
+      description: The name of the app you use to control your bed (check your app store)
+      placeholder: "e.g., Tempur Ergo, Sleeptracker, Sven & Son, Reverie"
     validations:
       required: false
 
   - type: input
-    id: bluetooth_name
+    id: remote_model
     attributes:
-      label: Bluetooth Device Name
-      description: |
-        The name shown when scanning with a BLE app like nRF Connect.
-        Tip: Look for names containing your bed brand, "Desk", "HHC", "Base", etc.
-      placeholder: "e.g., Desk 12345, HHC-BLE, base-i5.00000123"
-    validations:
-      required: true
-
-  - type: textarea
-    id: service_uuids
-    attributes:
-      label: BLE Service UUIDs
-      description: |
-        List the service UUIDs shown in nRF Connect when connected to your bed.
-        These help identify which protocol family your bed uses.
-      placeholder: |
-        e.g.,
-        - 0000ffe0-0000-1000-8000-00805f9b34fb
-        - 6e400001-b5a3-f393-e0a9-e50e24dcca9e
-    validations:
-      required: true
-
-  - type: textarea
-    id: manufacturer_data
-    attributes:
-      label: Manufacturer Data (if available)
-      description: |
-        From nRF Connect, check the "Advertising" or "Scanner" tab for manufacturer-specific data.
-        This is optional but can help with detection.
-      placeholder: "e.g., 0x4C00 02 15 ..."
+      label: Remote Control Model Number
+      description: Check the back of your remote for a model number (optional but helpful)
+      placeholder: "e.g., RF TOPLINE 82417"
     validations:
       required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic Report
+      description: |
+        **To generate a diagnostic report:**
+        1. Add your bed to Home Assistant using "Diagnostic/Unknown" as the bed type
+        2. Go to Developer Tools → Services
+        3. Call `adjustable_bed.generate_support_report` for your bed
+        4. Attach the generated JSON file here
+
+        This report contains all the BLE information we need (service UUIDs, device name, etc.) and is the easiest way to provide technical details.
+      placeholder: "Drag and drop the support report JSON file here"
+    validations:
+      required: true
 
   - type: textarea
     id: photos
@@ -94,12 +85,10 @@ body:
       label: Additional Information
       description: |
         Any other helpful details:
-        - Does the bed have an official mobile app? (name it)
-        - Does the app require cloud login or work locally?
+        - Does the app require cloud login or work locally via Bluetooth?
         - Any special pairing requirements?
-        - What features does your bed have? (massage, lights, presets, etc.)
-      placeholder: |
-        e.g., Uses the "Smart Bed" app from App Store, requires Bluetooth pairing, has 4 memory presets and massage
+        - Does the bed work with voice assistants (Alexa, Google)?
+      placeholder: "e.g., App works via Bluetooth only, no cloud required"
     validations:
       required: false
 
@@ -110,5 +99,4 @@ body:
       description: Let us know if you can help test an implementation
       options:
         - label: I can test beta implementations on my bed
-        - label: I have access to BLE sniffing tools (nRF Connect, Wireshark, etc.)
-        - label: I can capture BLE traffic from the official app
+        - label: I have access to BLE debugging tools (nRF Connect, Wireshark, etc.)
