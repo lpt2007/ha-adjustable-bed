@@ -29,6 +29,36 @@
 - **Position Feedback** - See current angles on supported beds
 - **Automations** - "Flat when leaving", "TV mode at 8pm", etc.
 
+## Need Help?
+
+| Guide | What's Inside |
+|-------|---------------|
+| **[Troubleshooting](docs/TROUBLESHOOTING.md)** | Connection issues, commands not working |
+| **[Getting Help](docs/GETTING_HELP.md)** | Bug reports, support requests, diagnostics |
+| **[Connection Guide](docs/CONNECTION_GUIDE.md)** | ESPHome proxy setup, finding your bed's address |
+| **[Supported Actuators](docs/SUPPORTED_ACTUATORS.md)** | Protocol details, bed brand lookup |
+
+| | |
+|---|---|
+| 💬 **[Ask a Question](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a)** | Get help from the community |
+| 💡 **[Suggest an Idea](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=ideas)** | Feature requests and improvements |
+| ❤️ **[Praise and Feedback](https://github.com/kristofferR/ha-adjustable-bed/discussions/131)** | Share your experience or say thanks |
+
+<details>
+<summary><b>Quick troubleshooting</b></summary>
+
+1. **Check range** - Bluetooth adapter or proxy within ~10m of bed
+2. **Disconnect other apps** - Most beds allow only one BLE connection
+3. **Reload integration** - Settings → Devices & Services → Adjustable Bed → Reload
+4. **Enable debug logs** - Add to `configuration.yaml`:
+   ```yaml
+   logger:
+     logs:
+       custom_components.adjustable_bed: debug
+   ```
+
+</details>
+
 ## Supported Beds
 
 The names below refer to motor/actuator manufacturers. Your bed might use one of these internally - check the [Supported Actuators guide](docs/SUPPORTED_ACTUATORS.md) to find your bed brand.
@@ -111,36 +141,6 @@ Works with Home Assistant's native Bluetooth:
 - **[ESPHome Bluetooth Proxy](https://esphome.io/components/bluetooth_proxy.html)** for extended range
 
 See the [Connection Guide](docs/CONNECTION_GUIDE.md) for setup help.
-
-## Need Help?
-
-| Guide | What's Inside |
-|-------|---------------|
-| **[Troubleshooting](docs/TROUBLESHOOTING.md)** | Connection issues, commands not working |
-| **[Getting Help](docs/GETTING_HELP.md)** | Bug reports, support requests, diagnostics |
-| **[Connection Guide](docs/CONNECTION_GUIDE.md)** | ESPHome proxy setup, finding your bed's address |
-| **[Supported Actuators](docs/SUPPORTED_ACTUATORS.md)** | Protocol details, bed brand lookup |
-
-| | |
-|---|---|
-| 💬 **[Ask a Question](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=q-a)** | Get help from the community |
-| 💡 **[Suggest an Idea](https://github.com/kristofferR/ha-adjustable-bed/discussions/new?category=ideas)** | Feature requests and improvements |
-| ❤️ **[Praise and Feedback](https://github.com/kristofferR/ha-adjustable-bed/discussions/131)** | Share your experience or say thanks |
-
-<details>
-<summary><b>Quick troubleshooting</b></summary>
-
-1. **Check range** - Bluetooth adapter or proxy within ~10m of bed
-2. **Disconnect other apps** - Most beds allow only one BLE connection
-3. **Reload integration** - Settings → Devices & Services → Adjustable Bed → Reload
-4. **Enable debug logs** - Add to `configuration.yaml`:
-   ```yaml
-   logger:
-     logs:
-       custom_components.adjustable_bed: debug
-   ```
-
-</details>
 
 ## Contributing
 
