@@ -14,7 +14,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | Nectar Adjustable | (no longer available) |
+| ⬜ | Nectar Adjustable | (no longer available) |
 
 ## Features
 

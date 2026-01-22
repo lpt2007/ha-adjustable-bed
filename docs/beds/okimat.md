@@ -13,8 +13,10 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | Okin Smart Remote | `com.okin.smartremote` |
-| ❌ | [Lucid Smart Base](https://play.google.com/store/apps/details?id=com.lucidmattress.android) | `com.lucidmattress.android` |
+| ✅ | OKIN ComfortBed II-N | `com.ore.jalon.neworebeding` |
+| ✅ | OKIN Comfort Bed | `com.ore.okincomfortbed` |
+| ⬜ | OKIN Smart Bed | `com.okin.bedding.smartbedwifi` |
+| ⬜ | Adjustable bed | `com.okin.bedding.adjustbed` |
 
 ## Features
 

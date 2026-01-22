@@ -14,7 +14,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [LP Adjustable Bed Control](https://play.google.com/store/apps/details?id=com.leggettandplatt.wirelessremote) | `com.leggettandplatt.wirelessremote` |
+| ⬜ | L&P Adjustable Base | `com.richmat.lp2` |
 
 ## Features
 

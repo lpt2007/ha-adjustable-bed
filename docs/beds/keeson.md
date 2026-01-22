@@ -29,10 +29,11 @@ Brands using Keeson/Ergomotion actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Ergomotion](https://play.google.com/store/apps/details?id=com.ergomotion.ergomotion) | `com.ergomotion.ergomotion` |
-| ❌ | [Serta Sleep](https://play.google.com/store/apps/details?id=com.smarthome.serta) | `com.smarthome.serta` |
-| ❌ | [Purple Smart Base](https://play.google.com/store/apps/details?id=com.purple.purplepowerbase) | `com.purple.purplepowerbase` |
-| ❌ | [SomosBeds](https://play.google.com/store/apps/details?id=com.somosbeds) | `com.somosbeds` |
+| ✅ | Ergomotion 4.0 | `com.sfd.hump` |
+| ✅ | Tempur Zero G Bed Base | `com.sfd.row` |
+| ✅ | Member's Mark Base Remote | (Keeson) |
+| ⬜ | Ergo Power Command | `com.keeson.ergopowercommand` |
+| ⬜ | Ergomotion | `com.sfd.ergomotion` |
 
 ## Features
 

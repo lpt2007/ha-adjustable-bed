@@ -18,7 +18,7 @@ Brands using Jiecang actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Jiecang Smart](https://play.google.com/store/apps/details?id=com.jiecang.android) | `com.jiecang.android` |
+| ✅ | Jiecang Bed / Comfort Motion | `com.jiecang.app.android.jiecangbed` |
 
 ## Features
 

@@ -13,7 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [MotoSleep](https://play.google.com/store/apps/details?id=com.motosleep.app) | `com.motosleep.app` |
+| ✅ | Power Bob for Adjustable Bed | `com.HHC.PowerBob` |
 
 ## Features
 | Feature | Supported |

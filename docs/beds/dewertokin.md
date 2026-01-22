@@ -40,7 +40,11 @@ Brands using DewertOkin actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | Okin Smart Remote | `com.okin.smartremote` |
+| ✅ | MFRM Sleepy's Elite | `com.okin.bedding.sleepy` |
+| ✅ | Resident Adjustable Base | `com.okin.resident.release` |
+| ⬜ | Resident Adjustable Bed | `com.okin.bedding.rizeResident` |
+| ⬜ | Smart Comfort by Synergy | `com.synergy.okin` |
+| ⬜ | INNOVA | `com.ore.sfm` |
 
 ## Features
 

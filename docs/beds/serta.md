@@ -12,7 +12,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Serta Sleep](https://play.google.com/store/apps/details?id=com.smarthome.serta) | `com.smarthome.serta` |
+| ✅ | Serta MP Remote | `com.ore.serta330` |
 
 ## Features
 

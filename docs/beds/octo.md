@@ -13,7 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Octo Control](https://play.google.com/store/apps/details?id=nl.octocontrol.octocontrol) | `nl.octocontrol.octocontrol` |
+| ✅ | OCTO Smart Control | `de.octoactuators.octosmartcontrolapp` |
 
 ## PIN Configuration
 

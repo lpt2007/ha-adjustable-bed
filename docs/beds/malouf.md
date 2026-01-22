@@ -13,7 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ✅ | [Malouf Base](https://play.google.com/store/apps/details?id=com.malouf.maloufbase) | `com.malouf.maloufbase` |
+| ✅ | Malouf Base | `com.malouf.bedbase` |
 
 ## Features
 

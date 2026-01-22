@@ -13,7 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Reverie Nightstand](https://play.google.com/store/apps/details?id=com.reverie.nightstand) | `com.reverie.nightstand` |
+| ✅ | Reverie Nightstand | `com.reverie.reverie` |
 
 ## Features
 

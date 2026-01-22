@@ -42,10 +42,11 @@ Brands using Richmat actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [L&P Adjustable Base](https://play.google.com/store/apps/details?id=app.vxhome.lp) | `app.vxhome.lp` |
-| ❌ | [Richmat Smart](https://play.google.com/store/apps/details?id=com.richmat.smartbed) | `com.richmat.smartbed` |
-| ❌ | [Casper Base](https://play.google.com/store/apps/details?id=com.casper.base) | `com.casper.base` |
-| ❌ | [Saatva](https://play.google.com/store/apps/details?id=com.saatva.app) | `com.saatva.app` |
+| ✅ | RMControl | `com.richmat.rmcontrol2` |
+| ✅ | SleepFunction Bed Control | `com.richmat.sleepfunction` |
+| ✅ | BedTech | `com.bedtech` |
+| ⬜ | L&P Adjustable Base | `com.richmat.lp2` |
+| ⬜ | SVEN & SON | `com.richmat.svenson` |
 
 ## Features
 

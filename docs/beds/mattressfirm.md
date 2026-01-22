@@ -12,7 +12,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | M900 | (no longer available) |
+| ⬜ | Mattress Firm 900 - O | `com.okin.bedding.rizemf900` |
 
 ## Features
 

@@ -16,7 +16,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ❌ | [Linak Bed Control](https://play.google.com/store/apps/details?id=com.linak.bedcontrol) | `com.linak.bedcontrol` |
+| ⬜ | Linak Bed Control | `com.linak.bedcontrol` |
 
 ## Features
 | Feature | Supported |
