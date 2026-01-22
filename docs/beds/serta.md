@@ -12,7 +12,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ✅ | Serta MP Remote | `com.ore.serta330` |
+| ✅ | [Serta MP Remote](https://play.google.com/store/apps/details?id=com.ore.serta330) | `com.ore.serta330` |
 
 ## Features
 

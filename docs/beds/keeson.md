@@ -29,11 +29,11 @@ Brands using Keeson/Ergomotion actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ✅ | Ergomotion 4.0 | `com.sfd.hump` |
-| ✅ | Tempur Zero G Bed Base | `com.sfd.row` |
+| ✅ | [Ergomotion 4.0](https://play.google.com/store/apps/details?id=com.sfd.hump) | `com.sfd.hump` |
+| ✅ | [Tempur Zero G Bed Base](https://play.google.com/store/apps/details?id=com.sfd.row) | `com.sfd.row` |
 | ✅ | Member's Mark Base Remote | (Keeson) |
-| ⬜ | Ergo Power Command | `com.keeson.ergopowercommand` |
-| ⬜ | Ergomotion | `com.sfd.ergomotion` |
+| ⬜ | [Ergo Power Command](https://play.google.com/store/apps/details?id=com.keeson.ergopowercommand) | `com.keeson.ergopowercommand` |
+| ⬜ | [Ergomotion](https://play.google.com/store/apps/details?id=com.sfd.ergomotion) | `com.sfd.ergomotion` |
 
 ## Features
 

@@ -13,7 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ✅ | Power Bob for Adjustable Bed | `com.HHC.PowerBob` |
+| ✅ | [Power Bob for Adjustable Bed](https://play.google.com/store/apps/details?id=com.HHC.PowerBob) | `com.HHC.PowerBob` |
 
 ## Features
 | Feature | Supported |
