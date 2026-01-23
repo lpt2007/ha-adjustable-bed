@@ -111,6 +111,9 @@ class JensenController(BedController):
         self._notify_callback: Callable[[str, float], None] | None = None
         self._features: JensenFeatureFlags = JensenFeatureFlags.NONE
         self._config_loaded: bool = False
+        # Config query state (used by query_config and _handle_notification)
+        self._config_received: asyncio.Event | None = None
+        self._config_data: bytes | None = None
         # Note: Light and massage state is tracked locally. It may become out of sync
         # if the bed is controlled via remote or the app, or after HA restarts.
         # The Jensen protocol does not support querying actual state.
@@ -183,6 +186,10 @@ class JensenController(BedController):
 
         Sends CONFIG_READ_ALL command and parses the response to
         determine which optional features the bed supports.
+
+        Note: This method uses the main notification handler (_handle_notification)
+        rather than starting its own, to avoid interfering with position notifications
+        that may already be active.
         """
         if self._config_loaded:
             _LOGGER.debug("Jensen config already loaded, skipping query")
@@ -194,28 +201,19 @@ class JensenController(BedController):
 
         _LOGGER.debug("Querying Jensen bed configuration...")
 
-        # Set up notification handler to receive config response
-        config_received = asyncio.Event()
-        config_data: list[bytes] = []
-
-        def notification_handler(sender: int, data: bytearray) -> None:
-            """Handle config notification."""
-            _LOGGER.debug("Received config notification: %s", data.hex())
-            config_data.append(bytes(data))
-            config_received.set()
+        # Set up event to wait for config response via _handle_notification
+        self._config_received = asyncio.Event()
+        self._config_data: bytes | None = None
 
         try:
-            # Subscribe to notifications
-            await self.client.start_notify(JENSEN_CHAR_UUID, notification_handler)
-
-            # Send config read command
+            # Send config read command - response comes via existing notification handler
             await self.client.write_gatt_char(
                 JENSEN_CHAR_UUID, JensenCommands.CONFIG_READ_ALL, response=True
             )
 
             # Wait for response (with timeout)
             try:
-                await asyncio.wait_for(config_received.wait(), timeout=5.0)
+                await asyncio.wait_for(self._config_received.wait(), timeout=5.0)
             except asyncio.TimeoutError:
                 _LOGGER.warning("Timeout waiting for config response, assuming full features")
                 # Default to all features enabled if we can't query
@@ -228,8 +226,8 @@ class JensenController(BedController):
                 return
 
             # Parse config response
-            if config_data:
-                data = config_data[0]
+            if self._config_data is not None:
+                data = self._config_data
                 if len(data) >= 3:
                     # Byte 2 contains feature flags (CONFIG2)
                     self._features = JensenFeatureFlags(data[2])
@@ -250,11 +248,9 @@ class JensenController(BedController):
             self._features = JensenFeatureFlags.NONE
         finally:
             self._config_loaded = True
-            # Always try to stop notifications
-            try:
-                await self.client.stop_notify(JENSEN_CHAR_UUID)
-            except (BleakError, AttributeError):
-                pass
+            # Clean up temporary attributes
+            self._config_received = None
+            self._config_data = None
 
     async def write_command(
         self,
@@ -357,8 +353,11 @@ class JensenController(BedController):
                 self._notify_callback("legs", foot_pct)
 
         elif cmd_type == 0x0A:
-            # Config response - handled separately in query_config
+            # Config response - signal query_config if waiting
             _LOGGER.debug("Jensen config notification: %s", data.hex())
+            if self._config_received is not None:
+                self._config_data = bytes(data)
+                self._config_received.set()
 
     async def start_notify(self, callback: Callable[[str, float], None]) -> None:
         """Start listening for position notifications."""

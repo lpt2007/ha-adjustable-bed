@@ -24,7 +24,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from bleak.exc import BleakError
 
@@ -122,6 +122,10 @@ class LeggettWilinkeController(BedController):
         super().__init__(coordinator)
         self._char_uuid = char_uuid or LEGGETT_RICHMAT_CHAR_UUID
         self._notify_callback: Callable[[str, float], None] | None = None
+
+        # Optimistic state tracking (no BLE feedback available)
+        # Timer mode: 0 = off, 10/20/30 = active timer
+        self._timer_mode: int = 0
 
         _LOGGER.debug(
             "LeggettWilinkeController initialized (char: %s)",
@@ -415,6 +419,7 @@ class LeggettWilinkeController(BedController):
     async def massage_off(self) -> None:
         """Turn off all massage."""
         await self.write_command(self._build_command(LeggettWilinkeCommands.MASSAGE_MOTOR_STOP))
+        self._timer_mode = 0  # Clear timer state
 
     async def massage_toggle(self) -> None:
         """Toggle massage (head motor)."""
@@ -473,17 +478,35 @@ class LeggettWilinkeController(BedController):
         if minutes == 0:
             # Turn off massage timer / stop massage
             await self.massage_off()
+            # Note: massage_off() already sets _timer_mode = 0
         elif minutes == 10:
             await self.write_command(
                 self._build_command(LeggettWilinkeCommands.MASSAGE_TIMER_10M)
             )
+            self._timer_mode = 10
         elif minutes == 20:
             await self.write_command(
                 self._build_command(LeggettWilinkeCommands.MASSAGE_TIMER_20M)
             )
+            self._timer_mode = 20
         elif minutes == 30:
             await self.write_command(
                 self._build_command(LeggettWilinkeCommands.MASSAGE_TIMER_30M)
             )
+            self._timer_mode = 30
         else:
             _LOGGER.warning("Invalid timer duration: %d (valid: 0, 10, 20, 30)", minutes)
+
+    def get_massage_state(self) -> dict[str, Any]:
+        """Return current massage state (optimistic tracking).
+
+        Since WiLinke beds don't provide BLE feedback, this returns
+        optimistically tracked state from commands sent by this controller.
+        Note: State may be out of sync if bed is controlled via physical remote.
+
+        Returns:
+            dict with timer_mode (int: 0, 10, 20, or 30)
+        """
+        return {
+            "timer_mode": str(self._timer_mode) if self._timer_mode > 0 else None,
+        }

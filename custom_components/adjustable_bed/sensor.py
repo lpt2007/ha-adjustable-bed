@@ -17,15 +17,16 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    BED_TYPE_ERGOMOTION,
+    BED_TYPE_KEESON,
     BEDS_WITH_PERCENTAGE_POSITIONS,
     CONF_BED_TYPE,
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
+    CONF_PROTOCOL_VARIANT,
     DEFAULT_MOTOR_COUNT,
     DOMAIN,
     KEESON_VARIANT_ERGOMOTION,
-    CONF_PROTOCOL_VARIANT,
-    BED_TYPE_KEESON,
 )
 from .coordinator import AdjustableBedCoordinator
 from .entity import AdjustableBedEntity
@@ -150,11 +151,12 @@ async def async_setup_entry(
         _LOGGER.debug("Angle sensing disabled, skipping angle sensor creation")
 
     # Set up massage state sensors (only for beds with massage and state feedback)
-    # Only Keeson/Ergomotion beds have state feedback via BLE notifications
+    # Keeson/Ergomotion beds have state feedback via BLE notifications
     if has_massage and controller is not None:
         protocol_variant = entry.data.get(CONF_PROTOCOL_VARIANT)
         has_massage_feedback = (
-            bed_type == BED_TYPE_KEESON and protocol_variant == KEESON_VARIANT_ERGOMOTION
+            bed_type == BED_TYPE_ERGOMOTION
+            or (bed_type == BED_TYPE_KEESON and protocol_variant == KEESON_VARIANT_ERGOMOTION)
         )
 
         if has_massage_feedback:

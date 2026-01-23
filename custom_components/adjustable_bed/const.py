@@ -1011,6 +1011,7 @@ BEDS_WITH_POSITION_FEEDBACK: Final = frozenset(
         BED_TYPE_REVERIE,
         BED_TYPE_REVERIE_NIGHTSTAND,
         BED_TYPE_ERGOMOTION,
+        BED_TYPE_JENSEN,
     }
 )
 
@@ -1021,6 +1022,7 @@ BEDS_WITH_PERCENTAGE_POSITIONS: Final = frozenset(
         BED_TYPE_KEESON,
         BED_TYPE_ERGOMOTION,
         BED_TYPE_SERTA,
+        BED_TYPE_JENSEN,
     }
 )
 
