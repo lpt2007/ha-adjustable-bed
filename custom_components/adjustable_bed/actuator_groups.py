@@ -9,6 +9,8 @@ from __future__ import annotations
 from typing import Final, TypedDict
 
 from .const import (
+    BED_TYPE_BEDTECH,
+    BED_TYPE_COMFORT_MOTION,
     BED_TYPE_ERGOMOTION,
     BED_TYPE_JENSEN,
     BED_TYPE_JIECANG,
@@ -21,6 +23,7 @@ from .const import (
     BED_TYPE_MALOUF_NEW_OKIN,
     BED_TYPE_MOTOSLEEP,
     BED_TYPE_OCTO,
+    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_7BYTE,
     BED_TYPE_OKIN_FFE,
     BED_TYPE_OKIN_HANDLE,
@@ -29,6 +32,8 @@ from .const import (
     BED_TYPE_REVERIE,
     BED_TYPE_REVERIE_NIGHTSTAND,
     BED_TYPE_RICHMAT,
+    BED_TYPE_SLEEPYS_BOX15,
+    BED_TYPE_SLEEPYS_BOX24,
     BED_TYPE_SOLACE,
     KEESON_VARIANT_BASE,
     KEESON_VARIANT_KSBT,
@@ -59,47 +64,32 @@ class ActuatorGroup(TypedDict):
     variants: list[ActuatorVariantWithProtocol] | None  # None = single protocol
 
 
+# Groups are in alphabetical order by key
 ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
-    "okin": {
-        "display": "Okin / DewertOkin",
-        "description": "Rize, Simmons, Nectar, Mattress Firm, Lucid beds",
-        "variants": [
-            {
-                "type": BED_TYPE_OKIN_HANDLE,
-                "label": "Standard (most common)",
-                "description": "DewertOkin, A H Beard, Rize, Simmons, Resident, Symphony",
-                "hint": "Device name often contains brand name or 'CB-'",
-            },
-            {
-                "type": BED_TYPE_OKIN_UUID,
-                "label": "Requires Bluetooth pairing",
-                "description": "Okimat, Lucid, CVB, Smartbed - must pair in phone settings first",
-                "hint": "Device name often starts with 'Okimat' or 'OKIN-'",
-            },
-            {
-                "type": BED_TYPE_OKIN_7BYTE,
-                "label": "Nectar beds",
-                "description": "Nectar Move and similar models",
-                "hint": "Device name contains 'Nectar'",
-            },
-            {
-                "type": BED_TYPE_OKIN_NORDIC,
-                "label": "Mattress Firm 900 / iFlex",
-                "description": "Uses Nordic UART protocol",
-                "hint": "Device name contains 'iFlex' or 'MF900'",
-            },
-            {
-                "type": BED_TYPE_OKIN_FFE,
-                "label": "OKIN 13/15 series",
-                "description": "Newer OKIN actuators with FFE5 service",
-                "hint": "Device name starts with 'OKIN', 'CB-', or 'CB.'",
-            },
-        ],
+    "bedtech": {
+        "display": "BedTech",
+        "description": "BedTech adjustable bases",
+        "variants": None,  # Single protocol
     },
-    "richmat": {
-        "display": "Richmat",
-        "description": "Casper, MLILY, Avocado, Jerome's, SVEN & SON, and 50+ brands",
-        "variants": None,  # Single protocol, variant detected automatically
+    "comfort_motion": {
+        "display": "Comfort Motion",
+        "description": "Comfort Motion, Lierda beds",
+        "variants": None,  # Single protocol
+    },
+    "ergomotion": {
+        "display": "Ergomotion",
+        "description": "Ergomotion, Serta Motion (not Motion Perfect), some Tempur-Pedic",
+        "variants": None,  # Single protocol
+    },
+    "jensen": {
+        "display": "Jensen",
+        "description": "Jensen JMC400, LinON Entry beds",
+        "variants": None,  # Single protocol
+    },
+    "jiecang": {
+        "display": "Jiecang",
+        "description": "Glideaway, Dream Motion beds",
+        "variants": None,  # Single protocol
     },
     "keeson": {
         "display": "Keeson",
@@ -157,15 +147,75 @@ ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
         "description": "Tempur-Pedic, Carpe Diem, Wonderland, Svane, high-end European beds",
         "variants": None,  # Single protocol
     },
-    "jensen": {
-        "display": "Jensen",
-        "description": "Jensen JMC400, LinON Entry beds",
+    "malouf": {
+        "display": "Malouf",
+        "description": "Malouf adjustable bases",
+        "variants": [
+            {
+                "type": BED_TYPE_MALOUF_NEW_OKIN,
+                "label": "New (Nordic UART)",
+                "description": "Newer Malouf bases",
+                "hint": "Device name contains 'Malouf' - try this first",
+            },
+            {
+                "type": BED_TYPE_MALOUF_LEGACY_OKIN,
+                "label": "Legacy (FFE5)",
+                "description": "Older Malouf bases",
+                "hint": "Try 'New' first, use this if it doesn't work",
+            },
+        ],
+    },
+    "motosleep": {
+        "display": "MotoSleep",
+        "description": "HHC branded beds",
         "variants": None,  # Single protocol
     },
-    "ergomotion": {
-        "display": "Ergomotion",
-        "description": "Ergomotion, Serta Motion (not Motion Perfect), some Tempur-Pedic",
+    "octo": {
+        "display": "Octo",
+        "description": "Octo beds (may require PIN)",
         "variants": None,  # Single protocol
+    },
+    "okin": {
+        "display": "Okin / DewertOkin",
+        "description": "Rize, Simmons, Nectar, Mattress Firm, Lucid beds",
+        "variants": [
+            {
+                "type": BED_TYPE_OKIN_HANDLE,
+                "label": "Standard (most common)",
+                "description": "DewertOkin, A H Beard, Rize, Simmons, Resident, Symphony",
+                "hint": "Device name often contains brand name or 'CB-'",
+            },
+            {
+                "type": BED_TYPE_OKIN_UUID,
+                "label": "Requires Bluetooth pairing",
+                "description": "Okimat, Lucid, CVB, Smartbed - must pair in phone settings first",
+                "hint": "Device name often starts with 'Okimat' or 'OKIN-'",
+            },
+            {
+                "type": BED_TYPE_OKIN_7BYTE,
+                "label": "Nectar beds",
+                "description": "Nectar Move and similar models",
+                "hint": "Device name contains 'Nectar'",
+            },
+            {
+                "type": BED_TYPE_OKIN_NORDIC,
+                "label": "Mattress Firm 900 / iFlex",
+                "description": "Uses Nordic UART protocol",
+                "hint": "Device name contains 'iFlex' or 'MF900'",
+            },
+            {
+                "type": BED_TYPE_OKIN_FFE,
+                "label": "OKIN 13/15 series",
+                "description": "Newer OKIN actuators with FFE5 service",
+                "hint": "Device name starts with 'OKIN', 'CB-', or 'CB.'",
+            },
+            {
+                "type": BED_TYPE_OKIN_64BIT,
+                "label": "64-bit protocol",
+                "description": "OKIN actuators using 10-byte 64-bit commands",
+                "hint": "Try other variants first, use this if they don't work",
+            },
+        ],
     },
     "reverie": {
         "display": "Reverie",
@@ -185,56 +235,48 @@ ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
             },
         ],
     },
+    "richmat": {
+        "display": "Richmat",
+        "description": "Casper, MLILY, Avocado, Jerome's, SVEN & SON, and 50+ brands",
+        "variants": None,  # Single protocol, variant detected automatically
+    },
+    "sleepys": {
+        "display": "Sleepy's",
+        "description": "Sleepy's Elite adjustable bases",
+        "variants": [
+            {
+                "type": BED_TYPE_SLEEPYS_BOX15,
+                "label": "BOX15 (9-byte)",
+                "description": "Sleepy's Elite with BOX15 protocol",
+                "hint": "Try this first if unsure",
+            },
+            {
+                "type": BED_TYPE_SLEEPYS_BOX24,
+                "label": "BOX24 (7-byte)",
+                "description": "Sleepy's Elite with BOX24 protocol",
+                "hint": "Try BOX15 first, use this if it doesn't work",
+            },
+        ],
+    },
     "solace": {
         "display": "Solace",
         "description": "Solace Sleep beds",
         "variants": None,  # Single protocol
     },
-    "motosleep": {
-        "display": "MotoSleep",
-        "description": "HHC branded beds",
-        "variants": None,  # Single protocol
-    },
-    "jiecang": {
-        "display": "Jiecang",
-        "description": "Glideaway, Dream Motion beds",
-        "variants": None,  # Single protocol
-    },
-    "octo": {
-        "display": "Octo",
-        "description": "Octo beds (may require PIN)",
-        "variants": None,  # Single protocol
-    },
-    "malouf": {
-        "display": "Malouf",
-        "description": "Malouf adjustable bases",
-        "variants": [
-            {
-                "type": BED_TYPE_MALOUF_NEW_OKIN,
-                "label": "New (Nordic UART)",
-                "description": "Newer Malouf bases",
-                "hint": "Device name contains 'Malouf' - try this first",
-            },
-            {
-                "type": BED_TYPE_MALOUF_LEGACY_OKIN,
-                "label": "Legacy (FFE5)",
-                "description": "Older Malouf bases",
-                "hint": "Try 'New' first, use this if it doesn't work",
-            },
-        ],
-    },
 }
 
 # Mapping from actuator group to single bed type (for groups without variants)
 SINGLE_TYPE_GROUPS: Final[dict[str, str]] = {
-    "richmat": BED_TYPE_RICHMAT,
-    "linak": BED_TYPE_LINAK,
-    "jensen": BED_TYPE_JENSEN,
+    "bedtech": BED_TYPE_BEDTECH,
+    "comfort_motion": BED_TYPE_COMFORT_MOTION,
     "ergomotion": BED_TYPE_ERGOMOTION,
-    "solace": BED_TYPE_SOLACE,
-    "motosleep": BED_TYPE_MOTOSLEEP,
+    "jensen": BED_TYPE_JENSEN,
     "jiecang": BED_TYPE_JIECANG,
+    "linak": BED_TYPE_LINAK,
+    "motosleep": BED_TYPE_MOTOSLEEP,
     "octo": BED_TYPE_OCTO,
+    "richmat": BED_TYPE_RICHMAT,
+    "solace": BED_TYPE_SOLACE,
 }
 
 
