@@ -10,6 +10,7 @@ from typing import Final, TypedDict
 
 from .const import (
     BED_TYPE_ERGOMOTION,
+    BED_TYPE_JENSEN,
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_GEN2,
@@ -153,7 +154,12 @@ ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
     },
     "linak": {
         "display": "Linak",
-        "description": "Tempur-Pedic, Jensen, Carpe Diem, Wonderland, Svane, high-end European beds",
+        "description": "Tempur-Pedic, Carpe Diem, Wonderland, Svane, high-end European beds",
+        "variants": None,  # Single protocol
+    },
+    "jensen": {
+        "display": "Jensen",
+        "description": "Jensen JMC400, LinON Entry beds",
         "variants": None,  # Single protocol
     },
     "ergomotion": {
@@ -223,6 +229,7 @@ ACTUATOR_GROUPS: Final[dict[str, ActuatorGroup]] = {
 SINGLE_TYPE_GROUPS: Final[dict[str, str]] = {
     "richmat": BED_TYPE_RICHMAT,
     "linak": BED_TYPE_LINAK,
+    "jensen": BED_TYPE_JENSEN,
     "ergomotion": BED_TYPE_ERGOMOTION,
     "solace": BED_TYPE_SOLACE,
     "motosleep": BED_TYPE_MOTOSLEEP,
