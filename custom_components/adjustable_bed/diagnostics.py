@@ -83,7 +83,11 @@ async def async_get_config_entry_diagnostics(
                 if service_info.service_uuids
                 else []
             ),
-            "manufacturer_data_keys": list(service_info.manufacturer_data.keys()),
+            "manufacturer_data_keys": (
+                list(service_info.manufacturer_data.keys())
+                if service_info.manufacturer_data
+                else []
+            ),
             "connectable": service_info.connectable,
         }
         if hasattr(service_info, "source"):

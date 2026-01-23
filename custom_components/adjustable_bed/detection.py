@@ -381,12 +381,16 @@ def detect_bed_type_detailed(service_info: BluetoothServiceInfoBleak) -> Detecti
         any(pattern in device_name for pattern in SLEEPYS_NAME_PATTERNS)
         and OKIMAT_SERVICE_UUID.lower() in service_uuids
     ):
+        signals.append("uuid:okin")
+        signals.append("name:sleepys")
         _LOGGER.info(
             "Detected Sleepy's Elite BOX24 bed at %s (name: %s)",
             service_info.address,
             service_info.name,
         )
-        return BED_TYPE_SLEEPYS_BOX24
+        return DetectionResult(
+            bed_type=BED_TYPE_SLEEPYS_BOX24, confidence=0.9, signals=signals
+        )
 
     # Check for Nectar - name-based detection (before Okimat since same UUID)
     # Nectar beds use OKIN service UUID but different command protocol
@@ -524,12 +528,16 @@ def detect_bed_type_detailed(service_info: BluetoothServiceInfoBleak) -> Detecti
         any(pattern in device_name for pattern in SLEEPYS_NAME_PATTERNS)
         and KEESON_BASE_SERVICE_UUID.lower() in service_uuids
     ):
+        signals.append("uuid:ffe5")
+        signals.append("name:sleepys")
         _LOGGER.info(
             "Detected Sleepy's Elite BOX15 bed at %s (name: %s)",
             service_info.address,
             service_info.name,
         )
-        return BED_TYPE_SLEEPYS_BOX15
+        return DetectionResult(
+            bed_type=BED_TYPE_SLEEPYS_BOX15, confidence=0.9, signals=signals
+        )
 
     # Check for Malouf LEGACY_OKIN - name pattern + FFE5 service (before Keeson)
     # Malouf LEGACY_OKIN uses FFE5 service UUID but different 9-byte command format

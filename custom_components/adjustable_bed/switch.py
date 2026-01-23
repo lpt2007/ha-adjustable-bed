@@ -82,14 +82,18 @@ class AdjustableBedSwitch(AdjustableBedEntity, SwitchEntity):
         self.entity_description = description
         self._attr_unique_id = f"{coordinator.address}_{description.key}"
         self._attr_is_on = False  # We don't have state feedback
+        # Cache discrete control capability at init (controller should exist at setup time)
+        # Default to False for toggle-only beds when controller disconnects
+        controller = coordinator.controller
+        self._supports_discrete_light_control = (
+            getattr(controller, "supports_discrete_light_control", True)
+            if controller is not None
+            else False
+        )
 
     def _supports_discrete_control(self) -> bool:
         """Check if controller supports discrete on/off (vs toggle-only)."""
-        controller = self._coordinator.controller
-        if controller is None:
-            return True  # Assume discrete control if no controller
-        # Default to True for controllers that don't define this property
-        return getattr(controller, "supports_discrete_light_control", True)
+        return self._supports_discrete_light_control
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""

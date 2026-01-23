@@ -24,6 +24,7 @@ from .const import (
     CONF_PROTOCOL_VARIANT,
     DEFAULT_MOTOR_COUNT,
     DOMAIN,
+    KEESON_VARIANT_ERGOMOTION,
     requires_pairing,
 )
 from .coordinator import AdjustableBedCoordinator
@@ -318,9 +319,15 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
             bed_type = entry.data.get(CONF_BED_TYPE)
             motor_count = entry.data.get(CONF_MOTOR_COUNT, DEFAULT_MOTOR_COUNT)
+            protocol_variant = entry.data.get(CONF_PROTOCOL_VARIANT)
 
             # Validate bed supports position feedback
-            if bed_type not in BEDS_WITH_POSITION_FEEDBACK:
+            # Special case: BED_TYPE_KEESON only supports position feedback with ergomotion variant
+            has_position_feedback = bed_type in BEDS_WITH_POSITION_FEEDBACK or (
+                bed_type == BED_TYPE_KEESON
+                and protocol_variant == KEESON_VARIANT_ERGOMOTION
+            )
+            if not has_position_feedback:
                 raise ServiceValidationError(
                     f"Device '{coordinator.name}' (type: {bed_type}) does not support position feedback",
                     translation_domain=DOMAIN,
