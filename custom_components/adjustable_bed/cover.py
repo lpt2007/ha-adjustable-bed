@@ -20,6 +20,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     BED_TYPE_ERGOMOTION,
     BED_TYPE_KEESON,
+    BED_TYPE_REVERIE,
+    BED_TYPE_REVERIE_NIGHTSTAND,
     BEDS_WITH_PERCENTAGE_POSITIONS,
     CONF_MOTOR_COUNT,
     DEFAULT_MOTOR_COUNT,
@@ -32,6 +34,10 @@ if TYPE_CHECKING:
     from .beds.base import BedController
 
 _LOGGER = logging.getLogger(__name__)
+
+# Bed-type-specific max angles for back/head motors
+# Reverie beds report position 0-100 which maps to 0-60 degrees (not 68)
+REVERIE_BACK_MAX_ANGLE = 60
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -241,6 +247,9 @@ async def async_setup_entry(
             entities.append(AdjustableBedCover(coordinator, descriptions_by_key["lumbar"]))
     else:
         # Standard bed motor layout (Back/Legs/Head/Feet)
+        # Check if bed type needs adjusted max angles
+        is_reverie = coordinator.bed_type in (BED_TYPE_REVERIE, BED_TYPE_REVERIE_NIGHTSTAND)
+
         for description in COVER_DESCRIPTIONS:
             # Skip tilt - only for Keeson/Ergomotion
             if description.key == "tilt":
@@ -254,7 +263,23 @@ async def async_setup_entry(
                 if controller is not None and controller.has_pillow_support:
                     entities.append(AdjustableBedCover(coordinator, description))
             elif motor_count >= description.min_motors:
-                entities.append(AdjustableBedCover(coordinator, description))
+                # For Reverie beds, adjust max_angle for back/head motors
+                if is_reverie and description.key in ("back", "head"):
+                    adjusted_desc = AdjustableBedCoverEntityDescription(
+                        key=description.key,
+                        translation_key=description.translation_key,
+                        icon=description.icon,
+                        device_class=description.device_class,
+                        open_fn=description.open_fn,
+                        close_fn=description.close_fn,
+                        stop_fn=description.stop_fn,
+                        min_motors=description.min_motors,
+                        position_key=description.position_key,
+                        max_angle=REVERIE_BACK_MAX_ANGLE,
+                    )
+                    entities.append(AdjustableBedCover(coordinator, adjusted_desc))
+                else:
+                    entities.append(AdjustableBedCover(coordinator, description))
 
     async_add_entities(entities)
 

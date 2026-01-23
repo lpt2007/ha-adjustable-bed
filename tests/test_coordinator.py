@@ -338,11 +338,16 @@ class TestMotorPulseConfiguration:
         hass: HomeAssistant,
         mock_config_entry,
     ):
-        """Test default motor pulse values are used when not configured."""
+        """Test default motor pulse values use bed-type-specific defaults.
+
+        Linak beds have specific defaults from BED_MOTOR_PULSE_DEFAULTS.
+        """
         coordinator = AdjustableBedCoordinator(hass, mock_config_entry)
 
-        assert coordinator.motor_pulse_count == DEFAULT_MOTOR_PULSE_COUNT
-        assert coordinator.motor_pulse_delay_ms == DEFAULT_MOTOR_PULSE_DELAY_MS
+        # Linak has specific defaults: (15, 100)
+        linak_defaults = BED_MOTOR_PULSE_DEFAULTS[BED_TYPE_LINAK]
+        assert coordinator.motor_pulse_count == linak_defaults[0]  # 15
+        assert coordinator.motor_pulse_delay_ms == linak_defaults[1]  # 100
 
     async def test_custom_motor_pulse_values(
         self,

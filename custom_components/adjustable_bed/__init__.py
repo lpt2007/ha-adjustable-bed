@@ -83,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def _maybe_create_pairing_issue() -> None:
         bed_type = entry.data.get(CONF_BED_TYPE)
         protocol_variant = entry.data.get(CONF_PROTOCOL_VARIANT)
-        if requires_pairing(bed_type, protocol_variant):
+        if bed_type and requires_pairing(bed_type, protocol_variant):
             await create_pairing_required_issue(
                 hass, entry.data.get(CONF_ADDRESS, "Unknown"), entry.data.get("name", entry.title)
             )
@@ -447,11 +447,11 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
             # Call async_seek_position
             await coordinator.async_seek_position(
-                position_key=config["position_key"],
+                position_key=cast(str, config["position_key"]),
                 target_angle=position,
-                move_up_fn=config["move_up_fn"],
-                move_down_fn=config["move_down_fn"],
-                move_stop_fn=config["move_stop_fn"],
+                move_up_fn=config["move_up_fn"],  # type: ignore[arg-type]
+                move_down_fn=config["move_down_fn"],  # type: ignore[arg-type]
+                move_stop_fn=config["move_stop_fn"],  # type: ignore[arg-type]
             )
 
     hass.services.async_register(

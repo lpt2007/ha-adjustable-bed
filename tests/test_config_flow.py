@@ -17,13 +17,16 @@ from custom_components.adjustable_bed.const import (
     BED_TYPE_ERGOMOTION,
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
+    BED_TYPE_LEGGETT_GEN2,
     BED_TYPE_LEGGETT_PLATT,
+    BED_TYPE_LEGGETT_WILINKE,
     BED_TYPE_LINAK,
     BED_TYPE_MOTOSLEEP,
     BED_TYPE_OCTO,
     BED_TYPE_OKIMAT,
     BED_TYPE_REVERIE,
     BED_TYPE_RICHMAT,
+    BED_TYPE_SERTA,
     BED_TYPE_SOLACE,
     CONF_BED_TYPE,
     CONF_DISABLE_ANGLE_SENSING,
@@ -75,7 +78,7 @@ class TestDetectBedType:
     def test_detect_leggett_platt_bed(self, mock_bluetooth_service_info_leggett):
         """Test detection of Leggett & Platt bed (Gen2)."""
         bed_type = detect_bed_type(mock_bluetooth_service_info_leggett)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT
+        assert bed_type == BED_TYPE_LEGGETT_GEN2
 
     def test_detect_reverie_bed(self, mock_bluetooth_service_info_reverie):
         """Test detection of Reverie bed."""
@@ -255,12 +258,12 @@ class TestDetectBedType:
         assert bed_type == BED_TYPE_DEWERTOKIN
 
     def test_detect_serta_bed(self, mock_bluetooth_service_info_serta):
-        """Test detection of Serta bed by name - routes to Keeson protocol."""
+        """Test detection of Serta bed by name - now returns BED_TYPE_SERTA."""
         bed_type = detect_bed_type(mock_bluetooth_service_info_serta)
-        assert bed_type == BED_TYPE_KEESON
+        assert bed_type == BED_TYPE_SERTA
 
     def test_detect_serta_motion_perfect_name(self):
-        """Test Serta detection with 'motion perfect' in name - routes to Keeson."""
+        """Test Serta detection with 'motion perfect' in name - returns BED_TYPE_SERTA."""
         service_info = MagicMock()
         service_info.name = "Motion Perfect III"
         service_info.address = "AA:BB:CC:DD:EE:FF"
@@ -268,7 +271,7 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        assert bed_type == BED_TYPE_KEESON
+        assert bed_type == BED_TYPE_SERTA
 
     def test_detect_octo_bed(self, mock_bluetooth_service_info_octo):
         """Test detection of Octo bed by name containing 'octo'."""
@@ -302,11 +305,10 @@ class TestDetectBedType:
     def test_detect_leggett_platt_mlrm_bed(self, mock_bluetooth_service_info_leggett_platt_richmat):
         """Test detection of Leggett & Platt MlRM variant bed (MlRM prefix).
 
-        MlRM beds are now detected as BED_TYPE_LEGGETT_PLATT; variant detection
-        happens at controller instantiation time.
+        MlRM beds are now detected as BED_TYPE_LEGGETT_WILINKE.
         """
         bed_type = detect_bed_type(mock_bluetooth_service_info_leggett_platt_richmat)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT
+        assert bed_type == BED_TYPE_LEGGETT_WILINKE
 
     def test_detect_leggett_platt_mlrm_case_insensitive(self):
         """Test L&P MlRM detection is case-insensitive (name is lowercased)."""
@@ -318,13 +320,13 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT
+        assert bed_type == BED_TYPE_LEGGETT_WILINKE
 
     def test_detect_leggett_mlrm_vs_generic_richmat(self):
         """Test L&P MlRM takes precedence over generic Richmat for mlrm prefix.
 
         Both L&P MlRM and generic Richmat use WiLinke UUIDs, but beds with
-        'mlrm' prefix should be detected as L&P (variant detection at controller time).
+        'mlrm' prefix should be detected as L&P.
         """
         # Same UUID as generic Richmat WiLinke, but with mlrm prefix
         service_info = MagicMock()
@@ -334,7 +336,7 @@ class TestDetectBedType:
         service_info.manufacturer_data = {}
 
         bed_type = detect_bed_type(service_info)
-        assert bed_type == BED_TYPE_LEGGETT_PLATT
+        assert bed_type == BED_TYPE_LEGGETT_WILINKE
 
         # Verify generic Richmat still works for non-mlrm names
         service_info.name = "Generic WiLinke Bed"

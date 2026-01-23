@@ -15,7 +15,6 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import (
-    BEDTECH_SERVICE_UUID,
     BEDTECH_WRITE_CHAR_UUID,
 )
 from .base import BedController

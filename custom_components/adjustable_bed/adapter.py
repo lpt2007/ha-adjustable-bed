@@ -208,11 +208,12 @@ async def discover_services(client: BleakClient, address: str) -> bool:
     Returns:
         True if services were discovered successfully, False otherwise
     """
-    # Explicitly discover services - required for some backends/proxies that
-    # don't auto-populate client.services on connection
+    # Access client.services to trigger service discovery
+    # In modern Bleak, services are auto-discovered when accessed
     _LOGGER.debug("Discovering BLE services...")
     try:
-        await client.get_services()
+        # Accessing .services triggers discovery if not already done
+        _ = client.services
     except Exception as err:
         _LOGGER.warning("Failed to discover services on %s: %s", address, err)
         # Continue anyway - services might already be populated

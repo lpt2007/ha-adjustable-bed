@@ -19,6 +19,7 @@ from homeassistant.config_entries import (
 )
 from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.helpers.selector import (
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -35,10 +36,10 @@ from .const import (
     ALL_PROTOCOL_VARIANTS,
     BED_MOTOR_PULSE_DEFAULTS,
     BED_TYPE_DIAGNOSTIC,
+    BED_TYPE_KEESON,
     BED_TYPE_OCTO,
     BED_TYPE_RICHMAT,
     BEDS_WITH_POSITION_FEEDBACK,
-    requires_pairing,
     CONF_BED_TYPE,
     CONF_DISABLE_ANGLE_SENSING,
     CONF_DISCONNECT_AFTER_COMMAND,
@@ -63,6 +64,7 @@ from .const import (
     DEFAULT_POSITION_MODE,
     DEFAULT_PROTOCOL_VARIANT,
     DOMAIN,
+    KEESON_VARIANT_ERGOMOTION,
     POSITION_MODE_ACCURACY,
     POSITION_MODE_SPEED,
     RICHMAT_REMOTE_AUTO,
@@ -71,6 +73,7 @@ from .const import (
     VARIANT_AUTO,
     get_richmat_features,
     get_richmat_motor_count,
+    requires_pairing,
 )
 from .detection import (
     BED_TYPE_DISPLAY_NAMES,
@@ -195,7 +198,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             protocol_variant = user_input.get(CONF_PROTOCOL_VARIANT, DEFAULT_PROTOCOL_VARIANT)
 
             # Validate protocol variant is valid for selected bed type
-            if not is_valid_variant_for_bed_type(selected_bed_type, protocol_variant):
+            if selected_bed_type and not is_valid_variant_for_bed_type(selected_bed_type, protocol_variant):
                 errors[CONF_PROTOCOL_VARIANT] = "invalid_variant_for_bed_type"
 
             # Get bed-specific defaults for motor pulse settings
@@ -287,7 +290,7 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     else:
                         entry_data[CONF_RICHMAT_REMOTE] = user_selected_remote
                 # If bed requires pairing, show pairing instructions
-                if requires_pairing(selected_bed_type, protocol_variant):
+                if selected_bed_type and requires_pairing(selected_bed_type, protocol_variant):
                     self._manual_data = entry_data
                     return await self.async_step_bluetooth_pairing()
                 return self.async_create_entry(
@@ -531,11 +534,11 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self.async_step_manual()
 
         # Build options for actuator brand selection
-        options = [
-            {
-                "value": key,
-                "label": f"{group['display']} - {group['description']}",
-            }
+        options: list[SelectOptionDict] = [
+            SelectOptionDict(
+                value=key,
+                label=f"{group['display']} - {group['description']}",
+            )
             for key, group in ACTUATOR_GROUPS.items()
         ]
 
@@ -570,11 +573,11 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_manual()
 
         # Build options for variant selection
-        options = [
-            {
-                "value": str(i),
-                "label": f"{v['label']} - {v['description']}",
-            }
+        options: list[SelectOptionDict] = [
+            SelectOptionDict(
+                value=str(i),
+                label=f"{v['label']} - {v['description']}",
+            )
             for i, v in enumerate(variants)
         ]
 
@@ -789,9 +792,14 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             }
 
-        # Determine smart defaults based on preselected bed type
+        # Determine smart defaults based on preselected bed type and variant
         if preselected_bed_type:
-            default_disable_angle = preselected_bed_type not in BEDS_WITH_POSITION_FEEDBACK
+            # Keeson with Ergomotion variant supports position feedback
+            has_position_feedback = preselected_bed_type in BEDS_WITH_POSITION_FEEDBACK or (
+                preselected_bed_type == BED_TYPE_KEESON
+                and preselected_protocol_variant == KEESON_VARIANT_ERGOMOTION
+            )
+            default_disable_angle = not has_position_feedback
             # Use bed-specific motor pulse defaults if available
             pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
                 preselected_bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
@@ -968,9 +976,14 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
             }
 
-        # Determine smart defaults based on preselected bed type
+        # Determine smart defaults based on preselected bed type and variant
         if preselected_bed_type:
-            default_disable_angle = preselected_bed_type not in BEDS_WITH_POSITION_FEEDBACK
+            # Keeson with Ergomotion variant supports position feedback
+            has_position_feedback = preselected_bed_type in BEDS_WITH_POSITION_FEEDBACK or (
+                preselected_bed_type == BED_TYPE_KEESON
+                and preselected_protocol_variant == KEESON_VARIANT_ERGOMOTION
+            )
+            default_disable_angle = not has_position_feedback
             # Use bed-specific motor pulse defaults if available
             pulse_defaults = BED_MOTOR_PULSE_DEFAULTS.get(
                 preselected_bed_type, (DEFAULT_MOTOR_PULSE_COUNT, DEFAULT_MOTOR_PULSE_DELAY_MS)
@@ -1175,8 +1188,8 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required("action"): SelectSelector(
                         SelectSelectorConfig(
                             options=[
-                                {"value": "pair_now", "label": "Pair Now"},
-                                {"value": "skip_pairing", "label": "Skip (already paired)"},
+                                SelectOptionDict(value="pair_now", label="Pair Now"),
+                                SelectOptionDict(value="skip_pairing", label="Skip (already paired)"),
                             ],
                             mode=SelectSelectorMode.LIST,
                         )
@@ -1236,8 +1249,8 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required("action"): SelectSelector(
                         SelectSelectorConfig(
                             options=[
-                                {"value": "pair_now", "label": "Pair Now"},
-                                {"value": "skip_pairing", "label": "Skip (already paired)"},
+                                SelectOptionDict(value="pair_now", label="Pair Now"),
+                                SelectOptionDict(value="skip_pairing", label="Skip (already paired)"),
                             ],
                             mode=SelectSelectorMode.LIST,
                         )

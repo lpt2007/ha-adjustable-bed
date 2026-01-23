@@ -27,8 +27,8 @@ from .const import (
     BED_TYPE_NECTAR,
     BED_TYPE_OCTO,
     BED_TYPE_OKIMAT,
-    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_7BYTE,
+    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_FFE,
     # Protocol-based bed types (new)
     BED_TYPE_OKIN_HANDLE,

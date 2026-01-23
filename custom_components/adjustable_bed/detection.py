@@ -38,8 +38,8 @@ from .const import (
     BED_TYPE_NECTAR,
     BED_TYPE_OCTO,
     BED_TYPE_OKIMAT,
-    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_7BYTE,
+    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_FFE,
     # Protocol-based bed types (new)
     BED_TYPE_OKIN_HANDLE,
@@ -52,8 +52,6 @@ from .const import (
     BED_TYPE_SLEEPYS_BOX15,
     BED_TYPE_SLEEPYS_BOX24,
     BED_TYPE_SOLACE,
-    # Detection result type
-    DetectionResult,
     # Detection constants
     BEDTECH_NAME_PATTERNS,
     BEDTECH_SERVICE_UUID,
@@ -76,10 +74,10 @@ from .const import (
     MANUFACTURER_ID_DEWERTOKIN,
     OCTO_NAME_PATTERNS,
     OCTO_STAR2_SERVICE_UUID,
-    OKIN_FFE_NAME_PATTERNS,
     OKIMAT_NAME_PATTERNS,
     OKIMAT_NOTIFY_CHAR_UUID,
     OKIMAT_SERVICE_UUID,
+    OKIN_FFE_NAME_PATTERNS,
     REVERIE_NIGHTSTAND_SERVICE_UUID,
     REVERIE_SERVICE_UUID,
     RICHMAT_NAME_PATTERNS,
@@ -89,6 +87,8 @@ from .const import (
     SLEEPYS_NAME_PATTERNS,
     SOLACE_NAME_PATTERNS,
     SOLACE_SERVICE_UUID,
+    # Detection result type
+    DetectionResult,
 )
 
 _LOGGER = logging.getLogger(__name__)

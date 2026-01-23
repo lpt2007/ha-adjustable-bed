@@ -20,9 +20,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import (
-    NORDIC_UART_SERVICE_UUID,
     NORDIC_UART_WRITE_CHAR_UUID,
-    OKIMAT_SERVICE_UUID,
     OKIMAT_WRITE_CHAR_UUID,
 )
 from .base import BedController

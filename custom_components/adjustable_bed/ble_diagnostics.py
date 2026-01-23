@@ -380,22 +380,25 @@ class BLEDiagnosticRunner:
 
     async def _unsubscribe_from_notifications(self, services: list[ServiceInfo]) -> None:
         """Unsubscribe from all notifiable characteristics."""
-        if not self._client or not self._client.is_connected:
-            return
-
-        # When using coordinator's connection, clear the raw callback
+        # When using coordinator's connection, always clear the raw callback
+        # (even if disconnected, to avoid stale callbacks)
         if self._using_coordinator_connection:
             if self.coordinator is not None:
                 _LOGGER.debug("Clearing raw notification callback from coordinator")
                 self.coordinator.set_raw_notify_callback(None)
-                # Stop notifications if we started them for diagnostics
+                # Stop notifications if we started them for diagnostics (only if still connected)
                 if (
                     self._diagnostic_notifications_started
                     and self.coordinator.controller is not None
+                    and self._client
+                    and self._client.is_connected
                 ):
                     _LOGGER.debug("Stopping diagnostic notifications that were started for capture")
                     await self.coordinator.controller.stop_notify()
                 self._diagnostic_notifications_started = False
+            return
+
+        if not self._client or not self._client.is_connected:
             return
 
         for service in services:

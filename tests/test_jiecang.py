@@ -122,137 +122,152 @@ class TestJiecangController:
 
 
 class TestJiecangMotorMovement:
-    """Test Jiecang motor movement commands (preset-only limitation)."""
+    """Test Jiecang motor movement commands (full Comfort Motion protocol)."""
 
-    async def test_move_head_up_warns(
+    async def test_move_head_up(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move head up logs warning about preset-only limitation."""
+        """Test move head up sends HEAD_UP command followed by BUTTON_RELEASE."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_head_up()
 
-        assert "only support preset positions" in caplog.text
-        # Should not send any command
-        mock_bleak_client.write_gatt_char.assert_not_called()
+        # Should send HEAD_UP commands followed by BUTTON_RELEASE
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        # First call should be HEAD_UP
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.HEAD_UP
+        # Last call should be BUTTON_RELEASE
+        last_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert last_call[0][1] == JiecangCommands.BUTTON_RELEASE
 
-    async def test_move_head_down_warns(
+    async def test_move_head_down(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move head down logs warning about preset-only limitation."""
+        """Test move head down sends HEAD_DOWN command followed by BUTTON_RELEASE."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_head_down()
 
-        assert "only support preset positions" in caplog.text
-        mock_bleak_client.write_gatt_char.assert_not_called()
+        # Should send HEAD_DOWN commands followed by BUTTON_RELEASE
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.HEAD_DOWN
+        last_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert last_call[0][1] == JiecangCommands.BUTTON_RELEASE
 
-    async def test_move_legs_up_warns(
+    async def test_move_legs_up(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move legs up logs warning."""
+        """Test move legs up sends LEG_UP command."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_legs_up()
 
-        assert "only support preset positions" in caplog.text
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.LEG_UP
 
-    async def test_move_legs_down_warns(
+    async def test_move_legs_down(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move legs down logs warning."""
+        """Test move legs down sends LEG_DOWN command."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_legs_down()
 
-        assert "only support preset positions" in caplog.text
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.LEG_DOWN
 
-    async def test_move_feet_up_warns(
+    async def test_move_feet_up(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move feet up logs warning."""
+        """Test move feet up sends LEG_UP command (alias)."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_feet_up()
 
-        assert "only support preset positions" in caplog.text
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.LEG_UP
 
-    async def test_move_back_up_warns(
+    async def test_move_back_up(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test move back up logs warning."""
+        """Test move back up sends HEAD_UP command (alias)."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_back_up()
 
-        assert "only support preset positions" in caplog.text
+        assert mock_bleak_client.write_gatt_char.call_count >= 2
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.HEAD_UP
 
-    async def test_stop_all_noop(
+    async def test_stop_all(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
     ):
-        """Test stop all does nothing (motor control not supported)."""
+        """Test stop all sends BUTTON_RELEASE command."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.stop_all()
 
-        # Should not send any command
-        mock_bleak_client.write_gatt_char.assert_not_called()
+        # Should send BUTTON_RELEASE
+        mock_bleak_client.write_gatt_char.assert_called()
+        last_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert last_call[0][1] == JiecangCommands.BUTTON_RELEASE
 
-    async def test_move_head_stop_noop(
+    async def test_move_head_stop(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
     ):
-        """Test move head stop does nothing."""
+        """Test move head stop sends BUTTON_RELEASE command."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
         await coordinator.controller.move_head_stop()
 
-        mock_bleak_client.write_gatt_char.assert_not_called()
+        mock_bleak_client.write_gatt_char.assert_called()
+        last_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert last_call[0][1] == JiecangCommands.BUTTON_RELEASE
 
 
 class TestJiecangPresets:
@@ -316,6 +331,23 @@ class TestJiecangPresets:
         first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
         assert first_call[0][1] == expected_command
 
+    async def test_preset_memory_3(
+        self,
+        hass: HomeAssistant,
+        mock_jiecang_config_entry,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test preset memory 3 (Jiecang supports 1-3)."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
+        await coordinator.async_connect()
+
+        await coordinator.controller.preset_memory(3)
+
+        # Memory 3 should send MEMORY_3 command
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.MEMORY_3
+
     async def test_preset_memory_invalid(
         self,
         hass: HomeAssistant,
@@ -328,10 +360,10 @@ class TestJiecangPresets:
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
-        # Memory 3 is not supported on Jiecang
-        await coordinator.controller.preset_memory(3)
+        # Memory 4 is not supported on Jiecang (1-3 only)
+        await coordinator.controller.preset_memory(4)
 
-        assert "only support memory presets 1 and 2" in caplog.text
+        assert "support memory presets 1-3 only" in caplog.text
 
     async def test_preset_commands_repeat(
         self,
@@ -351,9 +383,27 @@ class TestJiecangPresets:
 
 
 class TestJiecangProgramMemory:
-    """Test Jiecang program memory (not supported)."""
+    """Test Jiecang program memory (supported via BLE)."""
 
-    async def test_program_memory_warns(
+    async def test_program_memory_1(
+        self,
+        hass: HomeAssistant,
+        mock_jiecang_config_entry,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test program memory 1 sends MEMORY_1_SET command."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
+        await coordinator.async_connect()
+
+        await coordinator.controller.program_memory(1)
+
+        # Should send MEMORY_1_SET command
+        mock_bleak_client.write_gatt_char.assert_called()
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[0]
+        assert first_call[0][1] == JiecangCommands.MEMORY_1_SET
+
+    async def test_program_memory_invalid(
         self,
         hass: HomeAssistant,
         mock_jiecang_config_entry,
@@ -361,14 +411,13 @@ class TestJiecangProgramMemory:
         mock_bleak_client: MagicMock,
         caplog,
     ):
-        """Test program memory logs warning about not being supported."""
+        """Test program memory with invalid number logs warning."""
         coordinator = AdjustableBedCoordinator(hass, mock_jiecang_config_entry)
         await coordinator.async_connect()
 
-        await coordinator.controller.program_memory(1)
+        await coordinator.controller.program_memory(4)
 
-        assert "don't support programming memory presets" in caplog.text
-        mock_bleak_client.write_gatt_char.assert_not_called()
+        assert "support memory presets 1-3 only" in caplog.text
 
 
 class TestJiecangPositionNotifications:

@@ -131,6 +131,11 @@ class LeggettGen2Controller(BedController):
         return True
 
     @property
+    def supports_motor_control(self) -> bool:
+        """Return False - Gen2 uses position-based control, not motor commands."""
+        return False
+
+    @property
     def memory_slot_count(self) -> int:
         """Return 4 - Gen2 beds support memory slots 1-4."""
         return 4
