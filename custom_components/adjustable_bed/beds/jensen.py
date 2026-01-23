@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from bleak.exc import BleakError
 
-from ..const import JENSEN_CHAR_UUID
+from ..const import JENSEN_CHAR_UUID, JENSEN_SERVICE_UUID
 from .base import BedController
 
 if TYPE_CHECKING:
@@ -105,8 +105,16 @@ class JensenController(BedController):
     by querying the bed's configuration.
     """
 
-    def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
-        """Initialize the Jensen controller."""
+    # Default PIN for Jensen beds
+    DEFAULT_PIN: str = "3060"
+
+    def __init__(self, coordinator: AdjustableBedCoordinator, pin: str = "") -> None:
+        """Initialize the Jensen controller.
+
+        Args:
+            coordinator: The coordinator managing this controller.
+            pin: 4-digit PIN for bed authentication. Defaults to "3060" if empty.
+        """
         super().__init__(coordinator)
         self._notify_callback: Callable[[str, float], None] | None = None
         self._features: JensenFeatureFlags = JensenFeatureFlags.NONE
@@ -121,12 +129,36 @@ class JensenController(BedController):
         self._underbed_lights_on: bool = False
         self._massage_head_on: bool = False
         self._massage_foot_on: bool = False
-        _LOGGER.debug("JensenController initialized")
+
+        # PIN for authentication - use provided PIN or default
+        self._pin: str = pin if pin else self.DEFAULT_PIN
+        _LOGGER.debug("JensenController initialized with PIN: %s", "*" * len(self._pin))
 
     @property
     def control_characteristic_uuid(self) -> str:
         """Return the UUID of the control characteristic."""
         return JENSEN_CHAR_UUID
+
+    def _build_pin_unlock_command(self) -> bytes:
+        """Build the PIN unlock command from the configured PIN.
+
+        PIN command format: [0x1E, digit1, digit2, digit3, digit4, 0x00]
+        Each digit is its numeric value (not ASCII code).
+
+        Sanitizes the PIN by stripping whitespace and keeping only digits.
+        Falls back to "0000" if the PIN is invalid.
+        """
+        # Sanitize: strip whitespace and keep only digits
+        sanitized = "".join(c for c in self._pin.strip() if c.isdigit())
+
+        # Ensure exactly 4 digits (pad with 0s or truncate)
+        if not sanitized:
+            _LOGGER.warning("Invalid Jensen PIN configured, using default '%s'", self.DEFAULT_PIN)
+            sanitized = self.DEFAULT_PIN
+        pin_digits = sanitized.ljust(4, "0")[:4]
+
+        return bytes([0x1E, int(pin_digits[0]), int(pin_digits[1]),
+                      int(pin_digits[2]), int(pin_digits[3]), 0x00])
 
     # Capability properties
     @property
@@ -359,23 +391,52 @@ class JensenController(BedController):
                 self._config_data = bytes(data)
                 self._config_received.set()
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
-        """Start listening for position notifications."""
+    async def start_notify(self, callback: Callable[[str, float], None] | None = None) -> None:
+        """Start listening for position notifications.
+
+        The app ALWAYS enables notifications before sending any commands.
+        This method must be called even when angle sensing is disabled, because
+        Jensen beds require the notification handler to be active for commands to work.
+        """
         self._notify_callback = callback
 
         if self.client is None or not self.client.is_connected:
             _LOGGER.warning("Cannot start Jensen notifications: not connected")
             return
 
+        # Log discovered services and characteristic properties for debugging
+        if self.client.services:
+            for service in self.client.services:
+                if str(service.uuid).lower() == JENSEN_SERVICE_UUID.lower():
+                    _LOGGER.info("Found Jensen service: %s", service.uuid)
+                    for char in service.characteristics:
+                        if str(char.uuid).lower() == JENSEN_CHAR_UUID.lower():
+                            _LOGGER.info(
+                                "Found Jensen characteristic: %s, properties: %s",
+                                char.uuid,
+                                char.properties,
+                            )
+
         try:
+            # Always enable notifications - the app does this before any commands
             await self.client.start_notify(JENSEN_CHAR_UUID, self._handle_notification)
             _LOGGER.info("Started position notifications for Jensen bed")
 
-            # Request initial position reading
-            await self.read_positions()
+            # Send PIN unlock command IMMEDIATELY after notifications are enabled
+            # The app ALWAYS does this before any other commands (config, position, etc.)
+            _LOGGER.debug("Sending Jensen PIN unlock command")
+            await self.client.write_gatt_char(
+                JENSEN_CHAR_UUID, self._build_pin_unlock_command(), response=True
+            )
+
+            # Request initial position reading only if angle sensing is enabled
+            if callback is not None:
+                await self.read_positions()
 
         except BleakError as err:
             _LOGGER.warning("Failed to start Jensen notifications: %s", err)
+            # Log all available services for debugging
+            self.log_discovered_services(level=logging.INFO)
 
     async def stop_notify(self) -> None:
         """Stop listening for position notifications."""
@@ -413,7 +474,7 @@ class JensenController(BedController):
     async def _move_with_stop(self, command: bytes) -> None:
         """Execute a movement command and always send STOP at the end."""
         try:
-            await self.write_command(command, repeat_count=10, repeat_delay_ms=100)
+            await self.write_command(command)
         finally:
             try:
                 await self.write_command(

@@ -49,6 +49,7 @@ CONF_IDLE_DISCONNECT_SECONDS: Final = "idle_disconnect_seconds"
 CONF_POSITION_MODE: Final = "position_mode"
 CONF_OCTO_PIN: Final = "octo_pin"
 CONF_RICHMAT_REMOTE: Final = "richmat_remote"
+CONF_JENSEN_PIN: Final = "jensen_pin"
 
 # Position mode values
 POSITION_MODE_SPEED: Final = "speed"
@@ -1100,7 +1101,7 @@ BED_MOTOR_PULSE_DEFAULTS: Final = {
     # Sleepy's BOX24: 100ms delay → 10 repeats = 1.0s total
     # Source: com.okin.bedding.sleepy ANALYSIS.md
     BED_TYPE_SLEEPYS_BOX24: (10, 100),
-    # Jensen: 100ms delay → 10 repeats = 1.0s total
-    # Source: com.hilding.jbg_ble APK analysis
-    BED_TYPE_JENSEN: (10, 100),
+    # Jensen: 400ms delay → 10 repeats = 4.0s total
+    # Source: air.no.jensen.adjustablesleep APK analysis (RaiseAndLower.as:79 uses 400ms)
+    BED_TYPE_JENSEN: (10, 400),
 }
