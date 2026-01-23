@@ -12,7 +12,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
-| ⬜ | [Mattress Firm 900 - O](https://play.google.com/store/apps/details?id=com.okin.bedding.rizemf900) | `com.okin.bedding.rizemf900` |
+| ✅ | [Mattress Firm 900 - O](https://play.google.com/store/apps/details?id=com.okin.bedding.rizemf900) | `com.okin.bedding.rizemf900` |
 
 ## Features
 
@@ -93,6 +93,23 @@ This means it won't be confused with other Okin beds during auto-detection.
 Detected by device name starting with: `iflex` (case-insensitive)
 
 Or manually configured with bed type: `mattressfirm`
+
+## Command Timing
+
+From app disassembly analysis:
+
+- **Repeat Interval:** 100ms
+- **Pattern:** Continuous while button held
+- **Stop Required:** Yes, sends stop twice (at 100ms and 200ms) after release
+
+### Alternative Packet Format (from app analysis)
+
+The official app uses a 14-byte format:
+```
+[0x0C, 0x02, motor_bytes(4), control_bytes(4), reserved(4)]
+```
+
+Device detection uses device name prefix: "okin" (case-insensitive).
 
 ## Notes
 

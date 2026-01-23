@@ -20,7 +20,6 @@ Brands using DewertOkin actuators:
 - Eshine Sleep
 - CHERISH SMART
 - OrmatekTechnoSmart
-- Smart Comfort by Synergy
 - INNOVA
 - Symphony Sleep
 - Jordan's (multiple models: Restful, Serenity, Tranquil, Sanctuary, Carefree, Clarity)
@@ -40,11 +39,11 @@ Brands using DewertOkin actuators:
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
+| ✅ | [FurniMove](https://play.google.com/store/apps/details?id=com.dewertokin.okinsmartcomfort) | `com.dewertokin.okinsmartcomfort` |
 | ✅ | [MFRM Sleepy's Elite](https://play.google.com/store/apps/details?id=com.okin.bedding.sleepy) | `com.okin.bedding.sleepy` |
 | ✅ | [Resident Adjustable Base](https://play.google.com/store/apps/details?id=com.okin.resident.release) | `com.okin.resident.release` |
-| ⬜ | [Resident Adjustable Bed](https://play.google.com/store/apps/details?id=com.okin.bedding.rizeResident) | `com.okin.bedding.rizeResident` |
-| ⬜ | [Smart Comfort by Synergy](https://play.google.com/store/apps/details?id=com.synergy.okin) | `com.synergy.okin` |
-| ⬜ | [INNOVA](https://play.google.com/store/apps/details?id=com.ore.sfm) | `com.ore.sfm` |
+| ✅ | [Resident Adjustable Bed](https://play.google.com/store/apps/details?id=com.okin.bedding.rizeResident) | `com.okin.bedding.rizeResident` |
+| ✅ | [INNOVA](https://play.google.com/store/apps/details?id=com.ore.sfm) | `com.ore.sfm` |
 
 ## Features
 
@@ -112,6 +111,23 @@ See also: [Okin Protocol Family](../SUPPORTED_ACTUATORS.md#okin-protocol-family)
 | Command | Bytes (hex) | Description |
 |---------|-------------|-------------|
 | Underlight | `04 02 00 02 00 00` | Toggle under-bed light |
+
+## Command Timing
+
+From app disassembly analysis (FurniMove):
+
+- **Repeat Interval:** 100ms (`Thread.sleep(100L)`)
+- **Pattern:** Continuous while button held
+- **Stop Required:** Yes, explicit stop after motor release
+
+### RF Gateway Variant
+
+Some DewertOkin devices use an RF Gateway with an 8-byte protocol:
+```
+[0xE5, 0xFE, 0x16, data0, data1, data2, data3, checksum]
+```
+
+This variant uses the Keeson-style checksum (one's complement of byte sum).
 
 ## Detection
 

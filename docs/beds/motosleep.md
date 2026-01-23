@@ -13,6 +13,7 @@
 
 | Analyzed | App | Package ID |
 |----------|-----|------------|
+| ✅ | [MotoSleep](https://play.google.com/store/apps/details?id=com.HHC.MotoSleep) | `com.HHC.MotoSleep` |
 | ✅ | [Power Bob for Adjustable Bed](https://play.google.com/store/apps/details?id=com.HHC.PowerBob) | `com.HHC.PowerBob` |
 
 ## Features
@@ -73,3 +74,19 @@
 | Massage Foot Down | `24 46` | `$F` |
 | Massage Head Off | `24 4A` | `$J` |
 | Massage Foot Off | `24 49` | `$I` |
+| Sync | `24 7A` | `$z` |
+
+## Command Timing
+
+From app disassembly analysis:
+
+- **Motor commands:** Single command per button press (no repeat interval)
+- **Pattern:** Send command on press, motors stop when no command received
+- **Stop command:** Not required (controller handles stop)
+
+## Supported Bed Model Variants
+
+From app analysis, dedicated support for:
+- WR1140
+- WRS14 series (WRS14Dmm, WRS14ms)
+- WRS16ms, WRS18ms, WRS20ms, WRS23ms
