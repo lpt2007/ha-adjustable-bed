@@ -50,6 +50,9 @@
     },
     {
       "local_name": "JMC*"
+    },
+    {
+      "local_name": "Bed*"
     }
   ],
   "codeowners": ["@kristofferR"],

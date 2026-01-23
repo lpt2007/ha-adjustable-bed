@@ -484,7 +484,7 @@ SLEEPYS_NAME_PATTERNS: Final = ("sleepy", "mfrm")
 
 # Jensen name patterns (JMC400 / LinON Entry)
 # Source: com.hilding.jbg_ble APK analysis
-JENSEN_NAME_PATTERNS: Final = ("jmc400",)
+JENSEN_NAME_PATTERNS: Final = ("jmc",)  # JMC400, JMC300, etc.
 
 # Sleepy's Elite BOX24 protocol UUIDs (OKIN 64-bit service)
 SLEEPYS_BOX24_SERVICE_UUID: Final = "62741523-52f9-8864-b1ab-3b3a8d65950b"
