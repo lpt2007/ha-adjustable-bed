@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.exc import BleakError
@@ -342,6 +342,18 @@ class KeesonController(BedController):
             "tilt": "keeson_head",
             "feet": "keeson_legs",
         }
+
+    # Massage timer - Keeson only has step command, no direct timer set
+    # We cannot reliably emulate stepping without knowing current state
+    @property
+    def supports_massage_timer(self) -> bool:
+        """Return False - Keeson can only step through timer, not set directly."""
+        return False
+
+    @property
+    def massage_intensity_max(self) -> int:
+        """Return 6 - Keeson/Ergomotion use 0-6 intensity scale."""
+        return 6
 
     def _build_command(self, command_value: int) -> bytes:
         """Build command bytes based on protocol variant."""
@@ -782,3 +794,18 @@ class KeesonController(BedController):
     async def massage_mode_step(self) -> None:
         """Step through massage modes."""
         await self.write_command(self._build_command(KeesonCommands.MASSAGE_TIMER_STEP))
+
+    def get_massage_state(self) -> dict[str, Any]:
+        """Return current massage state from BLE notification feedback.
+
+        Only populated for ergomotion variant which has state notifications.
+
+        Returns:
+            dict with head_intensity, foot_intensity, timer_mode
+        """
+        return {
+            "head_intensity": self._head_massage,
+            "foot_intensity": self._foot_massage,
+            "timer_mode": self._timer_mode,
+            "led_on": self._led_on,
+        }
