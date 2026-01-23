@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from .adapter import discover_services
 from .const import (
     # Legacy/brand-specific bed types
+    BED_TYPE_BEDTECH,
     BED_TYPE_COMFORT_MOTION,
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_DIAGNOSTIC,
@@ -26,6 +27,7 @@ from .const import (
     BED_TYPE_NECTAR,
     BED_TYPE_OCTO,
     BED_TYPE_OKIMAT,
+    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_7BYTE,
     BED_TYPE_OKIN_FFE,
     # Protocol-based bed types (new)
@@ -339,5 +341,18 @@ async def create_controller(
         from .beds.diagnostic import DiagnosticBedController
 
         return DiagnosticBedController(coordinator)
+
+    if bed_type == BED_TYPE_BEDTECH:
+        from .beds.bedtech import BedTechController
+
+        return BedTechController(coordinator)
+
+    if bed_type == BED_TYPE_OKIN_64BIT:
+        from .beds.okin_64bit import Okin64BitController
+
+        # Use configured variant, default to Nordic UART (fire-and-forget)
+        variant = protocol_variant if protocol_variant and protocol_variant != "auto" else "nordic"
+        _LOGGER.debug("Using OKIN 64-bit variant: %s", variant)
+        return Okin64BitController(coordinator, variant=variant)
 
     raise ValueError(f"Unknown bed type: {bed_type}")

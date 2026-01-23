@@ -10,6 +10,12 @@ from homeassistant.helpers.selector import SelectOptionDict
 
 from .const import (
     # Legacy/brand-specific bed types
+    # NOTE: BED_TYPE_BEDTECH and BED_TYPE_OKIN_64BIT are imported for BED_TYPE_DISPLAY_NAMES
+    # but are NOT auto-detected in detect_bed_type() because:
+    # - BedTech shares the FEE9 service UUID with Richmat WiLinke
+    # - OKIN 64-bit uses UUIDs common to other OKIN protocols (Nordic UART or 62741523)
+    # Both require manual selection as they can't be reliably distinguished at the UUID level.
+    BED_TYPE_BEDTECH,
     BED_TYPE_COMFORT_MOTION,
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_DIAGNOSTIC,
@@ -28,6 +34,7 @@ from .const import (
     BED_TYPE_NECTAR,
     BED_TYPE_OCTO,
     BED_TYPE_OKIMAT,
+    BED_TYPE_OKIN_64BIT,
     BED_TYPE_OKIN_7BYTE,
     BED_TYPE_OKIN_FFE,
     # Protocol-based bed types (new)
@@ -149,11 +156,13 @@ BED_TYPE_DISPLAY_NAMES: dict[str, str] = {
     BED_TYPE_OKIN_7BYTE: "Okin 7-Byte (Nectar)",
     BED_TYPE_OKIN_NORDIC: "Okin Nordic (Mattress Firm 900, iFlex)",
     BED_TYPE_OKIN_FFE: "Okin FFE (13/15 series)",
+    BED_TYPE_OKIN_64BIT: "Okin 64-Bit (10-byte commands)",
     # Protocol-based types (Leggett & Platt family)
     BED_TYPE_LEGGETT_GEN2: "Leggett & Platt Gen2",
     BED_TYPE_LEGGETT_OKIN: "Leggett & Platt Okin (requires pairing)",
     BED_TYPE_LEGGETT_WILINKE: "Leggett & Platt WiLinke (MlRM)",
     # Brand-specific types
+    BED_TYPE_BEDTECH: "BedTech",
     BED_TYPE_ERGOMOTION: "Ergomotion",
     BED_TYPE_JIECANG: "Jiecang (Glide, Dream Motion)",
     BED_TYPE_KEESON: "Keeson (Member's Mark, Purple, Serta)",
