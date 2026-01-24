@@ -129,6 +129,7 @@ class JensenController(BedController):
         self._underbed_lights_on: bool = False
         self._massage_head_on: bool = False
         self._massage_foot_on: bool = False
+        self._write_with_response: bool = True
 
         # PIN for authentication - use provided PIN or default
         self._pin: str = pin if pin else self.DEFAULT_PIN
@@ -239,8 +240,10 @@ class JensenController(BedController):
 
         try:
             # Send config read command - response comes via existing notification handler
-            await self.client.write_gatt_char(
-                JENSEN_CHAR_UUID, JensenCommands.CONFIG_READ_ALL, response=True
+            await self._write_gatt_with_retry(
+                JENSEN_CHAR_UUID,
+                JensenCommands.CONFIG_READ_ALL,
+                response=self._write_with_response,
             )
 
             # Wait for response (with timeout)
@@ -292,32 +295,22 @@ class JensenController(BedController):
         cancel_event: asyncio.Event | None = None,
     ) -> None:
         """Write a command to the bed."""
-        if self.client is None or not self.client.is_connected:
-            _LOGGER.error("Cannot write command: BLE client not connected")
-            raise ConnectionError("Not connected to bed")
-
-        effective_cancel = cancel_event or self._coordinator.cancel_command
-
         _LOGGER.debug(
-            "Writing command to Jensen bed: %s (repeat: %d, delay: %dms)",
+            "Writing command to Jensen bed: %s (repeat: %d, delay: %dms, response=%s)",
             command.hex(),
             repeat_count,
             repeat_delay_ms,
+            self._write_with_response,
         )
 
-        for i in range(repeat_count):
-            if effective_cancel is not None and effective_cancel.is_set():
-                _LOGGER.info("Command cancelled after %d/%d writes", i, repeat_count)
-                return
-
-            try:
-                await self.client.write_gatt_char(JENSEN_CHAR_UUID, command, response=True)
-            except BleakError:
-                _LOGGER.exception("Failed to write command")
-                raise
-
-            if i < repeat_count - 1:
-                await asyncio.sleep(repeat_delay_ms / 1000)
+        await self._write_gatt_with_retry(
+            JENSEN_CHAR_UUID,
+            command,
+            repeat_count=repeat_count,
+            repeat_delay_ms=repeat_delay_ms,
+            cancel_event=cancel_event,
+            response=self._write_with_response,
+        )
 
     def _raw_to_percentage(self, raw_value: int, motor: str) -> float:
         """Convert raw position value to percentage (0-100).
@@ -411,10 +404,19 @@ class JensenController(BedController):
                     _LOGGER.info("Found Jensen service: %s", service.uuid)
                     for char in service.characteristics:
                         if str(char.uuid).lower() == JENSEN_CHAR_UUID.lower():
+                            props = {prop.lower() for prop in char.properties}
+                            if "write-without-response" in props:
+                                self._write_with_response = False
+                            elif "write" in props:
+                                self._write_with_response = True
                             _LOGGER.info(
                                 "Found Jensen characteristic: %s, properties: %s",
                                 char.uuid,
                                 char.properties,
+                            )
+                            _LOGGER.info(
+                                "Jensen write mode: %s",
+                                "with-response" if self._write_with_response else "without-response",
                             )
 
         try:
@@ -425,8 +427,10 @@ class JensenController(BedController):
             # Send PIN unlock command IMMEDIATELY after notifications are enabled
             # The app ALWAYS does this before any other commands (config, position, etc.)
             _LOGGER.debug("Sending Jensen PIN unlock command")
-            await self.client.write_gatt_char(
-                JENSEN_CHAR_UUID, self._build_pin_unlock_command(), response=True
+            await self._write_gatt_with_retry(
+                JENSEN_CHAR_UUID,
+                self._build_pin_unlock_command(),
+                response=self._write_with_response,
             )
 
             # Request initial position reading only if angle sensing is enabled
@@ -464,8 +468,10 @@ class JensenController(BedController):
             return
 
         try:
-            await self.client.write_gatt_char(
-                JENSEN_CHAR_UUID, JensenCommands.READ_POSITION, response=True
+            await self._write_gatt_with_retry(
+                JENSEN_CHAR_UUID,
+                JensenCommands.READ_POSITION,
+                response=self._write_with_response,
             )
             _LOGGER.debug("Sent READ_POSITION command to Jensen bed")
         except BleakError as err:
@@ -473,8 +479,16 @@ class JensenController(BedController):
 
     async def _move_with_stop(self, command: bytes) -> None:
         """Execute a movement command and always send STOP at the end."""
+        pulse_count = self._coordinator.motor_pulse_count
+        pulse_delay = self._coordinator.motor_pulse_delay_ms
         try:
-            await self.write_command(command)
+            # Jensen movement commands must be sent repeatedly while the button is held.
+            # The app repeats every 400ms; we use the configured pulse settings.
+            await self.write_command(
+                command,
+                repeat_count=pulse_count,
+                repeat_delay_ms=pulse_delay,
+            )
         finally:
             try:
                 await self.write_command(
@@ -552,40 +566,14 @@ class JensenController(BedController):
     # Preset methods
     async def preset_flat(self) -> None:
         """Go to flat position."""
-        try:
-            await self.write_command(
-                JensenCommands.PRESET_FLAT,
-                repeat_count=100,
-                repeat_delay_ms=150,
-            )
-        finally:
-            try:
-                await self.write_command(
-                    JensenCommands.MOTOR_STOP,
-                    cancel_event=asyncio.Event(),
-                )
-            except BleakError:
-                _LOGGER.debug("Failed to send STOP after preset_flat")
+        await self.write_command(JensenCommands.PRESET_FLAT)
 
     async def preset_memory(self, memory_num: int) -> None:
         """Go to memory preset (Jensen only has 1 slot)."""
         if memory_num != 1:
             _LOGGER.warning("Invalid memory preset number: %d (Jensen only supports slot 1)", memory_num)
             return
-        try:
-            await self.write_command(
-                JensenCommands.PRESET_MEMORY_RECALL,
-                repeat_count=100,
-                repeat_delay_ms=150,
-            )
-        finally:
-            try:
-                await self.write_command(
-                    JensenCommands.MOTOR_STOP,
-                    cancel_event=asyncio.Event(),
-                )
-            except BleakError:
-                _LOGGER.debug("Failed to send STOP after preset_memory")
+        await self.write_command(JensenCommands.PRESET_MEMORY_RECALL)
 
     async def program_memory(self, memory_num: int) -> None:
         """Program current position to memory (Jensen only has 1 slot)."""
