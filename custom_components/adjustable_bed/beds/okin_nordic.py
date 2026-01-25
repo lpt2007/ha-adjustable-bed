@@ -129,6 +129,11 @@ class OkinNordicController(BedController):
         return True
 
     @property
+    def supports_light_cycle(self) -> bool:
+        """Return True - these beds support cycling through light modes."""
+        return True
+
+    @property
     def supports_memory_presets(self) -> bool:
         """Return False - these beds don't support programmable memory presets."""
         return False
