@@ -10,6 +10,7 @@ This guide covers common issues and their solutions when using the Adjustable Be
 - [Physical Remote Conflicts](#physical-remote-conflicts)
 - [Protocol/Variant Issues](#protocolvariant-issues)
 - [Pairing Required (Okimat/Leggett Okin)](#pairing-required-okimatleggett-okin)
+- [Classic Bluetooth Beds (Not Supported)](#classic-bluetooth-beds-not-supported)
 - [Quick Reference: Service UUIDs](#quick-reference-service-uuids)
 - [Still Need Help?](#still-need-help)
 
@@ -247,6 +248,20 @@ Some beds require Bluetooth pairing before they can be controlled.
 - "Pairing required" error message
 
 **Note:** If discovery works but connection fails, first try the [pairing mode procedure](#bed-is-discovered-but-wont-connect) above. OS-level Bluetooth pairing is only needed for specific beds (Okimat, Leggett Okin).
+
+---
+
+## Classic Bluetooth Beds (Not Supported)
+
+Some older beds use **Classic Bluetooth** instead of **Bluetooth Low Energy (BLE)**. This integration only supports BLE.
+
+**Affected beds:**
+- **OKIN-i** devices (name contains "OKIN-i") - Leggett & Platt Prodigy 2.0
+- **OKIN CU258-4** controller - older Serta and Tempur beds
+
+**Why not supported:** Classic Bluetooth and BLE are completely different technologies that happen to share a name. Home Assistant's `bluetooth` integration is BLE-only, ESPHome proxies don't support classic BT, and there are no plans to add support.
+
+**Hardware fix:** Purchase a **BT40SA** or **BT01D** BLE dongle ($65-110 on eBay). Both use the standard DIN connector and are interchangeable - buy whichever is available. It plugs into the motor controller's DIN port and converts the bed to BLE.
 
 ---
 
