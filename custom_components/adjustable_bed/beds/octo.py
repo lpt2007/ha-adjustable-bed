@@ -43,6 +43,7 @@ OCTO_MOTOR_HEAD = 0x02
 OCTO_MOTOR_LEGS = 0x04
 
 # Feature IDs
+OCTO_FEATURE_MEMCOUNT = 0x000002  # Number of memory positions
 OCTO_FEATURE_PIN = 0x000003
 OCTO_FEATURE_LIGHT = 0x000102
 OCTO_FEATURE_END = 0xFFFFFF  # End-of-features sentinel
@@ -82,6 +83,7 @@ class OctoController(BedController):
         self._has_pin: bool | None = None  # None = not yet discovered
         self._pin_locked: bool | None = None
         self._has_lights: bool | None = None  # None = not yet discovered
+        self._memory_count: int | None = None  # None = not yet discovered
         self._features_loaded: asyncio.Event = asyncio.Event()
         self._features_complete: asyncio.Event = (
             asyncio.Event()
@@ -270,6 +272,10 @@ class OctoController(BedController):
                 self._has_pin,
                 self._pin_locked,
             )
+        elif feature_id == OCTO_FEATURE_MEMCOUNT:
+            # value[0] = number of memory slots (typically 1-4)
+            self._memory_count = value[0] if value else 0
+            _LOGGER.info("Memory count feature detected: %d slots", self._memory_count)
         elif feature_id == OCTO_FEATURE_LIGHT:
             # Presence of light feature means bed has lights
             # value[0] = current light state (0x01 = on, 0x00 = off)
@@ -405,8 +411,16 @@ class OctoController(BedController):
 
     @property
     def supports_memory_presets(self) -> bool:
-        """Return False - Octo beds don't support memory presets."""
+        """Return True if bed supports memory presets (CAP_MEMCOUNT > 0)."""
+        if self._memory_count is not None:
+            return self._memory_count > 0
+        # Features not discovered - assume no memory presets for safety
         return False
+
+    @property
+    def memory_slot_count(self) -> int:
+        """Return number of memory preset slots."""
+        return self._memory_count if self._memory_count is not None else 0
 
     async def discover_features(self) -> bool:
         """Discover bed features including PIN requirement and lights.
@@ -445,6 +459,7 @@ class OctoController(BedController):
         self._has_pin = None
         self._pin_locked = None
         self._has_lights = None
+        self._memory_count = None
 
         _LOGGER.debug("Requesting bed features...")
 
@@ -462,12 +477,15 @@ class OctoController(BedController):
                 # Set defaults for features not detected (bed doesn't have them)
                 if self._has_lights is None:
                     self._has_lights = False
+                if self._memory_count is None:
+                    self._memory_count = 0
 
                 _LOGGER.info(
-                    "Feature discovery complete: hasPin=%s, pinLocked=%s, hasLights=%s",
+                    "Feature discovery complete: hasPin=%s, pinLocked=%s, hasLights=%s, memorySlots=%d",
                     self._has_pin,
                     self._pin_locked,
                     self._has_lights,
+                    self._memory_count,
                 )
                 return True
             except TimeoutError:
@@ -476,6 +494,7 @@ class OctoController(BedController):
                 self._has_pin = bool(self._pin)  # Assume PIN needed if configured
                 self._pin_locked = bool(self._pin)
                 self._has_lights = True  # Assume lights exist for backward compatibility
+                self._memory_count = 0  # Assume no memory support if not reported
                 return False
 
         except BleakError as err:
@@ -569,7 +588,7 @@ class OctoController(BedController):
         """Stop all motors."""
         await self._stop_motors()
 
-    # Preset methods - Octo doesn't have built-in presets
+    # Preset methods
     async def preset_flat(self) -> None:
         """Go to flat position.
 
@@ -579,18 +598,54 @@ class OctoController(BedController):
         await self._move_with_stop(OCTO_MOTOR_HEAD | OCTO_MOTOR_LEGS, "down")
 
     async def preset_memory(self, memory_num: int) -> None:
-        """Go to memory preset.
+        """Go to memory preset position.
 
-        Octo doesn't support memory presets.
+        Args:
+            memory_num: Memory slot number (1-based, will be converted to 0-based for protocol)
         """
-        _LOGGER.warning("Octo beds don't support memory presets")
+        if not self.supports_memory_presets:
+            _LOGGER.warning("This Octo bed doesn't support memory presets")
+            return
+
+        if memory_num < 1 or memory_num > self.memory_slot_count:
+            _LOGGER.warning(
+                "Invalid memory slot %d (bed has %d slots)",
+                memory_num,
+                self.memory_slot_count,
+            )
+            return
+
+        # Protocol uses 0-based slot index
+        slot = memory_num - 1
+        await self._write_octo_command(
+            command=[0x02, 0x72],  # NORMAL packet, MOTOR_MEMPOS command
+            data=[slot],
+        )
 
     async def program_memory(self, memory_num: int) -> None:
-        """Program current position to memory.
+        """Save current position to memory slot.
 
-        Octo doesn't support memory presets.
+        Args:
+            memory_num: Memory slot number (1-based, will be converted to 0-based for protocol)
         """
-        _LOGGER.warning("Octo beds don't support memory presets")
+        if not self.supports_memory_presets:
+            _LOGGER.warning("This Octo bed doesn't support memory presets")
+            return
+
+        if memory_num < 1 or memory_num > self.memory_slot_count:
+            _LOGGER.warning(
+                "Invalid memory slot %d (bed has %d slots)",
+                memory_num,
+                self.memory_slot_count,
+            )
+            return
+
+        # Protocol uses 0-based slot index, CONFIG packet type (0x10)
+        slot = memory_num - 1
+        await self._write_octo_command(
+            command=[0x10, 0x70],  # CONFIG packet, SAVE_MOTORPOS command
+            data=[slot],
+        )
 
     # Light control
     async def lights_on(self) -> None:
