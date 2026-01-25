@@ -99,9 +99,24 @@ These settings control how motor movement commands are sent. Adjusting them can 
 
 | Bed Type | Pulse Count | Pulse Delay |
 |----------|-------------|-------------|
-| Richmat | 30 | 50ms |
-| Keeson | 25 | 200ms |
-| All others | 25 | 50ms |
+| Richmat | 7 | 150ms |
+| Keeson | 10 | 100ms |
+| Ergomotion | 10 | 100ms |
+| Serta | 10 | 100ms |
+| Malouf Legacy OKIN | 7 | 150ms |
+| Malouf New OKIN | 10 | 100ms |
+| OKIN FFE | 7 | 150ms |
+| OKIN Nordic | 10 | 100ms |
+| Leggett WiLinke | 7 | 150ms |
+| Octo | 3 | 350ms |
+| Jiecang | 10 | 100ms |
+| Comfort Motion | 10 | 100ms |
+| Linak | 10 | 100ms |
+| Sleepy's BOX15 | 10 | 100ms |
+| Sleepy's BOX24 | 10 | 100ms |
+| Jensen | 3 | 400ms |
+| Svane | 10 | 100ms |
+| All others | 10 | 100ms |
 
 ### When to Adjust
 
@@ -165,6 +180,7 @@ Okimat beds use different remote codes that determine available features and com
 | **93329** | RF TOPLINE | Head, Back, Legs, 4 Memory |
 | **93332** | RF TOPLINE | Head, Back, Legs, Feet, 2 Memory |
 | **94238** | RF FLASHLINE | Back, Legs, 2 Memory |
+| **92471** | RF TOPLINE | Back, Legs, 2 Memory |
 
 ---
 
@@ -187,6 +203,21 @@ Some Octo beds require PIN authentication to maintain the BLE connection. The be
 - If your bed works without a PIN, leave this field empty
 
 The integration automatically re-sends the PIN every 25 seconds to maintain the connection.
+
+### Jensen PIN
+
+**Setting:** 4-digit PIN code (default: 3060)
+
+Jensen JMC400 beds require PIN authentication for BLE control.
+
+**How to configure:**
+1. Go to **Settings** → **Devices & Services**
+2. Find your Adjustable Bed and click **Configure** (gear icon)
+3. Enter your 4-digit PIN in the "Jensen PIN" field
+
+**Finding your PIN:**
+- Default PIN is `3060` (used if field left empty)
+- Check your Jensen remote's settings menu for custom PIN
 
 ### Richmat Remote
 

@@ -1069,8 +1069,8 @@ DEFAULT_OCTO_PIN: Final = ""
 # Default motor pulse values (can be overridden per device)
 # These control how many command pulses are sent and the delay between them
 # Different bed types have different optimal defaults
-DEFAULT_MOTOR_PULSE_COUNT: Final = 25  # Default for most beds
-DEFAULT_MOTOR_PULSE_DELAY_MS: Final = 50  # Default for most beds
+DEFAULT_MOTOR_PULSE_COUNT: Final = 10  # Default for most beds
+DEFAULT_MOTOR_PULSE_DELAY_MS: Final = 100  # Default for most beds
 
 # Per-bed-type motor pulse defaults based on app disassembly analysis
 # Target: ~1.0 second total motor movement duration (repeat_count = 1000ms / delay_ms)
@@ -1120,9 +1120,9 @@ BED_MOTOR_PULSE_DEFAULTS: Final = {
     # Sleepy's BOX24: 100ms delay → 10 repeats = 1.0s total
     # Source: com.okin.bedding.sleepy ANALYSIS.md
     BED_TYPE_SLEEPYS_BOX24: (10, 100),
-    # Jensen: 400ms delay → 10 repeats = 4.0s total
+    # Jensen: 400ms delay → 3 repeats = 1.2s total
     # Source: air.no.jensen.adjustablesleep APK analysis (RaiseAndLower.as:79 uses 400ms)
-    BED_TYPE_JENSEN: (10, 400),
+    BED_TYPE_JENSEN: (3, 400),
     # Svane: 100ms delay → 10 repeats = 1.0s total
     # Source: com.produktide.svane.svaneremote ANALYSIS.md (motorRunnable posts every 100ms)
     BED_TYPE_SVANE: (10, 100),

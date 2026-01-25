@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Home Assistant custom integration for controlling smart adjustable beds via Bluetooth Low Energy (BLE). It replaces the broken `smartbed-mqtt` addon with a native HA integration that uses Home Assistant's Bluetooth stack directly.
 
-**Current status:** 18 bed types implemented. Linak, Keeson, Richmat, and MotoSleep tested. Other brands need community testing.
+**Current status:** 20 bed types implemented. Linak, Keeson, Richmat, MotoSleep, and Jensen tested. Other brands need community testing.
 
 ## Architecture
 

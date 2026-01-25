@@ -22,6 +22,7 @@ This document provides an overview of supported bed brands. Click on a brand nam
 | [Malouf](beds/malouf.md) | ✅ Supported | 2 memory presets, lumbar, head tilt, massage, lights |
 | [BedTech](beds/bedtech.md) | ✅ Supported | 5 presets, 4 massage modes, dual-base support |
 | [Sleepy's Elite](beds/sleepys.md) | ✅ Supported | Lumbar (BOX15), Zero-G, Flat presets |
+| [Svane](beds/svane.md) | ⚠️ Beta | LinonPI protocol, multi-service |
 
 ---
 
@@ -119,25 +120,28 @@ If your bed isn't auto-detected, use manual configuration and try different bed 
 
 ## Credits
 
-This integration relies heavily on protocol research from the [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt) project by [Richard Hopton](https://github.com/richardhopton), which documented BLE protocols for many adjustable bed brands.
+This integration relies heavily on protocol research from the [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt) project by [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), which documented BLE protocols for many adjustable bed brands.
 
 Community contributors who helped reverse-engineer specific protocols:
 
 | Protocol | Contributors |
 |----------|-------------|
-| Richmat | getrav |
-| Linak | jascdk |
-| Solace | Bonopaws |
-| MotoSleep | waynebowie99 |
-| Reverie | Vitaliy |
-| Leggett & Platt | MarcusW |
-| Okimat | david_nagy, corne, PT |
-| Malouf | [kristofferR](https://github.com/kristofferR/ha-adjustable-bed) |
-| BedTech | [kristofferR](https://github.com/kristofferR/ha-adjustable-bed) |
-| Okin 64-bit | [kristofferR](https://github.com/kristofferR/ha-adjustable-bed) |
-| Sleepy's Elite | [kristofferR](https://github.com/kristofferR/ha-adjustable-bed) |
-
-Additional contributions:
-- **Mattress Firm 900**: [David Delahoz](https://github.com/daviddelahoz) - [BLEAdjustableBase](https://github.com/daviddelahoz/BLEAdjustableBase)
-- **Nectar**: [MaximumWorf](https://github.com/MaximumWorf) - [homeassistant-nectar](https://github.com/MaximumWorf/homeassistant-nectar)
-- **Octo**: [_pm](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790), [goedh452](https://community.home-assistant.io/t/how-to-setup-esphome-to-control-my-bluetooth-controlled-octocontrol-bed/540790/10), Murp, [Brokkert](https://github.com/Brokkert)
+| Richmat | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), getrav, [kristofferR](https://github.com/kristofferR) |
+| Linak | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), jascdk |
+| Solace | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), Bonopaws, [kristofferR](https://github.com/kristofferR) |
+| MotoSleep | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), waynebowie99 |
+| Reverie | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), Vitaliy, [kristofferR](https://github.com/kristofferR) |
+| Leggett & Platt | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), MarcusW |
+| Okimat | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), david_nagy, corne, PT, [kristofferR](https://github.com/kristofferR) |
+| Keeson/Ergomotion | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), [kristofferR](https://github.com/kristofferR) |
+| Octo | [Richard Hopton](https://github.com/richardhopton/smartbed-mqtt), _pm, goedh452, Murp, Brokkert, [kristofferR](https://github.com/kristofferR) |
+| Jiecang | [kristofferR](https://github.com/kristofferR) |
+| Serta | [kristofferR](https://github.com/kristofferR) |
+| Malouf | [kristofferR](https://github.com/kristofferR) |
+| BedTech | [kristofferR](https://github.com/kristofferR) |
+| Okin 64-bit | [kristofferR](https://github.com/kristofferR) |
+| Sleepy's Elite | [kristofferR](https://github.com/kristofferR) |
+| Jensen | [kristofferR](https://github.com/kristofferR) |
+| Svane | [kristofferR](https://github.com/kristofferR) |
+| Mattress Firm 900 | [David Delahoz](https://github.com/daviddelahoz/BLEAdjustableBase) |
+| Nectar | [MaximumWorf](https://github.com/MaximumWorf/homeassistant-nectar) |

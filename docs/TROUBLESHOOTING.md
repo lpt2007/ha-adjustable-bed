@@ -269,18 +269,26 @@ Some older beds use **Classic Bluetooth** instead of **Bluetooth Low Energy (BLE
 
 Use these to identify your bed type in a BLE scanner:
 
-| UUID | Bed Type |
-|------|----------|
-| `99fa0001-338a-1024-8a49-009c0215f78a` | Linak |
-| `6e400001-b5a3-f393-e0a9-e50e24dcca9e` | Richmat Nordic / Keeson KSBT |
-| `0000ffe5-0000-1000-8000-00805f9b34fb` | Keeson Base / Ergomotion |
-| `0000fff0-0000-1000-8000-00805f9b34fb` | Keeson Base (fallback 1) |
-| `0000ffb0-0000-1000-8000-00805f9b34fb` | Keeson Base (fallback 2) |
-| `0000ffe0-0000-1000-8000-00805f9b34fb` | Solace / MotoSleep |
-| `45e25100-3171-4cfc-ae89-1d83cf8d8071` | Leggett & Platt Gen2 |
-| `62741523-52f9-8864-b1ab-3b3a8d65950b` | Okimat / Leggett Okin |
+| UUID | Bed Type(s) |
+|------|-------------|
+| `00001234-0000-1000-8000-00805f9b34fb` | Jensen JMC400 |
+| `00001523-0000-1000-8000-00805f9b34fb` | DewertOkin |
+| `0000aa5c-0000-1000-8000-00805f9b34fb` | Octo Star2 |
+| `0000abcb-0000-1000-8000-00805f9b34fb` | Svane |
+| `0000fee9-0000-1000-8000-00805f9b34fb` | BedTech, Richmat WiLinke (variant) |
+| `0000ff12-0000-1000-8000-00805f9b34fb` | Comfort Motion / Jiecang |
+| `0000ffb0-0000-1000-8000-00805f9b34fb` | Keeson Base (fallback) |
+| `0000ffe0-0000-1000-8000-00805f9b34fb` | Solace, MotoSleep, Octo (standard) |
+| `0000ffe5-0000-1000-8000-00805f9b34fb` | Keeson Base, Ergomotion, Malouf LEGACY_OKIN, OKIN FFE, Serta |
+| `0000fff0-0000-1000-8000-00805f9b34fb` | Keeson Base (fallback), Richmat WiLinke (variant) |
+| `01000001-0000-1000-8000-00805f9b34fb` | Malouf NEW_OKIN |
 | `1b1d9641-b942-4da8-89cc-98e6a58fbd93` | Reverie |
+| `45e25100-3171-4cfc-ae89-1d83cf8d8071` | Leggett & Platt Gen2 |
+| `62741523-52f9-8864-b1ab-3b3a8d65950b` | Okimat, Leggett Okin, Nectar, OKIN 64-bit, Sleepy's BOX24 |
+| `6e400001-b5a3-f393-e0a9-e50e24dcca9e` | Richmat Nordic, Keeson KSBT, Mattress Firm 900 |
 | `8ebd4f76-da9d-4b5a-a96e-8ebfbeb622e7` | Richmat WiLinke |
+| `99fa0001-338a-1024-8a49-009c0215f78a` | Linak |
+| `db801000-f324-29c3-38d1-85c0c2e86885` | Reverie Nightstand |
 
 ---
 
