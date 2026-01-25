@@ -1,6 +1,6 @@
 # Jensen
 
-**Status:** Beta (needs user testing)
+**Status:** ✅ Tested
 
 **Credit:** Protocol reverse-engineered from `com.hilding.jbg_ble` APK
 
@@ -14,6 +14,18 @@
 | Analyzed | App | Package ID |
 |----------|-----|------------|
 | ✅ | JBG BLE | `com.hilding.jbg_ble` |
+
+## PIN Authentication
+
+Jensen beds require a 4-digit PIN for authentication. The integration uses **3060** as the default PIN, which works for most beds.
+
+**If commands don't work or the bed disconnects immediately:**
+1. Go to **Settings** → **Devices & Services** → **Adjustable Bed**
+2. Click the **gear icon** on your Jensen device
+3. Enter your bed's correct PIN in the **Jensen PIN** field
+4. Save and reload the integration
+
+**Finding your PIN:** Check your bed's documentation, the label on the control box, or try common defaults like `0000`, `1234`, or `3060`.
 
 ## Features
 
@@ -53,6 +65,14 @@ Command types:
 - `0x10` - Motor/preset commands
 - `0x12` - Massage commands
 - `0x13` - Light commands
+
+### PIN Unlock Command
+
+The PIN unlock command must be sent immediately after enabling notifications, before any other commands will work.
+
+| Command | Bytes (hex) | Notes |
+|---------|-------------|-------|
+| PIN Unlock | `1E d1 d2 d3 d4 00` | d1-d4 are the 4 PIN digits (e.g., `1E 03 00 06 00 00` for PIN "3060") |
 
 ### Motor Commands
 

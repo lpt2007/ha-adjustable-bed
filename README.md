@@ -75,7 +75,8 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 | ✅ [Reverie](docs/beds/reverie.md) | Reverie |
 | ✅ [Okimat/Okin](docs/beds/okimat.md) | Lucid, CVB, Smartbed |
 | ✅ [Jiecang](docs/beds/jiecang.md) | Glideaway, Dream Motion |
-| ⚠️ [Jensen](docs/beds/jensen.md) | Jensen (JMC400, LinON Entry) |
+| ✅ [Jensen](docs/beds/jensen.md) | Jensen (JMC400, LinON Entry) |
+| ✅ [Svane](docs/beds/svane.md) | Svane |
 | ✅ [DewertOkin](docs/beds/dewertokin.md) | Rize, Simmons, Nectar, Resident, Symphony |
 | ✅ [Serta](docs/beds/serta.md) | Serta Motion Perfect |
 | ✅ [Mattress Firm 900](docs/beds/mattressfirm.md) | Mattress Firm, iFlex |
@@ -128,6 +129,7 @@ To adjust settings after setup, click the **gear icon** on your device in Settin
 | Protocol Variant | Usually auto-detected, override if needed |
 | Motor Pulse Settings | Fine-tune movement timing |
 | Disable Angle Sensing | Keep on to allow physical remote to work |
+| Jensen PIN | 4-digit PIN for Jensen beds (default: 3060) |
 | Octo PIN | 4-digit PIN for Octo beds that require authentication |
 | Richmat Remote | Remote model code for Richmat beds |
 
