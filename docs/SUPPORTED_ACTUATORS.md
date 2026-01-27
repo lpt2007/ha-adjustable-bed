@@ -64,28 +64,24 @@ Several bed brands use Okin-based BLE controllers. While they share common roots
 
 ---
 
-## Not Yet Supported
+## Not Supported
 
-### Sleeptracker AI (Cloud-based)
-- Tempur-Pedic Ergo series (cloud-connected models)
-- Beautyrest SmartMotion (cloud-connected models)
-- Serta Motion series (cloud-connected models)
+### WiFi and Cloud-Based Beds
 
-**Reason:** Requires cloud API, not local BLE control.
+**[Won't be supported, read reasons here](https://github.com/kristofferR/ha-adjustable-bed/issues/167).** This is a Bluetooth-only integration. WiFi and cloud beds require fundamentally different architecture and would be better served by a separate integration.
 
-### Logicdata (Local Network)
-- Tempur-Pedic beds with Logicdata controllers
-- Uses local UDP/HTTP protocol, not BLE
+Beds that won't be supported:
+- **Sleeptracker AI** — Tempur-Pedic Ergo, BeautyRest SmartMotion, Serta Motion (cloud-connected models)
+- **Logicdata** — Uses local UDP/HTTP, not Bluetooth
+- **ErgoWifi** — Uses Xlink cloud platform
 
-### ErgoWifi (Cloud-based)
-- Beds using Xlink cloud platform
-- Requires Chinese cloud API authentication
+If you have one of these beds, consider running [smartbed-mqtt](https://github.com/richardhopton/smartbed-mqtt) as an addon or make a seperate integration for WiFi/Cloud adjustable beds. 
 
-### Eight Sleep
-Will not be implemented. Use the [Eight Sleep](https://github.com/lukas-clarke/eight_sleep) integration instead.
+### Other Integrations
 
-### Sleep Number
-Will not be implemented. Use the [SleepIQ](https://www.home-assistant.io/integrations/sleepiq/) integration instead.
+These beds have their own dedicated integrations:
+- **Eight Sleep** — Use the [Eight Sleep](https://github.com/lukas-clarke/eight_sleep) integration
+- **Sleep Number** — Use the [SleepIQ](https://www.home-assistant.io/integrations/sleepiq/) integration
 
 ---
 

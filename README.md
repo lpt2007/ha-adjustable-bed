@@ -91,7 +91,9 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 
 **Still stuck?** [Open an issue](https://github.com/kristofferR/ha-adjustable-bed/issues) with your bed brand/model and we'll help!
 
-**Other beds:** [Eight Sleep](https://github.com/lukas-clarke/eight_sleep) and [Sleep Number](https://www.home-assistant.io/integrations/sleepiq/) have their own integrations. Cloud-based beds (Tempur Ergo, BeautyRest with Sleeptracker AI) aren't supported yet.
+**Other beds:** [Eight Sleep](https://github.com/lukas-clarke/eight_sleep) and [Sleep Number](https://www.home-assistant.io/integrations/sleepiq/) have their own integrations. 
+
+**WiFi and cloud-based beds [won't be supported](https://github.com/kristofferR/ha-adjustable-bed/issues/167)** — this is a Bluetooth-only integration for the reasons stated in the link.
 
 ## Installation
 
@@ -150,17 +152,6 @@ See the [Connection Guide](docs/CONNECTION_GUIDE.md) for setup help.
 - **Bug reports** - Found something wrong? [Open an issue](https://github.com/kristofferR/ha-adjustable-bed/issues)
 - **Code contributions** - PRs welcome!
 
-<details>
-<summary><b>Adding support for a new bed type</b></summary>
-
-1. Capture BLE traffic using nRF Connect or similar
-2. Document the GATT services and characteristics
-3. Implement a controller in `beds/`
-4. Add detection to `config_flow.py`
-
-See [Supported Actuators](docs/SUPPORTED_ACTUATORS.md) for protocol documentation.
-
-</details>
 
 ## Credits
 
