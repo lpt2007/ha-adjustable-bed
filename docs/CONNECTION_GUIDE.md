@@ -149,15 +149,21 @@ See the [Configuration Guide](CONFIGURATION.md) for detailed explanations of all
 
 If your bed isn't auto-discovered:
 
-**Using nRF Connect App (Recommended):**
-1. Install "nRF Connect" on your phone
-2. Start scanning
-3. Look for your bed (often named "Desk XXXXX" for Linak, "HHC..." for MotoSleep, etc.)
-4. Note the MAC address
+**Using the Integration (Recommended):**
+1. Go to Settings → Integrations → Add Integration → Adjustable Bed
+2. Choose "Manual entry"
+3. The integration displays all discovered Bluetooth devices with their MAC addresses
+4. Find your bed in the list (look for names like "Desk XXXXX", "HHC...", your bed brand, etc.)
 
 **Using ESPHome Logs:**
 1. Open ESPHome dashboard → View logs for your proxy
 2. Look for: `[bluetooth_proxy] Proxying packet from AA:BB:CC:DD:EE:FF...`
+
+**Using nRF Connect (Fallback):**
+
+If your bed doesn't appear in Home Assistant at all (not visible to any adapter or proxy), use [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) on your phone to verify the device exists and check its range. If nRF Connect sees it but Home Assistant doesn't, the bed may be out of range of your HA Bluetooth adapter - consider adding an ESPHome proxy closer to the bed.
+
+**Tip:** If your bed type isn't recognized, you can add it in Diagnostic mode to capture BLE data. See [Getting Help](GETTING_HELP.md) for details.
 
 ---
 

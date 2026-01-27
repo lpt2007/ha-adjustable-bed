@@ -127,7 +127,7 @@ custom_components/adjustable_bed/
 
 ## Adding a New Bed Type
 
-1. **Document the BLE protocol** - Use nRF Connect or the `run_diagnostics` service to capture GATT services, characteristics, and command bytes
+1. **Document the BLE protocol** - Use APK reverse engineering (see `disassembly/AGENTS.md`) to extract UUIDs and command bytes. The `run_diagnostics` service captures GATT structure and device responses. User-provided nRF Connect logs can supplement APK analysis with real traffic captures.
 
 2. **Add constants to `const.py`**:
    ```python

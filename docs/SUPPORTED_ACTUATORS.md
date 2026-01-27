@@ -87,9 +87,11 @@ These beds have their own dedicated integrations:
 
 ## Identifying Your Bed Type
 
-1. **Check the remote or controller** for brand markings
-2. **Scan for BLE devices** using nRF Connect app
-3. **Look at device names:**
+1. **Check if auto-discovery finds your bed**: Settings → Integrations → Add Integration → Adjustable Bed. If your bed appears in the list, the integration likely detected the correct type.
+
+2. **Check the remote or controller** for brand markings.
+
+3. **Look at the device name** (shown during manual setup or in diagnostics):
    - `HHC*` → MotoSleep
    - `DPG*` or `Desk*` → Linak
    - `Nectar*` → Nectar
@@ -104,7 +106,8 @@ These beds have their own dedicated integrations:
    - `Malouf*`, `Structures*` → Malouf
    - `Sleepy*` → Sleepy's Elite (try BOX24 first, BOX15 if lumbar needed)
    - `VMAT*` → Vibradorm
-4. **Check service UUIDs** (using nRF Connect):
+
+4. **Use Diagnostic mode to find service UUIDs**: If unsure, add the device as "Diagnostic/Unknown" and run the `run_diagnostics` service. The output includes service UUIDs:
    - Service `62741523-...` → Okin family (see [Okin Protocol Family](#okin-protocol-family))
    - Service `45e25100-...` → Leggett & Platt Gen2
    - Service `0000aa5c-...` → Octo Star2 variant
@@ -112,6 +115,8 @@ These beds have their own dedicated integrations:
    - Service `0000ffe5-...` → Malouf (Legacy OKIN) or Keeson OKIN variant
    - Service `0000fee9-...` → Richmat WiLinke or BedTech
    - Service `00001525-...` → Vibradorm
+
+5. **Fallback**: If the device isn't visible to Home Assistant at all, use [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) on your phone to verify it exists and check the service UUIDs.
 
 If your bed isn't auto-detected, use manual configuration and try different bed types.
 

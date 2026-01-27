@@ -98,15 +98,18 @@ If your bed isn't supported yet, file a [New Bed Support Request](https://github
 ### Required Information
 
 - **Bed manufacturer and model** (e.g., "Tempur-Pedic Ergo Extend")
-- **Bluetooth device name** shown in a BLE scanner app
-- **BLE Service UUIDs** from the device
+- **Bluetooth device name** shown when adding the device
+- **BLE Service UUIDs** from diagnostics output
 
 ### How to Find BLE Information
 
-1. **Install a BLE scanner app** like [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) (iOS/Android)
-2. **Scan for devices** - look for names containing your bed brand, "Desk", "HHC", "Base", etc.
-3. **Connect to the device** and note the Service UUIDs
-4. **Check the advertising data** for manufacturer-specific data
+The easiest way is to use the integration's built-in tools:
+
+1. **Add the device in Diagnostic mode**: Settings → Integrations → Add Integration → Adjustable Bed → Manual entry → Select "Diagnostic/Unknown" as bed type
+2. **Run diagnostics**: Developer Tools → Services → `adjustable_bed.run_diagnostics` → Select your device
+3. **Check the output file** in your `/config/` folder for service UUIDs and device info
+
+If your bed doesn't appear in Home Assistant at all (not visible to any Bluetooth adapter), use [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) on your phone to verify the device exists and is advertising.
 
 ### Helpful Additional Info
 
@@ -120,35 +123,72 @@ If your bed isn't supported yet, file a [New Bed Support Request](https://github
 
 Let us know if you can:
 - Test beta implementations on your bed
-- Capture BLE traffic from the official app using tools like nRF Connect, Wireshark, or Android BLE debugging
+- Capture BLE traffic from the official app (see [Capturing App Traffic](#capturing-app-traffic-for-new-bed-support) below)
 
 ---
 
-## Getting BLE Protocol Data
+## Which Diagnostic Tool Should I Use?
 
-For new bed support or complex debugging, capturing BLE traffic helps significantly.
+| Scenario | Recommended Tool |
+|----------|------------------|
+| Troubleshooting a configured bed | Support report or diagnostics download |
+| Finding your bed's MAC address | Integration shows discovered MACs when manually adding |
+| Identifying bed type/service UUIDs | `run_diagnostics` in Diagnostic mode |
+| New bed support - capture what app sends | nRF Connect logging (see below) |
+| Device not visible to HA at all | nRF Connect to verify it exists |
 
-### Using nRF Connect
+---
 
-1. Enable "Log" in nRF Connect settings
-2. Connect to your bed
-3. Use the official app to control the bed
-4. Export the log and attach it to your issue
+## Capturing BLE Data for Troubleshooting
 
-### Using Android BLE HCI Snoop
+For most troubleshooting, the **built-in diagnostics** provide everything needed:
+
+### Using run_diagnostics Service
+
+The `run_diagnostics` service captures GATT structure, device info, and notifications from your bed:
+
+1. Go to **Developer Tools** → **Services**
+2. Search for `adjustable_bed.run_diagnostics`
+3. Select your bed device (or enter a MAC address for unconfigured devices)
+4. Click **Call Service**
+5. Optionally operate your physical remote during capture to record notifications
+6. Find the JSON report in your `/config/` folder
+
+This captures:
+- All GATT services and characteristics
+- Device name and advertising data
+- Notifications sent BY the device (e.g., position updates)
+
+**Limitation:** This captures what the device *sends*, not commands sent *to* the device. For capturing outgoing commands from an app, see [Capturing App Traffic](#capturing-app-traffic-for-new-bed-support).
+
+---
+
+## Capturing App Traffic for New Bed Support
+
+When requesting support for a new bed, capturing what the official app sends to your bed is valuable. This data helps reverse-engineer the command protocol.
+
+### Using nRF Connect (Recommended)
+
+[nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) can log all BLE traffic while you use the official app:
+
+1. Install nRF Connect on your phone
+2. Enable **Log** in nRF Connect settings
+3. Connect to your bed in nRF Connect
+4. Open the official bed app on another device (or disconnect from nRF Connect first)
+5. Use the app to control the bed - move motors, activate presets, etc.
+6. Export the log and attach it to your GitHub issue
+
+The log shows the exact bytes the app sends for each command, which is essential for implementing new protocols.
+
+### Using Android BLE HCI Snoop (Advanced)
+
+For more detailed captures:
 
 1. Enable **Developer options** on your Android device
 2. Enable **Bluetooth HCI snoop log**
 3. Use the official app to control the bed
-4. Extract the log file and convert with Wireshark
-
-### Using Diagnostic Mode
-
-If your bed isn't recognized, try adding it in **Diagnostic mode**:
-
-1. Add the bed manually and select "Diagnostic/Unknown" as the bed type
-2. Call the `adjustable_bed.run_diagnostics` service
-3. This captures raw BLE data that can help identify the protocol
+4. Extract the log file (location varies by Android version)
+5. Open in Wireshark and filter by your bed's MAC address
 
 ---
 
