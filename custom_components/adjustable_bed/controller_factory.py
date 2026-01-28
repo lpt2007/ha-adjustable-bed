@@ -169,35 +169,52 @@ async def create_controller(
             # Still need to detect correct char_uuid - different WiLinke devices use different UUIDs
             if client is None or not client.is_connected:
                 raise ConnectionError("Cannot use WiLinke variant: client not connected")
-            _, char_uuid = await detect_richmat_variant(client)
+            _, char_uuid, write_with_response = await detect_richmat_variant(client)
             return RichmatController(
-                coordinator, is_wilinke=True, char_uuid=char_uuid, remote_code=richmat_remote
+                coordinator,
+                is_wilinke=True,
+                char_uuid=char_uuid,
+                remote_code=richmat_remote,
+                write_with_response=write_with_response,
             )
         elif protocol_variant == RICHMAT_VARIANT_PREFIX55:
             _LOGGER.debug("Using Prefix55 Richmat variant (configured)")
+            if client is None or not client.is_connected:
+                raise ConnectionError("Cannot use Prefix55 variant: client not connected")
+            _, char_uuid, write_with_response = await detect_richmat_variant(client)
             return RichmatController(
                 coordinator,
+                is_wilinke=True,
                 remote_code=richmat_remote,
                 command_protocol=RICHMAT_PROTOCOL_PREFIX55,
+                char_uuid=char_uuid,
+                write_with_response=write_with_response,
             )
         elif protocol_variant == RICHMAT_VARIANT_PREFIXAA:
             _LOGGER.debug("Using PrefixAA Richmat variant (configured)")
+            if client is None or not client.is_connected:
+                raise ConnectionError("Cannot use PrefixAA variant: client not connected")
+            _, char_uuid, write_with_response = await detect_richmat_variant(client)
             return RichmatController(
                 coordinator,
+                is_wilinke=True,
                 remote_code=richmat_remote,
                 command_protocol=RICHMAT_PROTOCOL_PREFIXAA,
+                char_uuid=char_uuid,
+                write_with_response=write_with_response,
             )
         else:
             # Auto-detect variant based on available services
             _LOGGER.debug("Auto-detecting Richmat variant...")
             if client is None or not client.is_connected:
                 raise ConnectionError("Cannot detect variant: client not connected")
-            is_wilinke, char_uuid = await detect_richmat_variant(client)
+            is_wilinke, char_uuid, write_with_response = await detect_richmat_variant(client)
             return RichmatController(
                 coordinator,
                 is_wilinke=is_wilinke,
                 char_uuid=char_uuid,
                 remote_code=richmat_remote,
+                write_with_response=write_with_response,
             )
 
     if bed_type == BED_TYPE_KEESON:

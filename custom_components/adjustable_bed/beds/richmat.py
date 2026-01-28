@@ -93,6 +93,7 @@ class RichmatController(BedController):
         char_uuid: str | None = None,
         remote_code: str | None = None,
         command_protocol: str | None = None,
+        write_with_response: bool = True,
     ) -> None:
         """Initialize the Richmat controller.
 
@@ -102,12 +103,14 @@ class RichmatController(BedController):
             char_uuid: The characteristic UUID to use for writing commands
             remote_code: The remote code for feature detection (e.g., "VIRM", "I7RM")
             command_protocol: Override the command protocol (single, wilinke, prefix55, prefixaa)
+            write_with_response: Whether to use write-with-response for GATT writes
         """
         super().__init__(coordinator)
         self._is_wilinke = is_wilinke
         self._char_uuid = char_uuid or RICHMAT_NORDIC_CHAR_UUID
         self._notify_callback: Callable[[str, float], None] | None = None
         self._remote_code = remote_code or RICHMAT_REMOTE_AUTO
+        self._write_with_response = write_with_response
         # Use get_richmat_features which looks up from both manual overrides
         # and the comprehensive 456-code generated mapping
         self._features = get_richmat_features(self._remote_code)
@@ -121,10 +124,11 @@ class RichmatController(BedController):
             self._command_protocol = RICHMAT_PROTOCOL_SINGLE
 
         _LOGGER.debug(
-            "RichmatController initialized (char: %s, protocol: %s, remote: %s)",
+            "RichmatController initialized (char: %s, protocol: %s, remote: %s, response: %s)",
             self._char_uuid,
             self._command_protocol,
             self._remote_code,
+            self._write_with_response,
         )
 
     @property
@@ -235,6 +239,7 @@ class RichmatController(BedController):
                 repeat_count=repeat_count,
                 repeat_delay_ms=repeat_delay_ms,
                 cancel_event=cancel_event,
+                response=self._write_with_response,
             )
         except BleakError as err:
             # Additional diagnostics for characteristic issues
@@ -456,16 +461,16 @@ class RichmatController(BedController):
         await self.write_command(self._build_command(RichmatCommands.MASSAGE_PATTERN_STEP))
 
 
-async def detect_richmat_variant(client: BleakClient) -> tuple[bool, str | None]:
+async def detect_richmat_variant(client: BleakClient) -> tuple[bool, str | None, bool]:
     """Detect which Richmat variant this device is.
 
     Returns:
-        Tuple of (is_wilinke, characteristic_uuid)
+        Tuple of (is_wilinke, characteristic_uuid, write_with_response)
     """
     # Guard against missing service discovery
     if client.services is None:
         _LOGGER.warning("BLE services not discovered, falling back to Nordic Richmat variant")
-        return False, RICHMAT_NORDIC_CHAR_UUID
+        return False, RICHMAT_NORDIC_CHAR_UUID, True
 
     # Log all discovered services for debugging
     service_uuids = [s.uuid.lower() for s in client.services]
@@ -494,7 +499,7 @@ async def detect_richmat_variant(client: BleakClient) -> tuple[bool, str | None]
                         service_uuid,
                         write_uuid,
                     )
-                    return True, write_uuid
+                    return True, write_uuid, True
 
                 _LOGGER.debug(
                     "Write characteristic %s not found in service %s",
@@ -515,11 +520,13 @@ async def detect_richmat_variant(client: BleakClient) -> tuple[bool, str | None]
                         if "write" in props:
                             _LOGGER.info(
                                 "Detected WiLinke Richmat variant using notify char for writing "
-                                "(service: %s, write char: %s)",
+                                "(service: %s, write char: %s, response: False)",
                                 service_uuid,
                                 notify_uuid,
                             )
-                            return True, notify_uuid
+                            # Use write-without-response for single-char variants
+                            # to maximize compatibility with devices that don't ack writes.
+                            return True, notify_uuid, False
                     _LOGGER.debug(
                         "Notify characteristic %s not writable or not found",
                         notify_uuid,
@@ -546,4 +553,4 @@ async def detect_richmat_variant(client: BleakClient) -> tuple[bool, str | None]
         "(write char: %s)",
         w1_write_char,
     )
-    return True, w1_write_char
+    return True, w1_write_char, True
