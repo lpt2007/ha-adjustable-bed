@@ -3,7 +3,7 @@
 This file is auto-generated from decompiled Richmat app data.
 Do not edit manually - regenerate with disassembly/generate_richmat_features.py
 
-Contains feature mappings for 456 Richmat remote codes extracted from
+Contains feature mappings for 492 Richmat remote codes extracted from
 the official Richmat/RMControl app.
 """
 
@@ -463,6 +463,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "b6rm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "b7rn": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -1363,6 +1364,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET |
         _F.MOTOR_LUMBAR
     ),
+    "dbrm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_TV |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "dcrm": (
         _F.PRESET_FLAT |
         _F.PRESET_LOUNGE |
@@ -1532,6 +1540,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET |
         _F.MOTOR_LUMBAR
     ),
+    "dqrm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_TV |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "dsrn": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -1625,6 +1640,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "e5rm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_TV |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "e9rm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -1642,6 +1664,14 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MASSAGE_FOOT_STEP |
         _F.MASSAGE_MODE |
         _F.MASSAGE_TOGGLE |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
+    "ecrm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_LOUNGE |
+        _F.PRESET_ANTI_SNORE |
+        _F.UNDER_BED_LIGHTS |
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
@@ -1677,6 +1707,15 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET
     ),
     "ekrm": _F.PRESET_FLAT | _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "eprm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_MEMORY_1 |
+        _F.PRESET_MEMORY_2 |
+        _F.UNDER_BED_LIGHTS |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "errm": (
         _F.PRESET_FLAT |
         _F.PRESET_MEMORY_1 |
@@ -1766,6 +1805,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET
     ),
     "f2rm": _F.PRESET_FLAT | _F.MOTOR_HEAD,
+    "f5rm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.UNDER_BED_LIGHTS |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "f8rm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -1796,6 +1842,15 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "fdrm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_LOUNGE |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_TV |
+        _F.UNDER_BED_LIGHTS |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
     "firm": (
         _F.PRESET_FLAT |
         _F.PRESET_MEMORY_1 |
@@ -1813,6 +1868,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET
     ),
     "flrm": _F.PRESET_FLAT | _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "fnrm": _F.PRESET_FLAT | _F.PRESET_ANTI_SNORE | _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "fprn": (
         _F.PRESET_FLAT |
         _F.PRESET_LOUNGE |
@@ -1844,6 +1900,15 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MASSAGE_FOOT_STEP |
         _F.MASSAGE_MODE |
         _F.MASSAGE_TOGGLE |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
+    "g4rm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.PRESET_MEMORY_1 |
+        _F.PRESET_MEMORY_2 |
+        _F.UNDER_BED_LIGHTS |
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
@@ -2009,6 +2074,8 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_PILLOW |
         _F.MOTOR_LUMBAR
     ),
+    "ghrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "gjrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "gnrm": (
         _F.PRESET_FLAT |
         _F.PRESET_MEMORY_1 |
@@ -2045,6 +2112,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "gsrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "gurm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2070,6 +2138,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "gxrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "gyrm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2183,6 +2252,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "hkrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "hmrm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2611,6 +2681,8 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "j6rm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "j7rm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "j9rm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2644,6 +2716,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET |
         _F.MOTOR_LUMBAR
     ),
+    "jdrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "jdrn": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2665,6 +2738,9 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET |
         _F.MOTOR_LUMBAR
     ),
+    "jfrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "jgrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "jmrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "jprm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2686,6 +2762,10 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_FEET |
         _F.MOTOR_LUMBAR
     ),
+    "jqrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "jrrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "jwrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "karm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "kbrn": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2851,6 +2931,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_PILLOW |
         _F.MOTOR_LUMBAR
     ),
+    "kurm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "kwrn": (
         _F.PRESET_FLAT |
         _F.PRESET_LOUNGE |
@@ -2882,6 +2963,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_PILLOW |
         _F.MOTOR_LUMBAR
     ),
+    "l3rm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "l9rn": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2902,6 +2984,7 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "lcrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "ldrm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -2934,6 +3017,9 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_PILLOW |
         _F.MOTOR_LUMBAR
     ),
+    "lqrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "lrrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "lsrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "lxrm": (
         _F.PRESET_FLAT |
         _F.PRESET_ZERO_G |
@@ -3053,6 +3139,11 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
+    "mcrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "mdrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "merm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "mfrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "mgrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "mlrm": (
         _F.PRESET_FLAT |
         _F.PRESET_ANTI_SNORE |
@@ -3620,6 +3711,8 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.MOTOR_PILLOW |
         _F.MOTOR_LUMBAR
     ),
+    "perm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
+    "qrrm": _F.MOTOR_HEAD | _F.MOTOR_FEET,
     "r2rm": (
         _F.PRESET_FLAT |
         _F.PRESET_LOUNGE |
@@ -3665,6 +3758,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.PRESET_MEMORY_2 |
         _F.PROGRAM_MEMORY_1 |
         _F.PROGRAM_MEMORY_2 |
+        _F.UNDER_BED_LIGHTS |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
+    "s9rm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
         _F.UNDER_BED_LIGHTS |
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
@@ -3835,6 +3935,13 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.UNDER_BED_LIGHTS |
         _F.MASSAGE_HEAD_STEP |
         _F.MASSAGE_FOOT_STEP |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET
+    ),
+    "twrm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_LOUNGE |
+        _F.UNDER_BED_LIGHTS |
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
     ),
@@ -5845,6 +5952,14 @@ RICHMAT_REMOTE_FEATURES_GENERATED: Final[dict[str, RichmatFeatures]] = {
         _F.PROGRAM_MEMORY_2 |
         _F.MOTOR_HEAD |
         _F.MOTOR_FEET
+    ),
+    "y6rm": (
+        _F.PRESET_FLAT |
+        _F.PRESET_ANTI_SNORE |
+        _F.UNDER_BED_LIGHTS |
+        _F.MOTOR_HEAD |
+        _F.MOTOR_FEET |
+        _F.MOTOR_PILLOW
     ),
     "y8rm": (
         _F.PRESET_FLAT |
