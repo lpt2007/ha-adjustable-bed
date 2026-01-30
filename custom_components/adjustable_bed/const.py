@@ -490,7 +490,8 @@ LINAK_NAME_PATTERNS: Final = ("bed ",)
 # - base-i4.XXXXXXXX (e.g., base-i4.00002574)
 # - base-i5.XXXXXXXX (e.g., base-i5.00000682)
 # - KSBTXXXXCXXXXXX (e.g., KSBT03C000015046)
-KEESON_NAME_PATTERNS: Final = ("base-i4.", "base-i5.", "ksbt")
+# - ORE-XXXXXXXXXXX (e.g., ORE-ac2170000d) - Dynasty, INNOVA beds (use ORE variant)
+KEESON_NAME_PATTERNS: Final = ("base-i4.", "base-i5.", "ksbt", "ore-")
 
 # Richmat Nordic name patterns (e.g., QRRM157052, Sleep Function 2.0, X1RM beds)
 # Also includes DHN- prefix (Germany Motions beds using FFF0 service)
@@ -639,6 +640,7 @@ KEESON_VARIANT_KSBT: Final = "ksbt"
 KEESON_VARIANT_ERGOMOTION: Final = "ergomotion"
 KEESON_VARIANT_OKIN: Final = "okin"
 KEESON_VARIANT_SERTA: Final = "serta"
+KEESON_VARIANT_ORE: Final = "ore"
 KEESON_VARIANTS: Final = {
     VARIANT_AUTO: "Auto-detect",
     KEESON_VARIANT_BASE: "BaseI4/BaseI5 (Member's Mark, Purple)",
@@ -646,6 +648,7 @@ KEESON_VARIANTS: Final = {
     KEESON_VARIANT_ERGOMOTION: "Ergomotion (with position feedback)",
     KEESON_VARIANT_OKIN: "OKIN FFE (OKIN 13/15 series, 0xE6 prefix)",
     KEESON_VARIANT_SERTA: "Serta (Serta MP Remote)",
+    KEESON_VARIANT_ORE: "ORE (Dynasty, INNOVA - big-endian)",
 }
 
 # Leggett & Platt variants
@@ -1069,6 +1072,7 @@ ALL_PROTOCOL_VARIANTS: Final = [
     KEESON_VARIANT_ERGOMOTION,
     KEESON_VARIANT_OKIN,
     KEESON_VARIANT_SERTA,
+    KEESON_VARIANT_ORE,
     LEGGETT_VARIANT_GEN2,
     LEGGETT_VARIANT_OKIN,
     LEGGETT_VARIANT_MLRM,

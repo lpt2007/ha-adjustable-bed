@@ -50,6 +50,7 @@ from .const import (
     KEESON_VARIANT_ERGOMOTION,
     KEESON_VARIANT_KSBT,
     KEESON_VARIANT_OKIN,
+    KEESON_VARIANT_ORE,
     KEESON_VARIANT_SERTA,
     LEGGETT_VARIANT_MLRM,
     LEGGETT_VARIANT_OKIN,
@@ -231,8 +232,11 @@ async def create_controller(
             _LOGGER.debug("Using OKIN FFE Keeson variant (0xE6 prefix)")
             return KeesonController(coordinator, variant="okin")
         elif protocol_variant == KEESON_VARIANT_SERTA:
-            _LOGGER.debug("Using Serta Keeson variant (big-endian)")
+            _LOGGER.debug("Using Serta Keeson variant")
             return KeesonController(coordinator, variant="serta")
+        elif protocol_variant == KEESON_VARIANT_ORE:
+            _LOGGER.debug("Using ORE Keeson variant (big-endian)")
+            return KeesonController(coordinator, variant="ore")
         else:
             # Auto or base variant
             _LOGGER.debug("Using Base Keeson variant")
