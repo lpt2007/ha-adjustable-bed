@@ -1097,7 +1097,12 @@ ALL_PROTOCOL_VARIANTS: Final = [
 
 # Bed types that require BLE pairing before they can be controlled
 # These beds use encrypted connections and must be paired at the OS level
-BEDS_REQUIRING_PAIRING: Final[set[str]] = {BED_TYPE_OKIN_UUID, BED_TYPE_LEGGETT_OKIN, BED_TYPE_OKIMAT}
+BEDS_REQUIRING_PAIRING: Final[set[str]] = {
+    BED_TYPE_OKIN_UUID,
+    BED_TYPE_LEGGETT_OKIN,
+    BED_TYPE_OKIMAT,
+    BED_TYPE_VIBRADORM,
+}
 
 # Bed type + variant combinations that require BLE pairing
 # Maps bed type to set of variants that require pairing for that specific bed type
