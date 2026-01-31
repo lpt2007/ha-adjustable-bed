@@ -75,7 +75,7 @@ class KeesonCommands:
     MOTOR_LUMBAR_UP = 0x40
     MOTOR_LUMBAR_DOWN = 0x80
 
-    # Massage
+    # Massage (standard Keeson)
     MASSAGE_HEAD_UP = 0x800
     MASSAGE_HEAD_DOWN = 0x800000
     MASSAGE_FOOT_UP = 0x400
@@ -84,9 +84,36 @@ class KeesonCommands:
     MASSAGE_TIMER_STEP = 0x200
     MASSAGE_WAVE_STEP = 0x10000000
 
-    # Lights
+    # Lights (standard Keeson)
     TOGGLE_SAFETY_LIGHTS = 0x20000
     TOGGLE_LIGHTS = 0x20000  # Alias for Ergomotion compatibility
+
+
+class ORECommands:
+    """ORE (Dynasty, INNOVA) specific command constants.
+
+    ORE beds use a different command structure for lights and massage.
+    Motor and preset commands use the same values as standard Keeson.
+    """
+
+    # Lights - discrete on/off (not toggle)
+    LIGHT_ON = 0x31000001
+    LIGHT_OFF = 0x31000000
+
+    # Massage - head intensity (0-10 scale, add level to base)
+    # Level 0 = stop, Level 1-10 = intensity
+    MASSAGE_HEAD_BASE = 0x10000010  # Add 0-10 for level
+
+    # Massage - foot intensity (0-10 scale, add level to base)
+    MASSAGE_FOOT_BASE = 0x11000010  # Add 0-10 for level
+
+    # Massage - wave mode (0-10 scale, add level to base)
+    MASSAGE_WAVE_BASE = 0x10000020  # Add 0-10 for level
+
+    # Timer commands
+    TIMER_10MIN = 0x10000030
+    TIMER_20MIN = 0x10000031
+    TIMER_30MIN = 0x10000032
 
 
 class KeesonController(BedController):
@@ -305,8 +332,8 @@ class KeesonController(BedController):
 
     @property
     def supports_discrete_light_control(self) -> bool:
-        """Return False - Keeson only supports toggle, not discrete on/off."""
-        return False
+        """Return True for ORE variant (discrete on/off), False for others (toggle only)."""
+        return self._variant == KEESON_VARIANT_ORE
 
     @property
     def has_tilt_support(self) -> bool:
@@ -352,8 +379,10 @@ class KeesonController(BedController):
 
     @property
     def massage_intensity_max(self) -> int:
-        """Return 6 - Keeson/Ergomotion use 0-6 intensity scale."""
-        return 6
+        """Return max massage intensity based on variant."""
+        if self._variant == KEESON_VARIANT_ORE:
+            return 10  # ORE uses 0-10 scale
+        return 6  # Keeson/Ergomotion use 0-6 scale
 
     def _build_command(self, command_value: int) -> bytes:
         """Build command bytes based on protocol variant."""
@@ -396,7 +425,9 @@ class KeesonController(BedController):
             cancel_event=cancel_event,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications (ergomotion variant only)."""
         self._notify_callback = callback
 
@@ -760,41 +791,119 @@ class KeesonController(BedController):
 
     # Light methods
     async def lights_on(self) -> None:
-        """Turn on safety lights (toggle - no discrete control)."""
-        await self.lights_toggle()
+        """Turn on safety lights."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE variant has discrete on/off commands
+            await self.write_command(self._build_command(ORECommands.LIGHT_ON))
+        else:
+            # Other variants only have toggle
+            await self.lights_toggle()
 
     async def lights_off(self) -> None:
-        """Turn off safety lights (toggle - no discrete control)."""
-        await self.lights_toggle()
+        """Turn off safety lights."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE variant has discrete on/off commands
+            await self.write_command(self._build_command(ORECommands.LIGHT_OFF))
+        else:
+            # Other variants only have toggle
+            await self.lights_toggle()
 
     async def lights_toggle(self) -> None:
         """Toggle safety lights."""
-        await self.write_command(self._build_command(KeesonCommands.TOGGLE_SAFETY_LIGHTS))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE doesn't have a toggle - track state and use discrete commands
+            # For now, just turn off (user can use lights_on to turn on)
+            await self.write_command(self._build_command(ORECommands.LIGHT_OFF))
+        else:
+            await self.write_command(self._build_command(KeesonCommands.TOGGLE_SAFETY_LIGHTS))
 
     # Massage methods
     async def massage_toggle(self) -> None:
         """Toggle massage."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_STEP))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE variant: toggle between medium intensity (5) and off
+            if self._head_massage > 0 or self._foot_massage > 0:
+                # Currently on - turn off
+                await self._ore_set_massage(0, 0, 0)
+            else:
+                # Currently off - turn on with medium intensity
+                await self._ore_set_massage(5, 5, 5)
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_STEP))
+
+    async def _ore_set_massage(
+        self, wave_level: int, head_level: int, foot_level: int
+    ) -> None:
+        """Set ORE massage levels (0-10 scale for each)."""
+        # Clamp values to 0-10
+        wave_level = max(0, min(10, wave_level))
+        head_level = max(0, min(10, head_level))
+        foot_level = max(0, min(10, foot_level))
+
+        # Send wave, head, and foot commands (as the app does on "Start")
+        await self.write_command(self._build_command(ORECommands.MASSAGE_WAVE_BASE + wave_level))
+        await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_BASE + head_level))
+        await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_BASE + foot_level))
+
+        # Update tracked state
+        self._head_massage = head_level
+        self._foot_massage = foot_level
 
     async def massage_head_up(self) -> None:
         """Increase head massage intensity."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_UP))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: increment head level (max 10)
+            new_level = min(10, self._head_massage + 1)
+            await self.write_command(
+                self._build_command(ORECommands.MASSAGE_HEAD_BASE + new_level)
+            )
+            self._head_massage = new_level
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_UP))
 
     async def massage_head_down(self) -> None:
         """Decrease head massage intensity."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_DOWN))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: decrement head level (min 0)
+            new_level = max(0, self._head_massage - 1)
+            await self.write_command(
+                self._build_command(ORECommands.MASSAGE_HEAD_BASE + new_level)
+            )
+            self._head_massage = new_level
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_DOWN))
 
     async def massage_foot_up(self) -> None:
         """Increase foot massage intensity."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_UP))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: increment foot level (max 10)
+            new_level = min(10, self._foot_massage + 1)
+            await self.write_command(
+                self._build_command(ORECommands.MASSAGE_FOOT_BASE + new_level)
+            )
+            self._foot_massage = new_level
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_UP))
 
     async def massage_foot_down(self) -> None:
         """Decrease foot massage intensity."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_DOWN))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: decrement foot level (min 0)
+            new_level = max(0, self._foot_massage - 1)
+            await self.write_command(
+                self._build_command(ORECommands.MASSAGE_FOOT_BASE + new_level)
+            )
+            self._foot_massage = new_level
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_DOWN))
 
     async def massage_mode_step(self) -> None:
         """Step through massage modes."""
-        await self.write_command(self._build_command(KeesonCommands.MASSAGE_TIMER_STEP))
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE doesn't have mode stepping - this is a no-op
+            _LOGGER.debug("ORE variant does not support massage mode stepping")
+        else:
+            await self.write_command(self._build_command(KeesonCommands.MASSAGE_TIMER_STEP))
 
     def get_massage_state(self) -> dict[str, Any]:
         """Return current massage state from BLE notification feedback.
