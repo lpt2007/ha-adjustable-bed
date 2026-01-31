@@ -106,7 +106,7 @@ Uses same 32-bit command values as Keeson - see [Keeson commands](keeson.md#comm
 
 ## MlRM Variant (WiLinke)
 
-**Credit:** Reverse engineering by [kristofferR](https://github.com/kristofferR/ha-adjustable-bed), [Josh Pearce](https://github.com/joshpearce) from the LP Adjustable Bed Control app.
+**Credit:** Reverse engineering by [kristofferR](https://github.com/kristofferR/ha-adjustable-bed), [Josh Pearce](https://github.com/joshpearce)
 
 **Characteristic UUID:** `fee1`
 **Format:** 5 bytes `[0x6E, 0x01, 0x00, command, checksum]`

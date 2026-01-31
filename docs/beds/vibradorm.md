@@ -1,8 +1,8 @@
 # Vibradorm
 
-**Status:** 🧪 Needs Testing
+**Status:** ✅ Tested
 
-**Credit:** Reverse engineering by [kristofferR](https://github.com/kristofferR/ha-adjustable-bed) based on APK analysis
+**Credit:** Reverse engineering by [kristofferR](https://github.com/kristofferR/ha-adjustable-bed)
 
 ## Known Models
 
