@@ -117,12 +117,15 @@ custom_components/adjustable_bed/
 | Malouf NEW_OKIN | `MaloufController` | NEW_OKIN 6-byte protocol | Name patterns (Malouf, Lucid, CVB) | Needs testing |
 | Malouf LEGACY_OKIN | `MaloufController` | LEGACY_OKIN 7-byte protocol | Name patterns (Malouf, Lucid, CVB) | Needs testing |
 | Jensen | `JensenController` | 6-byte commands with PIN auth | Service UUID `00001234-...` or name "JMC*" | ✅ Tested |
-| Svane | `SvaneController` | LinonPI multi-service 2-byte commands | Service UUID `0000abcb-...` or name "Svane Bed" | Needs testing |
+| Svane | `SvaneController` | LinonPI multi-service 2-byte commands | Service UUID `0000abcb-...` or name "Svane Bed" | ✅ Tested |
 | BedTech | `BedtechController` | 5-byte ASCII protocol | Service UUID `0000fee9-...` | Needs testing |
 | Sleepy's BOX15 | `SleepysController` | 9-byte with checksum | Service UUID `0000ffe5-...` | Needs testing |
 | Sleepy's BOX24 | `SleepysController` | 7-byte OKIN 64-bit | Service UUID `62741523-...` | Needs testing |
 | Reverie Nightstand | `ReverieNightstandController` | Protocol 110 | Service UUID `db801000-...` | Needs testing |
 | Okin 64-bit | `Okin64BitController` | 10-byte commands | Service UUID `62741523-...` | Needs testing |
+| Vibradorm | `VibradormController` | VMAT protocol, requires BLE pairing | Service UUID `00001525-...` or name "VMAT*" | ✅ Tested |
+| Rondure | `RondureController` | 8/9-byte FurniBus protocol | Manual selection (shared UUID) | Needs testing |
+| Remacro | `RemacroController` | 8-byte SynData protocol | Service UUID `6e403587-...` | Needs testing |
 | Diagnostic | `DiagnosticController` | Debug mode for unsupported beds | Manual selection only | Debug |
 
 ## Adding a New Bed Type

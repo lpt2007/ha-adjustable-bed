@@ -22,8 +22,10 @@ This document provides an overview of supported bed brands. Click on a brand nam
 | [Malouf](beds/malouf.md) | ✅ Supported | 2 memory presets, lumbar, head tilt, massage, lights |
 | [BedTech](beds/bedtech.md) | ✅ Supported | 5 presets, 4 massage modes, dual-base support |
 | [Sleepy's Elite](beds/sleepys.md) | ✅ Supported | Lumbar (BOX15), Zero-G, Flat presets |
-| [Svane](beds/svane.md) | ⚠️ Beta | LinonPI protocol, multi-service |
-| [Vibradorm](beds/vibradorm.md) | 🧪 Needs Testing | Position feedback, 4 memory presets, lights |
+| [Svane](beds/svane.md) | ✅ Supported | LinonPI protocol, multi-service |
+| [Vibradorm](beds/vibradorm.md) | ✅ Supported | Position feedback, 4 memory presets, lights |
+| [Rondure](beds/rondure.md) | 🧪 Needs Testing | 4 motors, split-king, massage, lights |
+| [Remacro](beds/remacro.md) | 🧪 Needs Testing | 4 motors, 8 presets, RGB lights, heat |
 
 ---
 
@@ -106,6 +108,7 @@ These beds have their own dedicated integrations:
    - `Malouf*`, `Structures*` → Malouf
    - `Sleepy*` → Sleepy's Elite (try BOX24 first, BOX15 if lumbar needed)
    - `VMAT*` → Vibradorm
+   - `CheersSleep*`, `Jeromes*`, `Slumberland*`, `The Brick*` → Remacro
    - `Rize*`, `Simmons*`, `Glory*`, `Symphony*` → See [DewertOkin](beds/dewertokin.md)
 
 4. **Use Diagnostic mode to find service UUIDs**: If unsure, add the device as "Diagnostic/Unknown" and run the `run_diagnostics` service. The output includes service UUIDs:
@@ -116,6 +119,7 @@ These beds have their own dedicated integrations:
    - Service `0000ffe5-...` → Malouf (Legacy OKIN) or Keeson OKIN variant
    - Service `0000fee9-...` → Richmat WiLinke or BedTech
    - Service `00001525-...` → Vibradorm
+   - Service `6e403587-...` → Remacro
 
 5. **Fallback**: If the device isn't visible to Home Assistant at all, use [nRF Connect](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) on your phone to verify it exists and check the service UUIDs.
 
