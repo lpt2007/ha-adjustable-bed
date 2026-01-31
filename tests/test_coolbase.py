@@ -142,8 +142,8 @@ class TestCoolBasePacketBuilding:
 
         # Header sum: 0xE5 + 0xFE + 0x16 = 0x1F9
         # With all zero commands: sum = 0x1F9
-        # checksum = 0x1F9 ^ 0xFF = 0x106, & 0xFF = 0x06
-        expected_checksum = (0xE5 + 0xFE + 0x16) ^ 0xFF & 0xFF
+        # checksum = (0x1F9 ^ 0xFF) & 0xFF = 0x106 & 0xFF = 0x06
+        expected_checksum = ((0xE5 + 0xFE + 0x16) ^ 0xFF) & 0xFF
         assert packet[7] == expected_checksum
 
     def test_build_from_value_splits_correctly(self):
@@ -170,7 +170,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Control characteristic should use Keeson Base write UUID."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -182,7 +182,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should support zero-g preset."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -194,7 +194,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should support TV preset."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -206,7 +206,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should support anti-snore preset."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -218,7 +218,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should support light control."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -230,7 +230,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should support fan control (unique feature)."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -242,7 +242,7 @@ class TestCoolBaseController:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """Cool Base should have max fan level of 3."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -263,7 +263,7 @@ class TestCoolBaseMovement:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """move_head_up should send 8-byte packet."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -281,7 +281,7 @@ class TestCoolBaseMovement:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """stop_all should send all-zero command bytes."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -311,7 +311,7 @@ class TestCoolBaseFanControl:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """fan_left_cycle should send FAN_LEFT command."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -329,7 +329,7 @@ class TestCoolBaseFanControl:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """fan_right_cycle should send FAN_RIGHT command."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)
@@ -347,7 +347,7 @@ class TestCoolBaseFanControl:
         self,
         hass: HomeAssistant,
         mock_coolbase_config_entry,
-        mock_coordinator_connected,
+        _mock_coordinator_connected,
     ):
         """fan_sync_cycle should send FAN_SYNC command."""
         coordinator = AdjustableBedCoordinator(hass, mock_coolbase_config_entry)

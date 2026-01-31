@@ -150,6 +150,7 @@ class CoolBaseController(BedController):
         """
         header = [0xE5, 0xFE, 0x16]
         data = header + [cmd0, cmd1, cmd2, cmd3]
+        # XOR checksum (differs from Scott Living's inverted sum)
         checksum = sum(data) ^ 0xFF
         data.append(checksum & 0xFF)
         return bytes(data)
@@ -257,7 +258,6 @@ class CoolBaseController(BedController):
 
     async def read_positions(self, motor_count: int = 2) -> None:
         """Read current position data (not supported on Cool Base)."""
-        pass
 
     async def _move_motor(self, motor: str, direction: bool | None) -> None:
         """Move a motor in a direction or stop it, always sending STOP at the end."""

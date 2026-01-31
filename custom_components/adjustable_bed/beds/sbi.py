@@ -350,7 +350,6 @@ class SBIController(BedController):
 
         Position is obtained via notifications, not explicit reads.
         """
-        pass
 
     async def _move_motor(self, motor: str, direction: bool | None) -> None:
         """Move a motor in a direction or stop it, always sending STOP at the end."""

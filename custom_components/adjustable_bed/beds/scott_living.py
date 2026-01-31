@@ -209,7 +209,6 @@ class ScottLivingController(BedController):
 
     async def read_positions(self, motor_count: int = 2) -> None:
         """Read current position data (not supported)."""
-        pass
 
     async def _move_motor(self, motor: str, direction: bool | None) -> None:
         """Move a motor in a direction or stop it, always sending STOP at the end."""
