@@ -298,41 +298,40 @@ async def async_setup_entry(
                 max_intensity,
             )
 
-            for description in MASSAGE_NUMBER_DESCRIPTIONS:
-                if description.massage_zone in supported_zones:
+            for massage_desc in MASSAGE_NUMBER_DESCRIPTIONS:
+                if massage_desc.massage_zone in supported_zones:
                     # Create description with correct max value for this controller
-                    adjusted_desc = AdjustableBedMassageNumberEntityDescription(
-                        key=description.key,
-                        translation_key=description.translation_key,
-                        icon=description.icon,
+                    massage_adjusted = AdjustableBedMassageNumberEntityDescription(
+                        key=massage_desc.key,
+                        translation_key=massage_desc.translation_key,
+                        icon=massage_desc.icon,
                         native_min_value=0,
                         native_max_value=max_intensity,
                         native_step=1,
-                        mode=description.mode,
-                        massage_zone=description.massage_zone,
+                        mode=massage_desc.mode,
+                        massage_zone=massage_desc.massage_zone,
                     )
-                    entities.append(AdjustableBedMassageNumber(coordinator, adjusted_desc))
+                    entities.append(AdjustableBedMassageNumber(coordinator, massage_adjusted))
 
     # Set up light level number entity (only for beds that support it)
-    if controller is not None:
-        if getattr(controller, "supports_light_level_control", False):
-            max_level = getattr(controller, "light_level_max", 10)
-            _LOGGER.debug(
-                "Setting up light level number for %s (max: %d)",
-                coordinator.name,
-                max_level,
-            )
-            # Create description with correct max value for this controller
-            adjusted_desc = NumberEntityDescription(
-                key=LIGHT_LEVEL_DESCRIPTION.key,
-                translation_key=LIGHT_LEVEL_DESCRIPTION.translation_key,
-                icon=LIGHT_LEVEL_DESCRIPTION.icon,
-                native_min_value=0,
-                native_max_value=max_level,
-                native_step=1,
-                mode=NumberMode.SLIDER,
-            )
-            entities.append(AdjustableBedLightLevelNumber(coordinator, adjusted_desc))
+    if controller is not None and getattr(controller, "supports_light_level_control", False):
+        max_level = getattr(controller, "light_level_max", 10)
+        _LOGGER.debug(
+            "Setting up light level number for %s (max: %d)",
+            coordinator.name,
+            max_level,
+        )
+        # Create description with correct max value for this controller
+        light_adjusted = NumberEntityDescription(
+            key=LIGHT_LEVEL_DESCRIPTION.key,
+            translation_key=LIGHT_LEVEL_DESCRIPTION.translation_key,
+            icon=LIGHT_LEVEL_DESCRIPTION.icon,
+            native_min_value=0,
+            native_max_value=max_level,
+            native_step=1,
+            mode=NumberMode.SLIDER,
+        )
+        entities.append(AdjustableBedLightLevelNumber(coordinator, light_adjusted))
 
     if entities:
         async_add_entities(entities)

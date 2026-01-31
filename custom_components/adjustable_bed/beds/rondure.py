@@ -26,7 +26,6 @@ from bleak.exc import BleakError
 from ..const import (
     RONDURE_VARIANT_BOTH,
     RONDURE_VARIANT_SIDE_A,
-    RONDURE_VARIANT_SIDE_B,
     RONDURE_WRITE_CHAR_UUID,
 )
 from .base import BedController

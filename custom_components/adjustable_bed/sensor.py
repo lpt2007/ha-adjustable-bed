@@ -165,8 +165,8 @@ async def async_setup_entry(
                 coordinator.name,
                 protocol_variant,
             )
-            for description in MASSAGE_SENSOR_DESCRIPTIONS:
-                entities.append(AdjustableBedMassageSensor(coordinator, description))
+            for massage_desc in MASSAGE_SENSOR_DESCRIPTIONS:
+                entities.append(AdjustableBedMassageSensor(coordinator, massage_desc))
 
     if entities:
         async_add_entities(entities)

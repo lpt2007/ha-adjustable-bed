@@ -65,20 +65,19 @@ async def async_setup_entry(
                 )
 
     # Set up light timer select (only for beds that support it)
-    if controller is not None:
-        if getattr(controller, "supports_light_timer", False):
-            light_timer_options = getattr(controller, "light_timer_options", [])
-            if light_timer_options:
-                _LOGGER.debug(
-                    "Setting up light timer select for %s (options: %s)",
-                    coordinator.name,
-                    light_timer_options,
+    if controller is not None and getattr(controller, "supports_light_timer", False):
+        light_timer_options = getattr(controller, "light_timer_options", [])
+        if light_timer_options:
+            _LOGGER.debug(
+                "Setting up light timer select for %s (options: %s)",
+                coordinator.name,
+                light_timer_options,
+            )
+            entities.append(
+                AdjustableBedLightTimerSelect(
+                    coordinator, LIGHT_TIMER_DESCRIPTION, light_timer_options
                 )
-                entities.append(
-                    AdjustableBedLightTimerSelect(
-                        coordinator, LIGHT_TIMER_DESCRIPTION, light_timer_options
-                    )
-                )
+            )
 
     if entities:
         async_add_entities(entities)

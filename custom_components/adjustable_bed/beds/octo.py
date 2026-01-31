@@ -352,7 +352,9 @@ class OctoController(BedController):
         packet = self._build_packet(command, data)
         await self.write_command(packet, repeat_count, repeat_delay_ms, cancel_event)
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for notifications.
 
         Octo beds don't support position notifications, but we use notifications
@@ -880,7 +882,9 @@ class OctoStar2Controller(BedController):
             if i < repeat_count - 1:
                 await asyncio.sleep(repeat_delay_ms / 1000)
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for notifications.
 
         Star2 doesn't support position notifications, so this only stores the callback.

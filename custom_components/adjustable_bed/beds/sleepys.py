@@ -189,7 +189,9 @@ class SleepysBox15Controller(BedController):
             cancel_event=cancel_event,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
         _LOGGER.debug("Sleepy's BOX15 beds don't support position notifications")
@@ -423,7 +425,9 @@ class SleepysBox24Controller(BedController):
             response=False,  # Fire-and-forget for BOX24
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
         _LOGGER.debug("Sleepy's BOX24 beds don't support position notifications")

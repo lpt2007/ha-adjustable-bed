@@ -78,7 +78,9 @@ class DiagnosticBedController(BedController):
         _ = (command, repeat_count, repeat_delay_ms)
         _LOGGER.debug("Diagnostic mode: write_command ignored (no known protocol)")
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """No-op - diagnostic devices don't have position notifications.
 
         The diagnostic service handles raw notification capture separately.

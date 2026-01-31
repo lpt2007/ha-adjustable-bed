@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import TYPE_CHECKING, cast
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from .beds.base import BedController
@@ -514,11 +515,13 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                     translation_key="device_not_found",
                     translation_placeholders={"device_id": device_id},
                 )
+            # Create a narrowed reference for use in closures (mypy doesn't narrow across closures)
+            coordinator_: AdjustableBedCoordinator = coordinator
 
             # Get config entry for motor count validation
             entry: ConfigEntry | None = None
-            for entry_id, coord in hass.data[DOMAIN].items():
-                if coord is coordinator:
+            for entry_id, existing_coord in hass.data[DOMAIN].items():
+                if existing_coord is coordinator:
                     entry = hass.config_entries.async_get_entry(entry_id)
                     break
 
@@ -540,7 +543,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
             if is_keeson_ergomotion:
                 valid_motors = {"head", "feet"}
-                motor_configs = {
+                motor_configs: dict[str, dict[str, Any]] = {
                     "head": {
                         "move_up_fn": lambda ctrl: ctrl.move_head_up(),
                         "move_down_fn": lambda ctrl: ctrl.move_head_down(),
@@ -600,10 +603,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             config = motor_configs[motor]
 
             # Get the appropriate move function based on direction
-            if direction == "up":
-                move_fn = config["move_up_fn"]
-            else:
-                move_fn = config["move_down_fn"]
+            move_fn = config["move_up_fn"] if direction == "up" else config["move_down_fn"]
             stop_fn = config["move_stop_fn"]
 
             # Execute timed movement
@@ -634,9 +634,9 @@ async def _async_register_services(hass: HomeAssistant) -> None:
             async def timed_movement(
                 ctrl: BedController,
                 *,
-                _coordinator: AdjustableBedCoordinator = coordinator,
-                _move_fn=move_fn,
-                _stop_fn=stop_fn,
+                _coordinator: AdjustableBedCoordinator = coordinator_,
+                _move_fn: Callable[..., Coroutine[Any, Any, None]] = move_fn,
+                _stop_fn: Callable[..., Coroutine[Any, Any, None]] = stop_fn,
                 _calculated_repeat_count: int = calculated_repeat_count,
                 _original_pulse_count: int = original_pulse_count,
             ) -> None:

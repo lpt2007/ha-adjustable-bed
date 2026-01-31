@@ -219,7 +219,9 @@ class Okin64BitController(BedController):
             response=self._use_response,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         # OKIN 64-bit beds don't support position notifications
         self._notify_callback = callback

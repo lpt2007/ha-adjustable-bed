@@ -167,7 +167,9 @@ class LeggettGen2Controller(BedController):
             cancel_event=cancel_event,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
         _LOGGER.debug("Leggett & Platt Gen2 beds don't support position notifications")

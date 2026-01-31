@@ -12,6 +12,7 @@ devices using the LinonPI protocol.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
@@ -284,10 +285,8 @@ class SvaneController(BedController):
         for service_uuid in [SVANE_HEAD_SERVICE_UUID, SVANE_FEET_SERVICE_UUID]:
             char = self._get_char_in_service(service_uuid, SVANE_CHAR_POSITION_UUID)
             if char:
-                try:
+                with contextlib.suppress(BleakError):
                     await self.client.stop_notify(char)
-                except BleakError:
-                    pass
 
     async def read_positions(self, motor_count: int = 2) -> None:
         """Read current position data."""

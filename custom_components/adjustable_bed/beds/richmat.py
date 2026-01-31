@@ -252,7 +252,9 @@ class RichmatController(BedController):
                 self.log_discovered_services(level=logging.INFO)
             raise
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         # Richmat beds don't support position notifications
         self._notify_callback = callback

@@ -16,6 +16,7 @@ from collections.abc import Callable
 from enum import IntFlag
 from typing import TYPE_CHECKING
 
+from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.exc import BleakError
 
 from ..const import JENSEN_CHAR_UUID, JENSEN_SERVICE_UUID
@@ -240,7 +241,7 @@ class JensenController(BedController):
 
         # Set up event to wait for config response via _handle_notification
         self._config_received = asyncio.Event()
-        self._config_data: bytes | None = None
+        self._config_data = None
 
         try:
             # Send config read command - response comes via existing notification handler
@@ -253,7 +254,7 @@ class JensenController(BedController):
             # Wait for response (with timeout)
             try:
                 await asyncio.wait_for(self._config_received.wait(), timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 _LOGGER.warning("Timeout waiting for config response, assuming full features")
                 # Default to all features enabled if we can't query
                 self._features = JensenFeatureFlags(
@@ -340,7 +341,7 @@ class JensenController(BedController):
             return 100.0
         return min(100.0, (raw_value - pos_flat) / (pos_max - pos_flat) * 100)
 
-    def _handle_notification(self, _sender: int, data: bytearray) -> None:
+    def _handle_notification(self, _sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """Handle BLE notification data.
 
         Parses position responses with format:

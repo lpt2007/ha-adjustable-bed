@@ -156,7 +156,9 @@ class MotoSleepController(BedController):
             response=True,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
         _LOGGER.debug("MotoSleep beds don't support position notifications")

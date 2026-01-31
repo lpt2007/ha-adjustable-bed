@@ -9,12 +9,11 @@ from .adapter import discover_services
 from .const import (
     # Legacy/brand-specific bed types
     BED_TYPE_BEDTECH,
-    BED_TYPE_REMACRO,
     BED_TYPE_COMFORT_MOTION,
-    BED_TYPE_JENSEN,
     BED_TYPE_DEWERTOKIN,
     BED_TYPE_DIAGNOSTIC,
     BED_TYPE_ERGOMOTION,
+    BED_TYPE_JENSEN,
     BED_TYPE_JIECANG,
     BED_TYPE_KEESON,
     BED_TYPE_LEGGETT_GEN2,
@@ -36,6 +35,7 @@ from .const import (
     BED_TYPE_OKIN_HANDLE,
     BED_TYPE_OKIN_NORDIC,
     BED_TYPE_OKIN_UUID,
+    BED_TYPE_REMACRO,
     BED_TYPE_REVERIE,
     BED_TYPE_REVERIE_NIGHTSTAND,
     BED_TYPE_RICHMAT,
@@ -420,7 +420,6 @@ async def create_controller(
 
     if bed_type == BED_TYPE_RONDURE:
         from .beds.rondure import RondureController
-
         from .const import RONDURE_VARIANTS
 
         # Validate and default variant

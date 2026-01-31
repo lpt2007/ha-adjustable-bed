@@ -16,6 +16,7 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.exc import BleakError
 
 from ..const import (
@@ -184,7 +185,7 @@ class VibradormController(BedController):
             cancel_event=cancel_event,
         )
 
-    def _handle_notification(self, _sender: int, data: bytearray) -> None:
+    def _handle_notification(self, _sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """Handle BLE notification data.
 
         Position notification format (from XMCMotorData.java):

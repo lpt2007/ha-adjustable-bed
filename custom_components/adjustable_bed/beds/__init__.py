@@ -18,11 +18,10 @@ Brand-specific controllers:
 """
 
 from .base import BedController
-from .remacro import RemacroController
+from .jensen import JensenController
 
 # Brand-specific controllers (unchanged)
 from .jiecang import JiecangController
-from .jensen import JensenController
 from .keeson import KeesonController
 from .leggett_gen2 import LeggettGen2Controller
 from .leggett_okin import LeggettOkinController
@@ -36,6 +35,7 @@ from .okin_7byte import Okin7ByteController
 from .okin_handle import OkinHandleController
 from .okin_nordic import OkinNordicController
 from .okin_uuid import OkinUuidController
+from .remacro import RemacroController
 from .reverie import ReverieController
 from .reverie_nightstand import ReverieNightstandController
 from .richmat import RichmatController

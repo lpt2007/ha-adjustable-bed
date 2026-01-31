@@ -180,7 +180,9 @@ class ReverieNightstandController(BedController):
             cancel_event,
         )
 
-    async def start_notify(self, callback: Callable[[str, float], None]) -> None:
+    async def start_notify(
+        self, callback: Callable[[str, float], None] | None = None
+    ) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
 
