@@ -92,28 +92,40 @@ class KeesonCommands:
 class ORECommands:
     """ORE (Dynasty, INNOVA) specific command constants.
 
-    ORE beds use a different command structure for lights and massage.
+    ORE beds with FFE5/FFE9 service UUIDs use SinoProtocol command values.
     Motor and preset commands use the same values as standard Keeson.
+    Light commands are ORE-specific (discrete on/off, not toggle).
+
+    Based on reverse engineering of com.ore.bedding.glideawaymontion APK.
     """
 
     # Lights - discrete on/off (not toggle)
     LIGHT_ON = 0x31000001
     LIGHT_OFF = 0x31000000
 
-    # Massage - head intensity (0-10 scale, add level to base)
-    # Level 0 = stop, Level 1-10 = intensity
-    MASSAGE_HEAD_BASE = 0x10000010  # Add 0-10 for level
+    # Massage - step commands (SinoProtocol values)
+    # These step intensity up/down by 1 level each press
+    MASSAGE_HEAD_UP = 0x800  # 2048 - increase head massage intensity
+    MASSAGE_HEAD_DOWN = 0x800000  # 8388608 - decrease head massage intensity
+    MASSAGE_FOOT_UP = 0x400  # 1024 - increase foot massage intensity
+    MASSAGE_FOOT_DOWN = 0x1000000  # 16777216 - decrease foot massage intensity
 
-    # Massage - foot intensity (0-10 scale, add level to base)
-    MASSAGE_FOOT_BASE = 0x11000010  # Add 0-10 for level
+    # All intensity (head + foot together)
+    MASSAGE_ALL_UP = 0xC00  # 3072 - increase all massage intensity
+    MASSAGE_ALL_DOWN = 0x1800000  # 25165824 - decrease all massage intensity
 
-    # Massage - wave mode (0-10 scale, add level to base)
-    MASSAGE_WAVE_BASE = 0x10000020  # Add 0-10 for level
+    # Massage toggle and on/off
+    MASSAGE_TOGGLE = 0x100  # 256 - toggle massage (step through modes)
+    MASSAGE_ON = 0x4000000  # 67108864 - turn massage on
+    MASSAGE_OFF = 0x2000000  # 33554432 - stop all massage
 
-    # Timer commands
-    TIMER_10MIN = 0x10000030
-    TIMER_20MIN = 0x10000031
-    TIMER_30MIN = 0x10000032
+    # Direct intensity set (optional, requires param byte)
+    # INTENSITY_ONE = 0x80000  # 524288 - set to level 1
+    # INTENSITY_TWO = 0x100000  # 1048576 - set to level 2
+    # INTENSITY_THREE = 0x200000  # 2097152 - set to level 3
+
+    # Timer - toggle through 10/20/30 min options
+    MASSAGE_TIMER = 0x200  # 512 - step through timer options
 
 
 class KeesonController(BedController):
@@ -376,6 +388,11 @@ class KeesonController(BedController):
     def supports_massage_timer(self) -> bool:
         """Return False - Keeson can only step through timer, not set directly."""
         return False
+
+    @property
+    def supports_massage_intensity_control(self) -> bool:
+        """Return True for ORE variant which supports step up/down intensity."""
+        return self._variant == KEESON_VARIANT_ORE
 
     @property
     def massage_intensity_max(self) -> int:
@@ -821,89 +838,119 @@ class KeesonController(BedController):
     async def massage_toggle(self) -> None:
         """Toggle massage."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE variant: toggle between medium intensity (5) and off
-            if self._head_massage > 0 or self._foot_massage > 0:
-                # Currently on - turn off
-                await self._ore_set_massage(0, 0, 0)
-            else:
-                # Currently off - turn on with medium intensity
-                await self._ore_set_massage(5, 5, 5)
+            # ORE variant: use the toggle command to step through modes
+            await self.write_command(self._build_command(ORECommands.MASSAGE_TOGGLE))
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_STEP))
 
-    async def _ore_set_massage(
-        self, wave_level: int, head_level: int, foot_level: int
-    ) -> None:
-        """Set ORE massage levels (0-10 scale for each)."""
-        # Clamp values to 0-10
-        wave_level = max(0, min(10, wave_level))
-        head_level = max(0, min(10, head_level))
-        foot_level = max(0, min(10, foot_level))
-
-        # Send wave, head, and foot commands (as the app does on "Start")
-        await self.write_command(self._build_command(ORECommands.MASSAGE_WAVE_BASE + wave_level))
-        await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_BASE + head_level))
-        await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_BASE + foot_level))
-
-        # Update tracked state
-        self._head_massage = head_level
-        self._foot_massage = foot_level
+    async def massage_off(self) -> None:
+        """Turn off all massage."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE variant: send stop all command
+            await self.write_command(self._build_command(ORECommands.MASSAGE_OFF))
+            self._head_massage = 0
+            self._foot_massage = 0
+        else:
+            # Standard Keeson doesn't have a dedicated off command
+            await super().massage_off()
 
     async def massage_head_up(self) -> None:
         """Increase head massage intensity."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE: increment head level (max 10)
-            new_level = min(10, self._head_massage + 1)
-            await self.write_command(
-                self._build_command(ORECommands.MASSAGE_HEAD_BASE + new_level)
-            )
-            self._head_massage = new_level
+            # ORE: step command increases intensity by 1 level
+            await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_UP))
+            self._head_massage = min(10, self._head_massage + 1)
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_UP))
 
     async def massage_head_down(self) -> None:
         """Decrease head massage intensity."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE: decrement head level (min 0)
-            new_level = max(0, self._head_massage - 1)
-            await self.write_command(
-                self._build_command(ORECommands.MASSAGE_HEAD_BASE + new_level)
-            )
-            self._head_massage = new_level
+            # ORE: step command decreases intensity by 1 level
+            await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_DOWN))
+            self._head_massage = max(0, self._head_massage - 1)
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_DOWN))
 
     async def massage_foot_up(self) -> None:
         """Increase foot massage intensity."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE: increment foot level (max 10)
-            new_level = min(10, self._foot_massage + 1)
-            await self.write_command(
-                self._build_command(ORECommands.MASSAGE_FOOT_BASE + new_level)
-            )
-            self._foot_massage = new_level
+            # ORE: step command increases intensity by 1 level
+            await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_UP))
+            self._foot_massage = min(10, self._foot_massage + 1)
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_UP))
 
     async def massage_foot_down(self) -> None:
         """Decrease foot massage intensity."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE: decrement foot level (min 0)
-            new_level = max(0, self._foot_massage - 1)
-            await self.write_command(
-                self._build_command(ORECommands.MASSAGE_FOOT_BASE + new_level)
-            )
-            self._foot_massage = new_level
+            # ORE: step command decreases intensity by 1 level
+            await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_DOWN))
+            self._foot_massage = max(0, self._foot_massage - 1)
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_DOWN))
 
-    async def massage_mode_step(self) -> None:
-        """Step through massage modes."""
+    async def massage_intensity_up(self) -> None:
+        """Increase all massage intensity."""
         if self._variant == KEESON_VARIANT_ORE:
-            # ORE doesn't have mode stepping - this is a no-op
-            _LOGGER.debug("ORE variant does not support massage mode stepping")
+            # ORE: increase both head and foot intensity
+            await self.write_command(self._build_command(ORECommands.MASSAGE_ALL_UP))
+            self._head_massage = min(10, self._head_massage + 1)
+            self._foot_massage = min(10, self._foot_massage + 1)
+        else:
+            # Standard Keeson doesn't have an all-intensity command
+            await super().massage_intensity_up()
+
+    async def massage_intensity_down(self) -> None:
+        """Decrease all massage intensity."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: decrease both head and foot intensity
+            await self.write_command(self._build_command(ORECommands.MASSAGE_ALL_DOWN))
+            self._head_massage = max(0, self._head_massage - 1)
+            self._foot_massage = max(0, self._foot_massage - 1)
+        else:
+            # Standard Keeson doesn't have an all-intensity command
+            await super().massage_intensity_down()
+
+    async def massage_mode_step(self) -> None:
+        """Step through massage modes/timer."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: use timer step command to cycle through 10/20/30 min options
+            await self.write_command(self._build_command(ORECommands.MASSAGE_TIMER))
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_TIMER_STEP))
+
+    async def massage_head_toggle(self) -> None:
+        """Toggle head massage zone on/off."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: toggle by setting to max if off, or stopping if on
+            if self._head_massage > 0:
+                # Turn off head massage by sending decrease commands
+                await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_DOWN))
+                self._head_massage = max(0, self._head_massage - 1)
+            else:
+                # Turn on head massage
+                await self.write_command(self._build_command(ORECommands.MASSAGE_HEAD_UP))
+                self._head_massage = 1
+        else:
+            # Standard Keeson doesn't have per-zone toggle
+            await super().massage_head_toggle()
+
+    async def massage_foot_toggle(self) -> None:
+        """Toggle foot massage zone on/off."""
+        if self._variant == KEESON_VARIANT_ORE:
+            # ORE: toggle by setting to max if off, or stopping if on
+            if self._foot_massage > 0:
+                # Turn off foot massage by sending decrease commands
+                await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_DOWN))
+                self._foot_massage = max(0, self._foot_massage - 1)
+            else:
+                # Turn on foot massage
+                await self.write_command(self._build_command(ORECommands.MASSAGE_FOOT_UP))
+                self._foot_massage = 1
+        else:
+            # Standard Keeson doesn't have per-zone toggle
+            await super().massage_foot_toggle()
 
     def get_massage_state(self) -> dict[str, Any]:
         """Return current massage state from BLE notification feedback.

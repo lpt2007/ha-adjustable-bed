@@ -12,6 +12,7 @@ This guide covers common issues and their solutions when using the Adjustable Be
 - [Pairing Required (Okimat/Leggett Okin)](#pairing-required-okimatleggett-okin)
 - [Classic Bluetooth Beds (Not Supported)](#classic-bluetooth-beds-not-supported)
 - [Quick Reference: Service UUIDs](#quick-reference-service-uuids)
+- [Debugging Tools](#debugging-tools)
 - [Still Need Help?](#still-need-help)
 
 ---
@@ -289,6 +290,32 @@ Use these to identify your bed type in a BLE scanner:
 | `8ebd4f76-da9d-4b5a-a96e-8ebfbeb622e7` | Richmat WiLinke |
 | `99fa0001-338a-1024-8a49-009c0215f78a` | Linak |
 | `db801000-f324-29c3-38d1-85c0c2e86885` | Reverie Nightstand |
+
+---
+
+## Debugging Tools
+
+### Debug Logging vs Support Report
+
+There are two ways to gather diagnostic information:
+
+| Feature | Debug Logging | Support Report |
+|---------|---------------|----------------|
+| **How to access** | Settings → Devices → ⋮ menu → Enable debug logging | Call `adjustable_bed.generate_support_report` service |
+| **What it captures** | Real-time stream of all integration activity | Snapshot of device state at one moment |
+| **Content** | Actual BLE commands sent (e.g., `e5fe16...`), connection events, errors with stack traces | Configuration, device info, GATT services |
+| **Size** | Large, includes unrelated entries from other integrations | Focused JSON file for one device |
+| **Best for** | "Why didn't this command work?" - seeing exact bytes sent | "What device do I have?" - sharing device info in bug reports |
+
+**When to use Debug Logging:**
+- Commands don't work and you need to see what's being sent
+- Investigating connection failures or timeouts
+- Comparing expected vs actual command bytes
+
+**When to use Support Report:**
+- Opening a new GitHub issue
+- Sharing device information with developers
+- Documenting your bed's GATT services for protocol analysis
 
 ---
 
