@@ -347,22 +347,22 @@ class OkinCB24Controller(BedController):
 
     # Preset methods
     async def _send_preset(self, command_value: int) -> None:
-        """Send a preset command.
+        """Send a preset command continuously until bed reaches target position.
 
-        Unlike motor movements, presets trigger automatic bed movement to a target
-        position. We send the command a few times to ensure it's received, but
-        we do NOT send STOP afterwards - the bed will stop automatically when it
-        reaches the target position.
+        CB24 beds require continuous commands to keep moving, same as motor control.
+        We send for ~15 seconds (50 repeats at 300ms) which should be enough for
+        most preset movements. The bed will stop automatically when it reaches the
+        target position, even if we're still sending commands.
 
-        Sending STOP after a preset would abort the movement before reaching the target.
+        We do NOT send STOP after presets - that would abort the movement if the
+        command loop is cancelled early.
         """
-        # Send preset command a few times to ensure reliable delivery
-        # The bed will auto-stop when it reaches the target position
-        # Use 100ms delay (from APK Thread.sleep after write), not 300ms (motor continuous)
+        # Send preset command continuously at 300ms intervals (same as motor timing)
+        # 83 repeats * 300ms = ~25 seconds, enough for most preset movements
         await self.write_command(
             self._build_command(command_value),
-            repeat_count=3,
-            repeat_delay_ms=100,
+            repeat_count=83,
+            repeat_delay_ms=300,
         )
 
     async def preset_flat(self) -> None:
@@ -442,19 +442,19 @@ class OkinCB24Controller(BedController):
         """Toggle foot massage (via intensity up)."""
         await self.massage_foot_up()
 
-    async def massage_all_toggle(self) -> None:
+    async def massage_toggle(self) -> None:
         """Toggle all massage zones."""
         await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_ALL_TOGGLE))
 
-    async def massage_all_up(self) -> None:
+    async def massage_intensity_up(self) -> None:
         """Increase all massage intensity."""
         await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_INTENSITY_UP))
 
-    async def massage_all_down(self) -> None:
+    async def massage_intensity_down(self) -> None:
         """Decrease all massage intensity."""
         await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_INTENSITY_DOWN))
 
-    async def massage_all_off(self) -> None:
+    async def massage_off(self) -> None:
         """Turn off all massage."""
         await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_STOP_ALL))
 
