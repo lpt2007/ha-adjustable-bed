@@ -71,6 +71,28 @@ class OkinCB24Commands:
     # Stretch/other
     STRETCH_MOVE = 0x40000
 
+    # Massage - intensity control (up = increase, minus = decrease)
+    MASSAGE_HEAD_UP = 0x800  # Increase head massage intensity
+    MASSAGE_HEAD_DOWN = 0x800000  # Decrease head massage intensity
+    MASSAGE_FEET_UP = 0x400  # Increase foot massage intensity
+    MASSAGE_FEET_DOWN = 0x1000000  # Decrease foot massage intensity
+    MASSAGE_WAIST_UP = 0x400000  # Increase waist massage intensity
+    MASSAGE_WAIST_DOWN = 0x10000000  # Decrease waist massage intensity
+
+    # Massage - global controls
+    MASSAGE_ALL_TOGGLE = 0x100  # Toggle all massage zones
+    MASSAGE_ON_OFF = 0x4000000  # Master massage on/off toggle
+    MASSAGE_STOP_ALL = 0x2000000  # Stop all massage
+
+    # Massage - mode and timer
+    MASSAGE_WAVE_STEP = 0x10000000  # Cycle through wave patterns
+    MASSAGE_TIMER_UP = 0x200  # Increase massage timer
+    MASSAGE_TIMER_DOWN = 0x100000  # Decrease massage timer
+
+    # Massage - intensity levels (direct set)
+    MASSAGE_INTENSITY_UP = 0xC00  # Increase overall intensity
+    MASSAGE_INTENSITY_DOWN = 0x1800000  # Decrease overall intensity
+
 
 class MotorDirection(Enum):
     """Direction for motor movement."""
@@ -165,6 +187,11 @@ class OkinCB24Controller(BedController):
     @property
     def supports_preset_tv(self) -> bool:
         """Return True - Memory 2 is often TV/PC position."""
+        return True
+
+    @property
+    def supports_massage(self) -> bool:
+        """Return True - CB24 beds support massage functions."""
         return True
 
     def _build_command(self, command_value: int) -> bytes:
@@ -319,32 +346,28 @@ class OkinCB24Controller(BedController):
         )
 
     # Preset methods
-    async def _preset_with_stop(self, command_value: int) -> None:
-        """Execute a preset command and always send STOP at the end."""
-        try:
-            await self.write_command(
-                self._build_command(command_value),
-                repeat_count=100,
-                repeat_delay_ms=300,
-            )
-        finally:
-            try:
-                await asyncio.shield(
-                    self.write_command(
-                        self._build_command(0),
-                        cancel_event=asyncio.Event(),
-                    )
-                )
-            except asyncio.CancelledError:
-                raise
-            except BleakError:
-                _LOGGER.debug(
-                    "Failed to send STOP command during preset cleanup", exc_info=True
-                )
+    async def _send_preset(self, command_value: int) -> None:
+        """Send a preset command.
+
+        Unlike motor movements, presets trigger automatic bed movement to a target
+        position. We send the command a few times to ensure it's received, but
+        we do NOT send STOP afterwards - the bed will stop automatically when it
+        reaches the target position.
+
+        Sending STOP after a preset would abort the movement before reaching the target.
+        """
+        # Send preset command a few times to ensure reliable delivery
+        # The bed will auto-stop when it reaches the target position
+        # Use 100ms delay (from APK Thread.sleep after write), not 300ms (motor continuous)
+        await self.write_command(
+            self._build_command(command_value),
+            repeat_count=3,
+            repeat_delay_ms=100,
+        )
 
     async def preset_flat(self) -> None:
         """Go to flat position."""
-        await self._preset_with_stop(OkinCB24Commands.PRESET_FLAT)
+        await self._send_preset(OkinCB24Commands.PRESET_FLAT)
 
     async def preset_memory(self, memory_num: int) -> None:
         """Go to memory preset."""
@@ -354,7 +377,7 @@ class OkinCB24Controller(BedController):
             3: OkinCB24Commands.PRESET_MEMORY_3,
         }
         if command := commands.get(memory_num):
-            await self._preset_with_stop(command)
+            await self._send_preset(command)
         else:
             _LOGGER.warning("Memory slot %d not supported (valid: 1-3)", memory_num)
 
@@ -367,19 +390,19 @@ class OkinCB24Controller(BedController):
 
     async def preset_zero_g(self) -> None:
         """Go to zero gravity position."""
-        await self._preset_with_stop(OkinCB24Commands.PRESET_ZERO_G)
+        await self._send_preset(OkinCB24Commands.PRESET_ZERO_G)
 
     async def preset_anti_snore(self) -> None:
         """Go to anti-snore position."""
-        await self._preset_with_stop(OkinCB24Commands.PRESET_ANTI_SNORE)
+        await self._send_preset(OkinCB24Commands.PRESET_ANTI_SNORE)
 
     async def preset_lounge(self) -> None:
         """Go to lounge position (Memory 1)."""
-        await self._preset_with_stop(OkinCB24Commands.PRESET_MEMORY_1)
+        await self._send_preset(OkinCB24Commands.PRESET_MEMORY_1)
 
     async def preset_tv(self) -> None:
         """Go to TV/PC position (Memory 2)."""
-        await self._preset_with_stop(OkinCB24Commands.PRESET_MEMORY_2)
+        await self._send_preset(OkinCB24Commands.PRESET_MEMORY_2)
 
     # Light methods
     async def lights_toggle(self) -> None:
@@ -393,3 +416,48 @@ class OkinCB24Controller(BedController):
     async def lights_off(self) -> None:
         """Turn off lights (via toggle - no discrete control)."""
         await self.lights_toggle()
+
+    # Massage methods
+    async def massage_head_up(self) -> None:
+        """Increase head massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_HEAD_UP))
+
+    async def massage_head_down(self) -> None:
+        """Decrease head massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_HEAD_DOWN))
+
+    async def massage_head_toggle(self) -> None:
+        """Toggle head massage (via intensity up)."""
+        await self.massage_head_up()
+
+    async def massage_foot_up(self) -> None:
+        """Increase foot massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_FEET_UP))
+
+    async def massage_foot_down(self) -> None:
+        """Decrease foot massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_FEET_DOWN))
+
+    async def massage_foot_toggle(self) -> None:
+        """Toggle foot massage (via intensity up)."""
+        await self.massage_foot_up()
+
+    async def massage_all_toggle(self) -> None:
+        """Toggle all massage zones."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_ALL_TOGGLE))
+
+    async def massage_all_up(self) -> None:
+        """Increase all massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_INTENSITY_UP))
+
+    async def massage_all_down(self) -> None:
+        """Decrease all massage intensity."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_INTENSITY_DOWN))
+
+    async def massage_all_off(self) -> None:
+        """Turn off all massage."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_STOP_ALL))
+
+    async def massage_mode_step(self) -> None:
+        """Cycle through massage wave patterns."""
+        await self.write_command(self._build_command(OkinCB24Commands.MASSAGE_WAVE_STEP))
