@@ -12,6 +12,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.adjustable_bed.beds.keeson import (
     KeesonCommands,
     KeesonController,
+    SinoCommands,
 )
 from custom_components.adjustable_bed.const import (
     BED_TYPE_KEESON,
@@ -20,6 +21,7 @@ from custom_components.adjustable_bed.const import (
     CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
     CONF_PREFERRED_ADAPTER,
+    CONF_PROTOCOL_VARIANT,
     DOMAIN,
     KEESON_BASE_WRITE_CHAR_UUID,
 )
@@ -323,6 +325,88 @@ class TestKeesonLights:
         mock_bleak_client.write_gatt_char.assert_called_with(
             KEESON_BASE_WRITE_CHAR_UUID, expected_cmd, response=True
         )
+
+    async def test_sino_lights_toggle_tracks_state(
+        self,
+        hass: HomeAssistant,
+        mock_keeson_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test Sino lights_toggle alternates on/off using tracked state."""
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Keeson Sino Test Bed",
+            data={
+                **mock_keeson_config_entry_data,
+                CONF_PROTOCOL_VARIANT: "sino",
+            },
+            unique_id="AA:BB:CC:DD:EE:FF",
+            entry_id="keeson_sino_lights_toggle",
+        )
+        entry.add_to_hass(hass)
+        coordinator = AdjustableBedCoordinator(hass, entry)
+        await coordinator.async_connect()
+
+        await coordinator.controller.lights_toggle()
+        assert coordinator.controller.led_on is True
+        first_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert first_call[0][1] == coordinator.controller._build_command(SinoCommands.LIGHT_ON)
+
+        await coordinator.controller.lights_toggle()
+        assert coordinator.controller.led_on is False
+        second_call = mock_bleak_client.write_gatt_char.call_args_list[-1]
+        assert second_call[0][1] == coordinator.controller._build_command(SinoCommands.LIGHT_OFF)
+
+    async def test_sino_lights_on_off_updates_led_state(
+        self,
+        hass: HomeAssistant,
+        mock_keeson_config_entry_data: dict,
+        mock_coordinator_connected,
+    ):
+        """Test Sino lights_on/lights_off keep tracked LED state in sync."""
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Keeson Sino Test Bed",
+            data={
+                **mock_keeson_config_entry_data,
+                CONF_PROTOCOL_VARIANT: "sino",
+            },
+            unique_id="AA:BB:CC:DD:EE:FF",
+            entry_id="keeson_sino_lights_discrete",
+        )
+        entry.add_to_hass(hass)
+        coordinator = AdjustableBedCoordinator(hass, entry)
+        await coordinator.async_connect()
+
+        await coordinator.controller.lights_on()
+        assert coordinator.controller.led_on is True
+        await coordinator.controller.lights_off()
+        assert coordinator.controller.led_on is False
+
+    async def test_legacy_ore_variant_maps_to_sino(
+        self,
+        hass: HomeAssistant,
+        mock_keeson_config_entry_data: dict,
+        mock_coordinator_connected,
+    ):
+        """Test legacy 'ore' protocol variant is normalized to Sino controller behavior."""
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Keeson ORE Alias Test Bed",
+            data={
+                **mock_keeson_config_entry_data,
+                CONF_PROTOCOL_VARIANT: "ore",
+            },
+            unique_id="AA:BB:CC:DD:EE:FF",
+            entry_id="keeson_ore_alias",
+        )
+        entry.add_to_hass(hass)
+        coordinator = AdjustableBedCoordinator(hass, entry)
+        await coordinator.async_connect()
+
+        assert isinstance(coordinator.controller, KeesonController)
+        assert coordinator.controller._variant == "sino"
 
 
 class TestKeesonMassage:

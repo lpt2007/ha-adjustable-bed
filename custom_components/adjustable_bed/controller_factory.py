@@ -239,20 +239,25 @@ async def create_controller(
     if bed_type == BED_TYPE_KEESON:
         from .beds.keeson import KeesonController
 
+        keeson_variant = protocol_variant
+        if keeson_variant == "ore":
+            _LOGGER.debug("Normalizing deprecated Keeson variant 'ore' to 'sino'")
+            keeson_variant = KEESON_VARIANT_SINO
+
         # Use configured variant or default to base
-        if protocol_variant == KEESON_VARIANT_KSBT:
+        if keeson_variant == KEESON_VARIANT_KSBT:
             _LOGGER.debug("Using KSBT Keeson variant (configured)")
             return KeesonController(coordinator, variant="ksbt")
-        elif protocol_variant == KEESON_VARIANT_ERGOMOTION:
+        elif keeson_variant == KEESON_VARIANT_ERGOMOTION:
             _LOGGER.debug("Using Ergomotion Keeson variant (with position feedback)")
             return KeesonController(coordinator, variant="ergomotion")
-        elif protocol_variant == KEESON_VARIANT_OKIN:
+        elif keeson_variant == KEESON_VARIANT_OKIN:
             _LOGGER.debug("Using OKIN FFE Keeson variant (0xE6 prefix)")
             return KeesonController(coordinator, variant="okin")
-        elif protocol_variant == KEESON_VARIANT_SERTA:
+        elif keeson_variant == KEESON_VARIANT_SERTA:
             _LOGGER.debug("Using Serta Keeson variant")
             return KeesonController(coordinator, variant="serta")
-        elif protocol_variant == KEESON_VARIANT_SINO:
+        elif keeson_variant == KEESON_VARIANT_SINO:
             _LOGGER.debug("Using Sino Keeson variant (big-endian)")
             return KeesonController(coordinator, variant="sino")
         else:

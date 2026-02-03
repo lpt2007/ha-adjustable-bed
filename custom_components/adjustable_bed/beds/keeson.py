@@ -812,6 +812,7 @@ class KeesonController(BedController):
         if self._variant == KEESON_VARIANT_SINO:
             # ORE variant has discrete on/off commands
             await self.write_command(self._build_command(SinoCommands.LIGHT_ON))
+            self._led_on = True
         else:
             # Other variants only have toggle
             await self.lights_toggle()
@@ -821,6 +822,7 @@ class KeesonController(BedController):
         if self._variant == KEESON_VARIANT_SINO:
             # ORE variant has discrete on/off commands
             await self.write_command(self._build_command(SinoCommands.LIGHT_OFF))
+            self._led_on = False
         else:
             # Other variants only have toggle
             await self.lights_toggle()
@@ -828,9 +830,10 @@ class KeesonController(BedController):
     async def lights_toggle(self) -> None:
         """Toggle safety lights."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE doesn't have a toggle - track state and use discrete commands
-            # For now, just turn off (user can use lights_on to turn on)
-            await self.write_command(self._build_command(SinoCommands.LIGHT_OFF))
+            # ORE doesn't have a toggle command; emulate it with tracked state.
+            command = SinoCommands.LIGHT_OFF if self._led_on else SinoCommands.LIGHT_ON
+            await self.write_command(self._build_command(command))
+            self._led_on = not self._led_on
         else:
             await self.write_command(self._build_command(KeesonCommands.TOGGLE_SAFETY_LIGHTS))
 

@@ -689,6 +689,8 @@ KEESON_VARIANT_ERGOMOTION: Final = "ergomotion"
 KEESON_VARIANT_OKIN: Final = "okin"
 KEESON_VARIANT_SERTA: Final = "serta"
 KEESON_VARIANT_SINO: Final = "sino"
+# Deprecated alias kept for compatibility with older references.
+KEESON_VARIANT_ORE: Final = KEESON_VARIANT_SINO
 KEESON_VARIANTS: Final = {
     VARIANT_AUTO: "Auto-detect",
     KEESON_VARIANT_BASE: "BaseI4/BaseI5 (Member's Mark, Purple)",
@@ -697,6 +699,7 @@ KEESON_VARIANTS: Final = {
     KEESON_VARIANT_OKIN: "OKIN FFE (OKIN 13/15 series, 0xE6 prefix)",
     KEESON_VARIANT_SERTA: "Serta (Serta MP Remote)",
     KEESON_VARIANT_SINO: "Sino (Dynasty, INNOVA - big-endian, FFE5 service)",
+    "ore": "ORE (deprecated alias for Sino)",
 }
 
 # Leggett & Platt variants
@@ -1121,6 +1124,7 @@ ALL_PROTOCOL_VARIANTS: Final = [
     KEESON_VARIANT_OKIN,
     KEESON_VARIANT_SERTA,
     KEESON_VARIANT_SINO,
+    "ore",  # Deprecated alias for Sino retained for existing config entries
     LEGGETT_VARIANT_GEN2,
     LEGGETT_VARIANT_OKIN,
     LEGGETT_VARIANT_MLRM,
