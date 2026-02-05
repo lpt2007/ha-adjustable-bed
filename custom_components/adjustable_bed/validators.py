@@ -29,7 +29,10 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # MAC address regex pattern (XX:XX:XX:XX:XX:XX or XX-XX-XX-XX-XX-XX)
-MAC_ADDRESS_PATTERN = re.compile(r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
+# Enforces consistent separator (all colons or all dashes, not mixed)
+MAC_ADDRESS_PATTERN = re.compile(
+    r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$|^([0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}$"
+)
 
 
 def is_valid_mac_address(address: str) -> bool:
