@@ -8,8 +8,9 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.adjustable_bed.beds.okin_7byte import (
-    Okin7ByteCommands,
+    OKIN_7BYTE_CONFIG,
     Okin7ByteController,
+    _cmd,
 )
 from custom_components.adjustable_bed.const import (
     BED_TYPE_OKIN_7BYTE,
@@ -65,79 +66,53 @@ def mock_okin_7byte_config_entry(
 
 
 class TestOkin7ByteCommands:
-    """Test Okin 7-byte command constants."""
+    """Test Okin 7-byte command building."""
 
-    def test_all_commands_are_7_bytes(self):
-        """All commands should be exactly 7 bytes."""
-        commands = [
-            Okin7ByteCommands.HEAD_UP,
-            Okin7ByteCommands.HEAD_DOWN,
-            Okin7ByteCommands.FOOT_UP,
-            Okin7ByteCommands.FOOT_DOWN,
-            Okin7ByteCommands.LUMBAR_UP,
-            Okin7ByteCommands.LUMBAR_DOWN,
-            Okin7ByteCommands.STOP,
-            Okin7ByteCommands.FLAT,
-            Okin7ByteCommands.LOUNGE,
-            Okin7ByteCommands.ZERO_GRAVITY,
-            Okin7ByteCommands.ANTI_SNORE,
-            Okin7ByteCommands.MASSAGE_ON,
-            Okin7ByteCommands.MASSAGE_WAVE,
-            Okin7ByteCommands.MASSAGE_OFF,
-            Okin7ByteCommands.LIGHT_ON,
-            Okin7ByteCommands.LIGHT_OFF,
-        ]
-        for cmd in commands:
-            assert len(cmd) == 7, f"Command {cmd.hex()} is not 7 bytes"
+    def test_cmd_produces_7_bytes(self):
+        """_cmd should produce exactly 7 bytes for any input."""
+        for byte_val in [0x00, 0x01, 0x0F, 0x10, 0x58, 0x73]:
+            cmd = _cmd(byte_val)
+            assert len(cmd) == 7, f"_cmd(0x{byte_val:02x}) is not 7 bytes"
 
     def test_command_header_format(self):
         """Commands should start with 5A 01 03 10 30."""
         header = bytes.fromhex("5A01031030")
-        commands = [
-            Okin7ByteCommands.HEAD_UP,
-            Okin7ByteCommands.STOP,
-            Okin7ByteCommands.FLAT,
-        ]
-        for cmd in commands:
-            assert cmd[0:5] == header, f"Command {cmd.hex()} has wrong header"
+        for byte_val in [0x00, 0x0F, 0x10]:
+            cmd = _cmd(byte_val)
+            assert cmd[0:5] == header, f"_cmd(0x{byte_val:02x}) has wrong header"
 
     def test_command_trailer(self):
         """Commands should end with A5."""
-        commands = [
-            Okin7ByteCommands.HEAD_UP,
-            Okin7ByteCommands.STOP,
-            Okin7ByteCommands.FLAT,
-        ]
-        for cmd in commands:
-            assert cmd[6] == 0xA5, f"Command {cmd.hex()} doesn't end with A5"
+        for byte_val in [0x00, 0x0F, 0x10]:
+            cmd = _cmd(byte_val)
+            assert cmd[6] == 0xA5, f"_cmd(0x{byte_val:02x}) doesn't end with A5"
 
-    def test_motor_command_bytes(self):
-        """Motor commands should have correct byte 5 values."""
-        assert Okin7ByteCommands.HEAD_UP[5] == 0x00
-        assert Okin7ByteCommands.HEAD_DOWN[5] == 0x01
-        assert Okin7ByteCommands.FOOT_UP[5] == 0x02
-        assert Okin7ByteCommands.FOOT_DOWN[5] == 0x03
-        assert Okin7ByteCommands.LUMBAR_UP[5] == 0x04
-        assert Okin7ByteCommands.LUMBAR_DOWN[5] == 0x07
-        assert Okin7ByteCommands.STOP[5] == 0x0F
+    def test_command_variable_byte(self):
+        """_cmd should place the variable byte at index 5."""
+        assert _cmd(0x00)[5] == 0x00  # HEAD_UP
+        assert _cmd(0x01)[5] == 0x01  # HEAD_DOWN
+        assert _cmd(0x02)[5] == 0x02  # FOOT_UP
+        assert _cmd(0x03)[5] == 0x03  # FOOT_DOWN
+        assert _cmd(0x04)[5] == 0x04  # LUMBAR_UP (7-byte variant)
+        assert _cmd(0x07)[5] == 0x07  # LUMBAR_DOWN
+        assert _cmd(0x0F)[5] == 0x0F  # STOP
+        assert _cmd(0x10)[5] == 0x10  # FLAT
+        assert _cmd(0x11)[5] == 0x11  # LOUNGE (7-byte variant)
+        assert _cmd(0x13)[5] == 0x13  # ZERO_GRAVITY
+        assert _cmd(0x16)[5] == 0x16  # ANTI_SNORE
+        assert _cmd(0x58)[5] == 0x58  # MASSAGE_ON
+        assert _cmd(0x59)[5] == 0x59  # MASSAGE_WAVE
+        assert _cmd(0x5A)[5] == 0x5A  # MASSAGE_OFF
+        assert _cmd(0x73)[5] == 0x73  # LIGHT_ON
+        assert _cmd(0x74)[5] == 0x74  # LIGHT_OFF
 
-    def test_preset_command_bytes(self):
-        """Preset commands should have correct byte 5 values."""
-        assert Okin7ByteCommands.FLAT[5] == 0x10
-        assert Okin7ByteCommands.LOUNGE[5] == 0x11
-        assert Okin7ByteCommands.ZERO_GRAVITY[5] == 0x13
-        assert Okin7ByteCommands.ANTI_SNORE[5] == 0x16
+    def test_config_lumbar_up_byte(self):
+        """7-byte config should use 0x04 for lumbar up."""
+        assert OKIN_7BYTE_CONFIG.lumbar_up_byte == 0x04
 
-    def test_massage_command_bytes(self):
-        """Massage commands should have correct byte 5 values."""
-        assert Okin7ByteCommands.MASSAGE_ON[5] == 0x58
-        assert Okin7ByteCommands.MASSAGE_WAVE[5] == 0x59
-        assert Okin7ByteCommands.MASSAGE_OFF[5] == 0x5A
-
-    def test_light_command_bytes(self):
-        """Light commands should have correct byte 5 values."""
-        assert Okin7ByteCommands.LIGHT_ON[5] == 0x73
-        assert Okin7ByteCommands.LIGHT_OFF[5] == 0x74
+    def test_config_lounge_byte(self):
+        """7-byte config should use 0x11 for lounge."""
+        assert OKIN_7BYTE_CONFIG.lounge_byte == 0x11
 
 
 # -----------------------------------------------------------------------------
@@ -265,7 +240,7 @@ class TestOkin7ByteMovement:
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
         assert len(first_call_data) == 7
-        assert first_call_data == Okin7ByteCommands.HEAD_UP
+        assert first_call_data == _cmd(0x00)
 
     async def test_move_lumbar_up_sends_correct_command(
         self,
@@ -282,7 +257,7 @@ class TestOkin7ByteMovement:
 
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
-        assert first_call_data == Okin7ByteCommands.LUMBAR_UP
+        assert first_call_data == _cmd(0x04)
 
     async def test_stop_all_sends_stop_command(
         self,
@@ -299,7 +274,7 @@ class TestOkin7ByteMovement:
 
         calls = mock_client.write_gatt_char.call_args_list
         call_data = calls[0][0][1]
-        assert call_data == Okin7ByteCommands.STOP
+        assert call_data == _cmd(0x0F)
 
     async def test_movement_sends_stop_after(
         self,
@@ -317,7 +292,7 @@ class TestOkin7ByteMovement:
         calls = mock_client.write_gatt_char.call_args_list
         # Last call should be STOP
         last_call_data = calls[-1][0][1]
-        assert last_call_data == Okin7ByteCommands.STOP
+        assert last_call_data == _cmd(0x0F)
 
 
 class TestOkin7BytePresets:
@@ -338,7 +313,7 @@ class TestOkin7BytePresets:
 
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
-        assert first_call_data == Okin7ByteCommands.FLAT
+        assert first_call_data == _cmd(0x10)
 
     async def test_preset_zero_g_sends_correct_command(
         self,
@@ -355,7 +330,7 @@ class TestOkin7BytePresets:
 
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
-        assert first_call_data == Okin7ByteCommands.ZERO_GRAVITY
+        assert first_call_data == _cmd(0x13)
 
 
 class TestOkin7ByteLights:
@@ -376,7 +351,7 @@ class TestOkin7ByteLights:
 
         calls = mock_client.write_gatt_char.call_args_list
         call_data = calls[0][0][1]
-        assert call_data == Okin7ByteCommands.LIGHT_ON
+        assert call_data == _cmd(0x73)
 
     async def test_lights_off_sends_correct_command(
         self,
@@ -393,4 +368,4 @@ class TestOkin7ByteLights:
 
         calls = mock_client.write_gatt_char.call_args_list
         call_data = calls[0][0][1]
-        assert call_data == Okin7ByteCommands.LIGHT_OFF
+        assert call_data == _cmd(0x74)

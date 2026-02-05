@@ -1,6 +1,6 @@
 """Tests for Okin Nordic UART bed controller.
 
-Protocol reverse-engineered by David Delahoz (https://github.com/daviddelahoz/BLEAdjustableBase)
+Protocol reverse-engineered by @kristofferR based on discovery from @Zrau5454.
 """
 
 from __future__ import annotations
@@ -12,8 +12,11 @@ from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.adjustable_bed.beds.okin_7byte import (
+    OKIN_NORDIC_CONFIG,
+    _cmd,
+)
 from custom_components.adjustable_bed.beds.okin_nordic import (
-    OkinNordicCommands,
     OkinNordicController,
 )
 from custom_components.adjustable_bed.const import (
@@ -89,7 +92,7 @@ class TestOkinNordicController:
         mock_okin_nordic_coordinator._client = mock_client
 
         # Send a motor command - should trigger init sequence
-        await controller.write_command(OkinNordicCommands.HEAD_UP, repeat_count=1)
+        await controller.write_command(_cmd(0x00), repeat_count=1)
 
         # Verify init commands were sent before motor command
         assert mock_client.write_gatt_char.call_count == 3
@@ -97,15 +100,15 @@ class TestOkinNordicController:
 
         # First call: INIT_1
         assert calls[0][0][0] == MATTRESSFIRM_WRITE_CHAR_UUID
-        assert calls[0][0][1] == OkinNordicCommands.INIT_1
+        assert calls[0][0][1] == OKIN_NORDIC_CONFIG.init_commands[0]
 
         # Second call: INIT_2
         assert calls[1][0][0] == MATTRESSFIRM_WRITE_CHAR_UUID
-        assert calls[1][0][1] == OkinNordicCommands.INIT_2
+        assert calls[1][0][1] == OKIN_NORDIC_CONFIG.init_commands[1]
 
         # Third call: HEAD_UP
         assert calls[2][0][0] == MATTRESSFIRM_WRITE_CHAR_UUID
-        assert calls[2][0][1] == OkinNordicCommands.HEAD_UP
+        assert calls[2][0][1] == _cmd(0x00)
 
     async def test_subsequent_commands_skip_init(
         self, mock_okin_nordic_coordinator: AdjustableBedCoordinator
@@ -116,19 +119,19 @@ class TestOkinNordicController:
         mock_okin_nordic_coordinator._client = mock_client
 
         # Send first command (with init)
-        await controller.write_command(OkinNordicCommands.HEAD_UP, repeat_count=1)
+        await controller.write_command(_cmd(0x00), repeat_count=1)
         assert controller._initialized
 
         # Reset call count
         mock_client.reset_mock()
 
         # Send second command (should skip init)
-        await controller.write_command(OkinNordicCommands.FOOT_UP, repeat_count=1)
+        await controller.write_command(_cmd(0x02), repeat_count=1)
 
         # Verify only the motor command was sent
         assert mock_client.write_gatt_char.call_count == 1
         calls = mock_client.write_gatt_char.call_args_list
-        assert calls[0][0][1] == OkinNordicCommands.FOOT_UP
+        assert calls[0][0][1] == _cmd(0x02)
 
     async def test_motor_commands(self, mock_okin_nordic_coordinator: AdjustableBedCoordinator):
         """Test motor control commands."""
@@ -140,16 +143,16 @@ class TestOkinNordicController:
         # Test head up
         await controller.move_head_up()
         assert mock_client.write_gatt_char.called
-        assert OkinNordicCommands.HEAD_UP in [
+        assert _cmd(0x00) in [
             call[0][1] for call in mock_client.write_gatt_char.call_args_list
         ]
 
         mock_client.reset_mock()
 
-        # Test lumbar up (unique to Okin Nordic)
+        # Test lumbar up (Nordic uses 0x06 instead of 0x04)
         await controller.move_lumbar_up()
         assert mock_client.write_gatt_char.called
-        assert OkinNordicCommands.LUMBAR_UP in [
+        assert _cmd(0x06) in [
             call[0][1] for call in mock_client.write_gatt_char.call_args_list
         ]
 
@@ -164,23 +167,23 @@ class TestOkinNordicController:
         await controller.preset_flat()
         assert mock_client.write_gatt_char.called
         first_call = mock_client.write_gatt_char.call_args_list[0]
-        assert first_call[0][1] == OkinNordicCommands.FLAT
+        assert first_call[0][1] == _cmd(0x10)
 
         mock_client.reset_mock()
 
-        # Test lounge preset (unique to Okin Nordic)
+        # Test lounge preset (Nordic uses 0x17 instead of 0x11)
         await controller.preset_lounge()
         assert mock_client.write_gatt_char.called
         first_call = mock_client.write_gatt_char.call_args_list[0]
-        assert first_call[0][1] == OkinNordicCommands.LOUNGE
+        assert first_call[0][1] == _cmd(0x17)
 
         mock_client.reset_mock()
 
-        # Test incline preset (unique to Okin Nordic)
+        # Test incline preset (Nordic only, 0x18)
         await controller.preset_incline()
         assert mock_client.write_gatt_char.called
         first_call = mock_client.write_gatt_char.call_args_list[0]
-        assert first_call[0][1] == OkinNordicCommands.INCLINE
+        assert first_call[0][1] == _cmd(0x18)
 
     async def test_massage_commands(self, mock_okin_nordic_coordinator: AdjustableBedCoordinator):
         """Test massage control commands."""
@@ -189,17 +192,18 @@ class TestOkinNordicController:
         mock_okin_nordic_coordinator._client = mock_client
         controller._initialized = True
 
-        # Test massage on
+        # Test massage on (Nordic uses MASSAGE_1 = 0x52)
         await controller.massage_on()
         assert mock_client.write_gatt_char.called
-        assert mock_client.write_gatt_char.call_args_list[0][0][1] == OkinNordicCommands.MASSAGE_1
+        assert mock_client.write_gatt_char.call_args_list[0][0][1] == _cmd(0x52)
 
         mock_client.reset_mock()
 
-        # Test massage intensity up
+        # Test massage intensity up (Nordic: byte 4 = 0x40, byte 5 = 0x60)
         await controller.massage_intensity_up()
         assert mock_client.write_gatt_char.called
-        assert mock_client.write_gatt_char.call_args_list[0][0][1] == OkinNordicCommands.MASSAGE_UP
+        expected = bytes([0x5A, 0x01, 0x03, 0x10, 0x40, 0x60, 0xA5])
+        assert mock_client.write_gatt_char.call_args_list[0][0][1] == expected
 
     async def test_light_commands(self, mock_okin_nordic_coordinator: AdjustableBedCoordinator):
         """Test light control commands."""
@@ -211,18 +215,16 @@ class TestOkinNordicController:
         # Test light on
         await controller.lights_on()
         assert mock_client.write_gatt_char.called
-        assert mock_client.write_gatt_char.call_args_list[0][0][1] == OkinNordicCommands.LIGHT_ON
+        assert mock_client.write_gatt_char.call_args_list[0][0][1] == _cmd(0x73)
 
         mock_client.reset_mock()
 
-        # Test light off
+        # Test light off (Nordic repeats 3 times)
         await controller.lights_off()
         assert mock_client.write_gatt_char.called
         # Should be called 3 times (repeat_count=3)
         assert mock_client.write_gatt_char.call_count == 3
-        assert (
-            mock_client.write_gatt_char.call_args_list[0][0][1] == OkinNordicCommands.LIGHT_OFF_HOLD
-        )
+        assert mock_client.write_gatt_char.call_args_list[0][0][1] == _cmd(0x74)
 
     async def test_memory_not_supported(
         self, mock_okin_nordic_coordinator: AdjustableBedCoordinator
@@ -244,7 +246,7 @@ class TestOkinNordicController:
         # Client is None by default in coordinator, so no need to set it
 
         with pytest.raises(ConnectionError):
-            await controller.write_command(OkinNordicCommands.HEAD_UP)
+            await controller.write_command(_cmd(0x00))
 
     async def test_position_feedback_not_supported(
         self, mock_okin_nordic_coordinator: AdjustableBedCoordinator

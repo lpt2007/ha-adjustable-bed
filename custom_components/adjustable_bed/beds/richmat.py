@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from bleak import BleakClient
@@ -108,7 +107,6 @@ class RichmatController(BedController):
         super().__init__(coordinator)
         self._is_wilinke = is_wilinke
         self._char_uuid = char_uuid or RICHMAT_NORDIC_CHAR_UUID
-        self._notify_callback: Callable[[str, float], None] | None = None
         self._remote_code = remote_code or RICHMAT_REMOTE_AUTO
         self._write_with_response = write_with_response
         # Use get_richmat_features which looks up from both manual overrides
@@ -251,23 +249,6 @@ class RichmatController(BedController):
                 )
                 self.log_discovered_services(level=logging.INFO)
             raise
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        # Richmat beds don't support position notifications
-        self._notify_callback = callback
-        _LOGGER.debug("Richmat beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        pass
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        # Richmat beds don't support position reading
-        pass
 
     async def _send_command(self, command_byte: int, repeat: int | None = None) -> None:
         """Send a command to the bed."""

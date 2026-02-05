@@ -464,17 +464,15 @@ class TestOkinHandlePositionNotifications:
         mock_okin_handle_config_entry,
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
-        caplog,
     ):
-        """Test that Okin handle doesn't support position notifications."""
+        """Test start_notify stores callback without BLE subscription."""
         coordinator = AdjustableBedCoordinator(hass, mock_okin_handle_config_entry)
         await coordinator.async_connect()
 
         callback = MagicMock()
         await coordinator.controller.start_notify(callback)
 
-        # Should log that notifications aren't supported
-        assert "don't support position notifications" in caplog.text
+        assert coordinator.controller._notify_callback is callback
 
     async def test_read_positions_noop(
         self,

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from bleak.exc import BleakError
@@ -83,7 +82,6 @@ class MaloufNewOkinController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Malouf NEW_OKIN controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("MaloufNewOkinController initialized")
 
     @property
@@ -156,44 +154,6 @@ class MaloufNewOkinController(BedController):
             0x00,
             0x00,
         ])
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to Malouf NEW_OKIN bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            MALOUF_NEW_OKIN_WRITE_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        # These beds don't support position feedback
-        self._notify_callback = callback
-        _LOGGER.debug("Malouf NEW_OKIN beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current motor positions - not supported."""
-        pass
 
     async def _move_with_stop(self, command_value: int) -> None:
         """Execute a movement command and always send STOP at the end."""
@@ -399,7 +359,6 @@ class MaloufLegacyOkinController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Malouf LEGACY_OKIN controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("MaloufLegacyOkinController initialized")
 
     @property
@@ -476,44 +435,6 @@ class MaloufLegacyOkinController(BedController):
         checksum = (~sum(data)) & 0xFF
         data.append(checksum)
         return bytes(data)
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to Malouf LEGACY_OKIN bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            MALOUF_LEGACY_OKIN_WRITE_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        # These beds don't support position feedback
-        self._notify_callback = callback
-        _LOGGER.debug("Malouf LEGACY_OKIN beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current motor positions - not supported."""
-        pass
 
     async def _move_with_stop(self, command_value: int) -> None:
         """Execute a movement command and always send STOP at the end."""

@@ -475,13 +475,12 @@ class TestKeesonPositionNotifications:
         hass: HomeAssistant,
         mock_keeson_config_entry,
         mock_coordinator_connected,
-        caplog,
     ):
-        """Test that Keeson doesn't support position notifications."""
+        """Test start_notify stores callback for non-ergomotion variant."""
         coordinator = AdjustableBedCoordinator(hass, mock_keeson_config_entry)
         await coordinator.async_connect()
 
         callback = MagicMock()
         await coordinator.controller.start_notify(callback)
 
-        assert "don't support position notifications" in caplog.text
+        assert coordinator.controller._notify_callback is callback
