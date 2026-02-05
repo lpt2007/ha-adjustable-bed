@@ -230,6 +230,58 @@ class SvaneController(BedController):
             cancel_event,
         )
 
+    async def _write_memory_command(
+        self,
+        command: bytes,
+        repeat_count: int,
+        repeat_delay_ms: int,
+        cancel_event: asyncio.Event | None = None,
+    ) -> None:
+        """Write a memory/preset command to available memory characteristics.
+
+        Svane beds expose the MEMORY characteristic in both motor services.
+        Some models appear to only react reliably when both are written.
+        """
+        if self.client is None or not self.client.is_connected:
+            _LOGGER.error("Cannot write memory command: BLE client not connected")
+            raise ConnectionError("Not connected to bed")
+
+        memory_chars: list[BleakGATTCharacteristic] = []
+        for service_uuid in (SVANE_HEAD_SERVICE_UUID, SVANE_FEET_SERVICE_UUID):
+            char = self._get_char_in_service(service_uuid, SVANE_CHAR_MEMORY_UUID)
+            if char is not None:
+                memory_chars.append(char)
+
+        if not memory_chars:
+            _LOGGER.error("Memory characteristic not found in head or feet service")
+            raise ConnectionError("Memory characteristic not found")
+
+        effective_cancel = cancel_event or self._coordinator.cancel_command
+
+        _LOGGER.debug(
+            "Writing memory command %s to %d characteristic(s) (repeat: %d, delay: %dms)",
+            command.hex(),
+            len(memory_chars),
+            repeat_count,
+            repeat_delay_ms,
+        )
+
+        for i in range(repeat_count):
+            if effective_cancel is not None and effective_cancel.is_set():
+                _LOGGER.info("Memory command cancelled after %d/%d writes", i, repeat_count)
+                return
+
+            for char in memory_chars:
+                try:
+                    async with self._ble_lock:
+                        await self.client.write_gatt_char(char, command, response=True)
+                except BleakError:
+                    _LOGGER.exception("Failed to write memory command to %s", char.uuid[:8])
+                    raise
+
+            if i < repeat_count - 1:
+                await asyncio.sleep(repeat_delay_ms / 1000)
+
     async def start_notify(self, callback: Callable[[str, float], None] | None = None) -> None:
         """Start listening for position notifications."""
         self._notify_callback = callback
@@ -439,12 +491,10 @@ class SvaneController(BedController):
     # Preset methods
     async def preset_flat(self) -> None:
         """Go to flat position."""
-        await self._write_to_service_char(
-            SVANE_HEAD_SERVICE_UUID,
-            SVANE_CHAR_MEMORY_UUID,
+        await self._write_memory_command(
             SvaneCommands.FLATTEN,
-            repeat_count=3,
-            repeat_delay_ms=100,
+            repeat_count=max(3, self._coordinator.motor_pulse_count),
+            repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,
         )
 
     async def preset_zero_g(self) -> None:
@@ -463,12 +513,10 @@ class SvaneController(BedController):
         Svane beds only support a single memory position (memory_num is ignored).
         """
         del memory_num  # Svane only supports 1 memory slot
-        await self._write_to_service_char(
-            SVANE_HEAD_SERVICE_UUID,
-            SVANE_CHAR_MEMORY_UUID,
+        await self._write_memory_command(
             SvaneCommands.RECALL_POSITION,
-            repeat_count=3,
-            repeat_delay_ms=100,
+            repeat_count=max(3, self._coordinator.motor_pulse_count),
+            repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,
         )
 
     async def program_memory(self, memory_num: int) -> None:
@@ -477,10 +525,10 @@ class SvaneController(BedController):
         Svane beds only support a single memory position (memory_num is ignored).
         """
         del memory_num  # Svane only supports 1 memory slot
-        await self._write_to_service_char(
-            SVANE_HEAD_SERVICE_UUID,
-            SVANE_CHAR_MEMORY_UUID,
+        await self._write_memory_command(
             SvaneCommands.SAVE_POSITION,
+            repeat_count=max(3, self._coordinator.motor_pulse_count),
+            repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,
         )
 
     # Light methods
