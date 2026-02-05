@@ -239,7 +239,8 @@ class LeggettWilinkeController(BedController):
                 return
 
             try:
-                await self.client.write_gatt_char(self._char_uuid, command, response=True)
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(self._char_uuid, command, response=True)
             except BleakError as err:
                 _LOGGER.exception("Failed to write command")
                 if "not found" in str(err).lower() or "invalid" in str(err).lower():

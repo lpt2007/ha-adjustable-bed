@@ -188,9 +188,10 @@ class RondureController(BedController):
                 return
 
             try:
-                await self.client.write_gatt_char(
-                    RONDURE_WRITE_CHAR_UUID, command, response=False
-                )
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(
+                        RONDURE_WRITE_CHAR_UUID, command, response=False
+                    )
             except BleakError:
                 _LOGGER.exception("Failed to write command")
                 raise

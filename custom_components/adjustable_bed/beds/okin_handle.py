@@ -164,7 +164,8 @@ class OkinHandleController(BedController):
 
             try:
                 # Write to handle directly (Bleak supports integer handles)
-                await self.client.write_gatt_char(DEWERTOKIN_WRITE_HANDLE, command, response=True)
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(DEWERTOKIN_WRITE_HANDLE, command, response=True)
             except BleakError:
                 _LOGGER.exception("Failed to write command")
                 raise

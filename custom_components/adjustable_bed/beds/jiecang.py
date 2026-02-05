@@ -174,7 +174,8 @@ class JiecangController(BedController):
                 return
 
             try:
-                await self.client.write_gatt_char(JIECANG_CHAR_UUID, command, response=True)
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(JIECANG_CHAR_UUID, command, response=True)
             except BleakError:
                 _LOGGER.exception("Failed to write command")
                 raise

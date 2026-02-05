@@ -164,18 +164,20 @@ class OkinNordicController(BedController):
                     MATTRESSFIRM_WRITE_CHAR_UUID,
                     OkinNordicCommands.INIT_1.hex(),
                 )
-                await self.client.write_gatt_char(
-                    MATTRESSFIRM_WRITE_CHAR_UUID, OkinNordicCommands.INIT_1, response=True
-                )
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(
+                        MATTRESSFIRM_WRITE_CHAR_UUID, OkinNordicCommands.INIT_1, response=True
+                    )
                 await asyncio.sleep(0.1)  # 100ms delay between init commands
                 _LOGGER.debug(
                     "Init write to %s: %s (response=True)",
                     MATTRESSFIRM_WRITE_CHAR_UUID,
                     OkinNordicCommands.INIT_2.hex(),
                 )
-                await self.client.write_gatt_char(
-                    MATTRESSFIRM_WRITE_CHAR_UUID, OkinNordicCommands.INIT_2, response=True
-                )
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(
+                        MATTRESSFIRM_WRITE_CHAR_UUID, OkinNordicCommands.INIT_2, response=True
+                    )
                 self._initialized = True
             except BleakError:
                 _LOGGER.exception("Failed to send init sequence")
@@ -195,9 +197,10 @@ class OkinNordicController(BedController):
                 return
 
             try:
-                await self.client.write_gatt_char(
-                    MATTRESSFIRM_WRITE_CHAR_UUID, command, response=True
-                )
+                async with self._ble_lock:
+                    await self.client.write_gatt_char(
+                        MATTRESSFIRM_WRITE_CHAR_UUID, command, response=True
+                    )
             except BleakError:
                 _LOGGER.exception("Failed to write command")
                 raise
