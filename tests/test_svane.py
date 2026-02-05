@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
+
 import pytest
 from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant
@@ -257,3 +259,138 @@ class TestSvaneMultiServiceProtocol:
     def test_light_on_off_characteristic_uuid_defined(self):
         """Light on/off characteristic UUID should be defined."""
         assert SVANE_LIGHT_ON_OFF_UUID is not None
+
+
+# -----------------------------------------------------------------------------
+# Memory/Preset Command Tests
+# -----------------------------------------------------------------------------
+
+
+class _MockCharacteristic:
+    """Simple mock BLE characteristic with UUID."""
+
+    def __init__(self, uuid: str) -> None:
+        self.uuid = uuid
+
+
+class _MockService:
+    """Simple mock BLE service with UUID + characteristics."""
+
+    def __init__(self, uuid: str, characteristics: list[_MockCharacteristic]) -> None:
+        self.uuid = uuid
+        self.characteristics = characteristics
+
+
+class TestSvaneMemoryCommands:
+    """Test Svane memory/preset command routing."""
+
+    async def test_preset_flat_writes_to_head_and_feet_memory_chars(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Flat preset should write to MEMORY characteristic in both motor services."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+        ]
+        mock_client.write_gatt_char.reset_mock()
+
+        sleep_mock = AsyncMock()
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
+
+        await coordinator.controller.preset_flat()
+
+        expected_repeats = max(3, coordinator.motor_pulse_count)
+        assert mock_client.write_gatt_char.call_count == expected_repeats * 2
+
+        written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
+        assert head_memory in written_chars
+        assert feet_memory in written_chars
+        assert all(
+            call.args[1] == SvaneCommands.FLATTEN
+            for call in mock_client.write_gatt_char.call_args_list
+        )
+
+    async def test_program_memory_uses_repeated_writes(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Program memory should send repeated writes (not a single fire-and-forget write)."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+        ]
+        mock_client.write_gatt_char.reset_mock()
+
+        sleep_mock = AsyncMock()
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
+
+        await coordinator.controller.program_memory(1)
+
+        written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
+        assert head_memory in written_chars
+        assert feet_memory in written_chars
+
+        expected_repeats = max(3, coordinator.motor_pulse_count)
+        assert mock_client.write_gatt_char.call_count == expected_repeats * 2
+        assert all(
+            call.args[1] == SvaneCommands.SAVE_POSITION
+            for call in mock_client.write_gatt_char.call_args_list
+        )
+
+    async def test_preset_memory_uses_repeated_writes(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Preset memory should send repeated writes (not a single fire-and-forget write)."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+        ]
+        mock_client.write_gatt_char.reset_mock()
+
+        sleep_mock = AsyncMock()
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
+
+        await coordinator.controller.preset_memory(1)
+
+        written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
+        assert head_memory in written_chars
+        assert feet_memory in written_chars
+
+        expected_repeats = max(3, coordinator.motor_pulse_count)
+        assert mock_client.write_gatt_char.call_count == expected_repeats * 2
+        assert all(
+            call.args[1] == SvaneCommands.RECALL_POSITION
+            for call in mock_client.write_gatt_char.call_args_list
+        )
