@@ -347,6 +347,10 @@ class TestSvaneMemoryCommands:
 
         await coordinator.controller.program_memory(1)
 
+        written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
+        assert head_memory in written_chars
+        assert feet_memory in written_chars
+
         expected_repeats = max(3, coordinator.motor_pulse_count)
         assert mock_client.write_gatt_char.call_count == expected_repeats * 2
         assert all(
@@ -379,6 +383,10 @@ class TestSvaneMemoryCommands:
         monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
 
         await coordinator.controller.preset_memory(1)
+
+        written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
+        assert head_memory in written_chars
+        assert feet_memory in written_chars
 
         expected_repeats = max(3, coordinator.motor_pulse_count)
         assert mock_client.write_gatt_char.call_count == expected_repeats * 2
