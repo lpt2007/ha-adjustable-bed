@@ -7,7 +7,7 @@ Reverie Nightstand uses direct writes to specific characteristics:
 - Position control: write position value directly (0-100)
 - Presets: write to PRESETS characteristic
 - LED: write to LED characteristic (0x64 on, 0x00 off)
-- Massage: write level (0-10) to HEAD_WAVE/FOOT_WAVE characteristics
+- Massage: write level * 4 (0-40) to HEAD_WAVE/FOOT_WAVE characteristics
 """
 
 from __future__ import annotations
@@ -449,29 +449,29 @@ class ReverieNightstandController(BedController):
         await self._write_to_char(REVERIE_NIGHTSTAND_FOOT_WAVE_UUID, 0)
 
     async def massage_head_up(self) -> None:
-        """Increase head massage intensity (0-10)."""
+        """Increase head massage intensity (0-10, written as level * 4)."""
         self._massage_head_level = min(10, self._massage_head_level + 1)
         await self._write_to_char(
-            REVERIE_NIGHTSTAND_HEAD_WAVE_UUID, self._massage_head_level
+            REVERIE_NIGHTSTAND_HEAD_WAVE_UUID, self._massage_head_level * 4
         )
 
     async def massage_head_down(self) -> None:
-        """Decrease head massage intensity (0-10)."""
+        """Decrease head massage intensity (0-10, written as level * 4)."""
         self._massage_head_level = max(0, self._massage_head_level - 1)
         await self._write_to_char(
-            REVERIE_NIGHTSTAND_HEAD_WAVE_UUID, self._massage_head_level
+            REVERIE_NIGHTSTAND_HEAD_WAVE_UUID, self._massage_head_level * 4
         )
 
     async def massage_foot_up(self) -> None:
-        """Increase foot massage intensity (0-10)."""
+        """Increase foot massage intensity (0-10, written as level * 4)."""
         self._massage_foot_level = min(10, self._massage_foot_level + 1)
         await self._write_to_char(
-            REVERIE_NIGHTSTAND_FOOT_WAVE_UUID, self._massage_foot_level
+            REVERIE_NIGHTSTAND_FOOT_WAVE_UUID, self._massage_foot_level * 4
         )
 
     async def massage_foot_down(self) -> None:
-        """Decrease foot massage intensity (0-10)."""
+        """Decrease foot massage intensity (0-10, written as level * 4)."""
         self._massage_foot_level = max(0, self._massage_foot_level - 1)
         await self._write_to_char(
-            REVERIE_NIGHTSTAND_FOOT_WAVE_UUID, self._massage_foot_level
+            REVERIE_NIGHTSTAND_FOOT_WAVE_UUID, self._massage_foot_level * 4
         )
