@@ -123,7 +123,7 @@ class TestSBICommands:
         """Preset commands should be correct values."""
         assert SBICommands.PRESET_FLAT == 0x08000000  # cmd3=0x08
         assert SBICommands.PRESET_ZERO_G == 0x00001000  # cmd1=0x10
-        assert SBICommands.PRESET_MEMORY_1 == 0x00002000  # cmd1=0x20
+        assert SBICommands.PRESET_MEMORY_1 == 0x00010000  # cmd2=0x01
         assert SBICommands.PRESET_MEMORY_2 == 0x00004000  # cmd1=0x40
         assert SBICommands.PRESET_TV == 0x00008000  # cmd1=0x80
 
@@ -505,8 +505,8 @@ class TestSBIPresets:
 
         calls = mock_client.write_gatt_char.call_args_list
         call_data = calls[0][0][1]
-        # PRESET_MEMORY_1 = 0x00002000 -> cmd1=0x20
-        assert call_data[4] == 0x20
+        # PRESET_MEMORY_1 = 0x00010000 -> cmd2=0x01
+        assert call_data[5] == 0x01
 
 
 # -----------------------------------------------------------------------------
