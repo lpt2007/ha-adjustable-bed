@@ -285,13 +285,13 @@ class TestVibradormPresets:
         first_call_data = calls[0][0][1]
         assert first_call_data[0] == VibradormCommands.ALL_DOWN
 
-    async def test_preset_memory_1_sends_correct_command(
+    async def test_preset_memory_1_sends_cbi_command(
         self,
         hass: HomeAssistant,
         mock_vibradorm_config_entry,
         mock_coordinator_connected,
     ):
-        """preset_memory(1) should send MEMORY_1 command."""
+        """preset_memory(1) should send 2-byte CBI command with MEMORY_1."""
         coordinator = AdjustableBedCoordinator(hass, mock_vibradorm_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
@@ -299,16 +299,18 @@ class TestVibradormPresets:
         await coordinator.controller.preset_memory(1)
 
         calls = mock_client.write_gatt_char.call_args_list
+        # First call: CBI command [0x00, MEMORY_1] (toggle=False -> 0x0000)
         first_call_data = calls[0][0][1]
-        assert first_call_data[0] == VibradormCommands.MEMORY_1
+        assert len(first_call_data) == 2
+        assert first_call_data[1] == VibradormCommands.MEMORY_1
 
-    async def test_preset_memory_4_sends_correct_command(
+    async def test_preset_memory_4_sends_cbi_command(
         self,
         hass: HomeAssistant,
         mock_vibradorm_config_entry,
         mock_coordinator_connected,
     ):
-        """preset_memory(4) should send MEMORY_4 command."""
+        """preset_memory(4) should send 2-byte CBI command with MEMORY_4."""
         coordinator = AdjustableBedCoordinator(hass, mock_vibradorm_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
@@ -317,15 +319,16 @@ class TestVibradormPresets:
 
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
-        assert first_call_data[0] == VibradormCommands.MEMORY_4
+        assert len(first_call_data) == 2
+        assert first_call_data[1] == VibradormCommands.MEMORY_4
 
-    async def test_program_memory_sends_store_command(
+    async def test_program_memory_sends_store_sequence(
         self,
         hass: HomeAssistant,
         mock_vibradorm_config_entry,
         mock_coordinator_connected,
     ):
-        """program_memory should send STORE command."""
+        """program_memory should send STORE×4 + slot + STOP×4 via CBI."""
         coordinator = AdjustableBedCoordinator(hass, mock_vibradorm_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
@@ -333,8 +336,20 @@ class TestVibradormPresets:
         await coordinator.controller.program_memory(1)
 
         calls = mock_client.write_gatt_char.call_args_list
-        call_data = calls[0][0][1]
-        assert call_data[0] == VibradormCommands.STORE
+        sent = [call.args[1] for call in calls]
+
+        # First 4 calls: STORE to CBI with alternating toggle
+        assert sent[0] == bytes([0x00, VibradormCommands.STORE])  # toggle=0
+        assert sent[1] == bytes([0x80, VibradormCommands.STORE])  # toggle=1
+        assert sent[2] == bytes([0x00, VibradormCommands.STORE])  # toggle=0
+        assert sent[3] == bytes([0x80, VibradormCommands.STORE])  # toggle=1
+
+        # 5th call: memory slot to CBI
+        assert sent[4] == bytes([0x00, VibradormCommands.MEMORY_1])  # toggle=0
+
+        # Last 4 calls: STOP (1-byte motor commands)
+        for i in range(5, 9):
+            assert sent[i] == bytes([VibradormCommands.STOP])
 
 
 class TestVibradormCommandFormat:

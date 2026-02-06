@@ -102,6 +102,7 @@ class VibradormController(BedController):
         self._notify_callback: Callable[[str, float], None] | None = None
         self._lights_on: bool = False
         self._write_with_response: bool = False
+        self._cbi_toggle: bool = False  # Alternates 0x0000/0x8000 per CBI write
 
     @property
     def control_characteristic_uuid(self) -> str:
@@ -188,6 +189,28 @@ class VibradormController(BedController):
             repeat_delay_ms=repeat_delay_ms,
             cancel_event=cancel_event,
         )
+
+    async def _write_cbi_command(self, cmd: int) -> None:
+        """Write a 2-byte command to the CBI characteristic with toggle bit.
+
+        The toggle bit alternates between 0x0000 and 0x8000 on each send,
+        matching the APK's MC.java behavior.
+        """
+        toggle = 0x8000 if self._cbi_toggle else 0x0000
+        value = toggle | cmd
+        data = value.to_bytes(2, byteorder="big")
+        _LOGGER.debug(
+            "Writing CBI command: 0x%04X (cmd=0x%02X, toggle=%s)",
+            value,
+            cmd,
+            self._cbi_toggle,
+        )
+        await self._write_gatt_with_retry(
+            VIBRADORM_CBI_CHAR_UUID,
+            data,
+            response=self._write_with_response,
+        )
+        self._cbi_toggle = not self._cbi_toggle
 
     def _handle_notification(self, _sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """Handle BLE notification data.
@@ -397,10 +420,10 @@ class VibradormController(BedController):
         await self._move_with_stop(VibradormCommands.ALL_DOWN)
 
     async def preset_memory(self, memory_num: int) -> None:
-        """Go to memory preset position.
+        """Go to memory preset position via CBI characteristic.
 
-        Presets work like motor commands - they trigger movement that
-        continues until STOP is sent (based on APK analysis).
+        Memory recall sends the slot command to the CBI characteristic
+        with toggle bit, then STOP to halt after reaching position.
 
         Args:
             memory_num: Memory slot number (1-4)
@@ -414,22 +437,55 @@ class VibradormController(BedController):
         if memory_num not in memory_commands:
             _LOGGER.warning("Invalid memory preset number: %d (supported: 1-4)", memory_num)
             return
-        await self._move_with_stop(memory_commands[memory_num])
+        try:
+            await self._write_cbi_command(memory_commands[memory_num])
+        finally:
+            try:
+                await self._write_motor_command(
+                    VibradormCommands.STOP,
+                    repeat_count=1,
+                    cancel_event=asyncio.Event(),
+                )
+            except BleakError:
+                _LOGGER.debug("Failed to send STOP after memory recall")
 
     async def program_memory(self, memory_num: int) -> None:
-        """Program current position to memory.
+        """Program current position to memory via CBI characteristic.
 
-        Note: Vibradorm uses a single STORE command. The app selects which
-        memory slot to save to via UI state. For simplicity, we always
-        send STORE which saves to the currently selected slot.
+        APK sequence (MC.storeMemPos):
+        1. Send STORE ×4 to CBI (with toggle bit)
+        2. Send memory slot command to CBI (with toggle bit)
+        3. Send STOP ×4
+
+        Args:
+            memory_num: Memory slot number (1-4)
         """
-        if memory_num < 1 or memory_num > 4:
+        memory_commands = {
+            1: VibradormCommands.MEMORY_1,
+            2: VibradormCommands.MEMORY_2,
+            3: VibradormCommands.MEMORY_3,
+            4: VibradormCommands.MEMORY_4,
+        }
+        if memory_num not in memory_commands:
             _LOGGER.warning("Invalid memory program number: %d (supported: 1-4)", memory_num)
             return
-        # The STORE command saves to the currently active memory slot
-        # Different from Jensen where memory slots are addressed directly
-        await self._write_motor_command(VibradormCommands.STORE, repeat_count=1)
-        _LOGGER.info("Saved current position to memory (STORE command sent)")
+
+        # Step 1: Send STORE ×4 to CBI
+        for _ in range(4):
+            await self._write_cbi_command(VibradormCommands.STORE)
+
+        # Step 2: Send memory slot command to CBI
+        await self._write_cbi_command(memory_commands[memory_num])
+
+        # Step 3: Send STOP ×4
+        for _ in range(4):
+            await self._write_motor_command(
+                VibradormCommands.STOP,
+                repeat_count=1,
+                cancel_event=asyncio.Event(),
+            )
+
+        _LOGGER.info("Saved position to memory slot %d", memory_num)
 
     # Light methods
     async def lights_on(self) -> None:
@@ -481,8 +537,4 @@ class VibradormController(BedController):
         if self.client is None or not self.client.is_connected:
             raise ConnectionError("Not connected to bed")
 
-        await self._write_gatt_with_retry(
-            VIBRADORM_CBI_CHAR_UUID,
-            bytes([VibradormCommands.VRT_ON_OFF]),
-            response=self._write_with_response,
-        )
+        await self._write_cbi_command(VibradormCommands.VRT_ON_OFF)
