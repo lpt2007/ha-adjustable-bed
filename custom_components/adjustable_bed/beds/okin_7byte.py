@@ -337,7 +337,7 @@ class Okin7ByteController(BedController):
     # Massage controls
     async def massage_toggle(self) -> None:
         """Toggle massage on/off."""
-        await self.write_command(_cmd(0x58))
+        await self.write_command(_cmd(0x5A))
 
     async def massage_on(self) -> None:
         """Turn massage on."""
@@ -349,7 +349,7 @@ class Okin7ByteController(BedController):
 
     async def massage_off(self) -> None:
         """Turn massage off."""
-        await self.write_command(_cmd(0x5A))
+        await self.write_command(_cmd(0x6F))
 
     async def massage_mode_step(self) -> None:
         """Step through massage modes (wave pattern)."""
