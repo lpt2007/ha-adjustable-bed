@@ -43,14 +43,18 @@ class SolaceCommands:
     PRESET_MEMORY_2 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0xB1, 0x0B, 0xE2, 0x97])
     PRESET_MEMORY_3 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x51, 0x05, 0x2A, 0x93])
     PRESET_MEMORY_4 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x91, 0x09, 0x7A, 0x96])
+    PRESET_MEMORY_5 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0xF1, 0x0F, 0xD2, 0x94])
 
     # Program memory
     PROGRAM_MEMORY_1 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0xA0, 0x0A, 0x2F, 0x07])
     PROGRAM_MEMORY_2 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0xB0, 0x0B, 0xE3, 0x07])
     PROGRAM_MEMORY_3 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x50, 0x05, 0x2B, 0x03])
     PROGRAM_MEMORY_4 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x90, 0x09, 0x7B, 0x06])
+    PROGRAM_MEMORY_5 = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0xF0, 0x0F, 0xD3, 0x04])
 
     # Motor controls
+    MOTOR_HEAD_UP = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x01, 0x16, 0xC0])
+    MOTOR_HEAD_DOWN = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x02, 0x57, 0x81])
     MOTOR_BACK_UP = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x03, 0x97, 0x01])
     MOTOR_BACK_DOWN = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x04, 0xD6, 0xC3])
     MOTOR_LEGS_UP = bytes([0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x06, 0x57, 0x02])
@@ -137,8 +141,8 @@ class SolaceController(BedController):
 
     @property
     def memory_slot_count(self) -> int:
-        """Return 4 - Solace beds support memory slots 1-4."""
-        return 4
+        """Return 5 - Solace beds support memory slots 1-5."""
+        return 5
 
     @property
     def supports_memory_programming(self) -> bool:
@@ -161,12 +165,12 @@ class SolaceController(BedController):
 
     # Motor control methods
     async def move_head_up(self) -> None:
-        """Move head/back up."""
-        await self._move_with_stop(SolaceCommands.MOTOR_BACK_UP)
+        """Move head up (separate pillow-top motor)."""
+        await self._move_with_stop(SolaceCommands.MOTOR_HEAD_UP)
 
     async def move_head_down(self) -> None:
-        """Move head/back down."""
-        await self._move_with_stop(SolaceCommands.MOTOR_BACK_DOWN)
+        """Move head down (separate pillow-top motor)."""
+        await self._move_with_stop(SolaceCommands.MOTOR_HEAD_DOWN)
 
     async def move_head_stop(self) -> None:
         """Stop head motor."""
@@ -230,11 +234,12 @@ class SolaceController(BedController):
             2: SolaceCommands.PRESET_MEMORY_2,
             3: SolaceCommands.PRESET_MEMORY_3,
             4: SolaceCommands.PRESET_MEMORY_4,
+            5: SolaceCommands.PRESET_MEMORY_5,
         }
         if command := commands.get(memory_num):
             await self.write_command(command, repeat_count=3)
         else:
-            _LOGGER.warning("Invalid memory preset number: %d (valid: 1-4)", memory_num)
+            _LOGGER.warning("Invalid memory preset number: %d (valid: 1-5)", memory_num)
 
     async def program_memory(self, memory_num: int) -> None:
         """Program current position to memory."""
@@ -243,11 +248,12 @@ class SolaceController(BedController):
             2: SolaceCommands.PROGRAM_MEMORY_2,
             3: SolaceCommands.PROGRAM_MEMORY_3,
             4: SolaceCommands.PROGRAM_MEMORY_4,
+            5: SolaceCommands.PROGRAM_MEMORY_5,
         }
         if command := commands.get(memory_num):
             await self.write_command(command)
         else:
-            _LOGGER.warning("Invalid memory program number: %d (valid: 1-4)", memory_num)
+            _LOGGER.warning("Invalid memory program number: %d (valid: 1-5)", memory_num)
 
     async def preset_zero_g(self) -> None:
         """Go to zero gravity position (single-shot, bed moves autonomously)."""

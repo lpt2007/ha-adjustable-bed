@@ -115,7 +115,7 @@ class TestSolaceMovement:
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
     ):
-        """Test move head up sends BACK_UP followed by stop."""
+        """Test move head up sends HEAD_UP followed by stop."""
         coordinator = AdjustableBedCoordinator(hass, mock_solace_config_entry)
         await coordinator.async_connect()
 
@@ -124,9 +124,9 @@ class TestSolaceMovement:
         calls = mock_bleak_client.write_gatt_char.call_args_list
         assert len(calls) > 1
 
-        # First call should be BACK_UP
+        # First call should be HEAD_UP
         first_command = calls[0][0][1]
-        assert first_command == SolaceCommands.MOTOR_BACK_UP
+        assert first_command == SolaceCommands.MOTOR_HEAD_UP
 
         # Last call should be stop
         last_command = calls[-1][0][1]
@@ -139,7 +139,7 @@ class TestSolaceMovement:
         mock_coordinator_connected,
         mock_bleak_client: MagicMock,
     ):
-        """Test move head down sends BACK_DOWN command."""
+        """Test move head down sends HEAD_DOWN command."""
         coordinator = AdjustableBedCoordinator(hass, mock_solace_config_entry)
         await coordinator.async_connect()
 
@@ -147,7 +147,7 @@ class TestSolaceMovement:
 
         calls = mock_bleak_client.write_gatt_char.call_args_list
         first_command = calls[0][0][1]
-        assert first_command == SolaceCommands.MOTOR_BACK_DOWN
+        assert first_command == SolaceCommands.MOTOR_HEAD_DOWN
 
     async def test_move_legs_up(
         self,
