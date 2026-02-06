@@ -64,10 +64,22 @@ class OkinOreCommands:
     CMD_MEMORY_2 = 0x2065  # 8293
     CMD_FLAT = 0x2066  # 8294
 
+    # Wave pattern controls (0x2070 series)
+    CMD_WAVE_PLUS = 0x2070  # Increase wave speed
+    CMD_WAVE_MINUS = 0x2071  # Decrease wave speed
+
     # Light and massage controls (0x2080 series)
     CMD_LIGHT_TOGGLE = 0x2080  # 8320
     CMD_MASSAGE_ON_OFF = 0x2081  # 8321 - toggle massage on/off
     CMD_MASSAGE_TIMER = 0x2082  # 8322 - cycle through timer options
+    CMD_WAVE = 0x2083  # Cycle through wave patterns
+    CMD_HEAD_INTENSITY = 0x2084  # Set head intensity directly (param: 1-3)
+    CMD_FOOT_INTENSITY = 0x2085  # Set foot intensity directly (param: 1-3)
+    CMD_INTENSITY = 0x2086  # Set overall intensity directly (param: 1-3)
+
+    # Combined intensity step controls (0x2090 series)
+    CMD_INTENSITY_PLUS = 0x2096  # Step overall intensity up
+    CMD_INTENSITY_MINUS = 0x2097  # Step overall intensity down
 
 
 class OkinOreController(BedController):
@@ -392,18 +404,28 @@ class OkinOreController(BedController):
         self._foot_massage = max(0, self._foot_massage - 1)
 
     async def massage_intensity_up(self) -> None:
-        """Increase all massage intensity."""
-        await self.massage_head_up()
-        await self.massage_foot_up()
+        """Increase overall massage intensity."""
+        await self.write_command(self._build_command(OkinOreCommands.CMD_INTENSITY_PLUS))
 
     async def massage_intensity_down(self) -> None:
-        """Decrease all massage intensity."""
-        await self.massage_head_down()
-        await self.massage_foot_down()
+        """Decrease overall massage intensity."""
+        await self.write_command(self._build_command(OkinOreCommands.CMD_INTENSITY_MINUS))
 
     async def massage_mode_step(self) -> None:
         """Step through massage timer options."""
         await self.write_command(self._build_command(OkinOreCommands.CMD_MASSAGE_TIMER))
+
+    async def massage_wave_toggle(self) -> None:
+        """Cycle through wave massage patterns."""
+        await self.write_command(self._build_command(OkinOreCommands.CMD_WAVE))
+
+    async def massage_wave_speed_up(self) -> None:
+        """Increase wave massage speed."""
+        await self.write_command(self._build_command(OkinOreCommands.CMD_WAVE_PLUS))
+
+    async def massage_wave_speed_down(self) -> None:
+        """Decrease wave massage speed."""
+        await self.write_command(self._build_command(OkinOreCommands.CMD_WAVE_MINUS))
 
     async def massage_head_toggle(self) -> None:
         """Toggle head massage."""
