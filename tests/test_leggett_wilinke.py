@@ -874,16 +874,15 @@ class TestLeggettWilinkePositionNotifications:
         hass: HomeAssistant,
         mock_leggett_wilinke_config_entry,
         mock_coordinator_connected,
-        caplog,
     ):
-        """Test that L&P WiLinke doesn't support position notifications."""
+        """Test start_notify stores callback without BLE subscription."""
         coordinator = AdjustableBedCoordinator(hass, mock_leggett_wilinke_config_entry)
         await coordinator.async_connect()
 
         callback = MagicMock()
         await coordinator.controller.start_notify(callback)
 
-        assert "don't support position notifications" in caplog.text
+        assert coordinator.controller._notify_callback is callback
 
     async def test_read_positions_noop(
         self,

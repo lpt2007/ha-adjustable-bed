@@ -9,9 +9,7 @@ Protocol reverse-engineered from com.bedtech BedTech app (React Native/Hermes).
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import (
@@ -145,7 +143,6 @@ class BedTechController(BedController):
         super().__init__(coordinator)
         self._is_dual_base = is_dual_base
         self._char_uuid = BEDTECH_WRITE_CHAR_UUID
-        self._notify_callback: Callable[[str, float], None] | None = None
 
         _LOGGER.debug(
             "BedTechController initialized (char: %s, dual_base: %s)",
@@ -209,45 +206,6 @@ class BedTechController(BedController):
     def _build_command(self, cmd_char: str) -> bytes:
         """Build command bytes for the given command character."""
         return build_bedtech_command(cmd_char)
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to BedTech bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            self._char_uuid,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        # BedTech beds don't support position notifications
-        self._notify_callback = callback
-        _LOGGER.debug("BedTech beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        return None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        # BedTech beds don't support position reading
-        return None
 
     async def _send_command(self, cmd_char: str, repeat: int | None = None) -> None:
         """Send a command to the bed."""

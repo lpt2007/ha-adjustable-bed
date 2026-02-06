@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from bleak.exc import BleakError
@@ -89,7 +88,6 @@ class OkinHandleController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Okin handle controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("OkinHandleController initialized")
 
     @property
@@ -173,57 +171,9 @@ class OkinHandleController(BedController):
             if i < repeat_count - 1:
                 await asyncio.sleep(repeat_delay_ms / 1000)
 
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Okin handle beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        _ = motor_count  # Unused - this bed doesn't support position feedback
-
-    async def _move_with_stop(self, command: bytes) -> None:
-        """Execute a movement command and always send STOP at the end."""
-        try:
-            pulse_count = self._coordinator.motor_pulse_count
-            pulse_delay = self._coordinator.motor_pulse_delay_ms
-            await self.write_command(command, repeat_count=pulse_count, repeat_delay_ms=pulse_delay)
-        finally:
-            try:
-                await self.write_command(
-                    OkinHandleCommands.STOP,
-                    cancel_event=asyncio.Event(),
-                )
-            except BleakError:
-                _LOGGER.debug("Failed to send STOP command during cleanup", exc_info=True)
-
-    async def _preset_with_stop(
-        self,
-        command: bytes,
-        repeat_count: int = 100,
-        repeat_delay_ms: int = 300,
-    ) -> None:
-        """Execute a preset command and always send STOP at the end."""
-        try:
-            await self.write_command(
-                command,
-                repeat_count=repeat_count,
-                repeat_delay_ms=repeat_delay_ms,
-            )
-        finally:
-            try:
-                await self.write_command(
-                    OkinHandleCommands.STOP,
-                    cancel_event=asyncio.Event(),
-                )
-            except BleakError:
-                _LOGGER.debug("Failed to send STOP command during preset cleanup", exc_info=True)
+    async def _send_stop(self) -> None:
+        """Send STOP command with fresh cancel event."""
+        await self.write_command(OkinHandleCommands.STOP, cancel_event=asyncio.Event())
 
     # Motor control methods
     async def move_head_up(self) -> None:

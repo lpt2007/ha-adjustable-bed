@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from bleak.exc import BleakError
@@ -107,7 +106,6 @@ class SolaceController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Solace controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("SolaceController initialized")
 
     @property
@@ -147,69 +145,18 @@ class SolaceController(BedController):
         """Return True - Solace beds support programming memory positions."""
         return True
 
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        if self.client is None or not self.client.is_connected:
-            _LOGGER.error("Cannot write command: BLE client not connected")
-            raise ConnectionError("Not connected to bed")
-
-        effective_cancel = cancel_event or self._coordinator.cancel_command
-
-        _LOGGER.debug(
-            "Writing command to Solace bed (%s): %s (repeat: %d, delay: %dms, response=True)",
-            SOLACE_CHAR_UUID,
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-
-        for i in range(repeat_count):
-            if effective_cancel is not None and effective_cancel.is_set():
-                _LOGGER.info("Command cancelled after %d/%d writes", i, repeat_count)
-                return
-
-            try:
-                async with self._ble_lock:
-                    await self.client.write_gatt_char(SOLACE_CHAR_UUID, command, response=True)
-            except BleakError:
-                _LOGGER.exception("Failed to write command")
-                raise
-
-            if i < repeat_count - 1:
-                await asyncio.sleep(repeat_delay_ms / 1000)
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Solace beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        pass
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        pass
+    async def _send_stop(self) -> None:
+        """Send STOP command with fresh cancel event."""
+        await self.write_command(SolaceCommands.MOTOR_STOP, cancel_event=asyncio.Event())
 
     async def _move_with_stop(self, command: bytes) -> None:
-        """Execute a movement command and always send STOP at the end."""
+        """Execute a movement command with Solace-specific timing."""
         try:
             await self.write_command(command, repeat_count=30, repeat_delay_ms=50)
         finally:
             try:
-                await self.write_command(
-                    SolaceCommands.MOTOR_STOP,
-                    cancel_event=asyncio.Event(),
-                )
-            except BleakError:
+                await self._send_stop()
+            except (BleakError, ConnectionError):
                 _LOGGER.debug("Failed to send STOP command during cleanup")
 
     # Motor control methods

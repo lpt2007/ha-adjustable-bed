@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from bleak.exc import BleakError
@@ -121,7 +120,6 @@ class LeggettWilinkeController(BedController):
         """
         super().__init__(coordinator)
         self._char_uuid = char_uuid or LEGGETT_RICHMAT_CHAR_UUID
-        self._notify_callback: Callable[[str, float], None] | None = None
 
         # Optimistic state tracking (no BLE feedback available)
         # Timer mode: 0 = off, 10/20/30 = active timer
@@ -253,19 +251,6 @@ class LeggettWilinkeController(BedController):
 
             if i < repeat_count - 1:
                 await asyncio.sleep(repeat_delay_ms / 1000)
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("L&P WiLinke beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
 
     async def _send_command(self, command_byte: int, repeat: int | None = None) -> None:
         """Send a command to the bed."""

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from bleak.exc import BleakError
@@ -99,7 +98,6 @@ class SleepysBox15Controller(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Sleepy's BOX15 controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("SleepysBox15Controller initialized")
 
     @property
@@ -166,42 +164,6 @@ class SleepysBox15Controller(BedController):
         # data[7] = 0x00
         checksum = _calculate_box15_checksum(bytes(data))
         return bytes(data) + bytes([checksum])
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to Sleepy's BOX15 bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            KEESON_BASE_WRITE_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Sleepy's BOX15 beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:  # noqa: ARG002
-        """Read current motor positions - not supported."""
 
     async def _move_with_stop(self, motor_cmd: int) -> None:
         """Execute a movement command and always send STOP at the end."""
@@ -359,7 +321,6 @@ class SleepysBox24Controller(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Sleepy's BOX24 controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("SleepysBox24Controller initialized")
 
     @property
@@ -424,20 +385,6 @@ class SleepysBox24Controller(BedController):
             cancel_event=cancel_event,
             response=False,  # Fire-and-forget for BOX24
         )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Sleepy's BOX24 beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:  # noqa: ARG002
-        """Read current motor positions - not supported."""
 
     async def _move_with_stop(self, motor_cmd: int) -> None:
         """Execute a movement command and always send STOP at the end."""

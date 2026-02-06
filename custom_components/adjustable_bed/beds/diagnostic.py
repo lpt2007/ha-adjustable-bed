@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from .base import BedController
@@ -77,25 +76,6 @@ class DiagnosticBedController(BedController):
             return
         _ = (command, repeat_count, repeat_delay_ms)
         _LOGGER.debug("Diagnostic mode: write_command ignored (no known protocol)")
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """No-op - diagnostic devices don't have position notifications.
-
-        The diagnostic service handles raw notification capture separately.
-        """
-        _ = callback
-        _LOGGER.debug("Diagnostic mode: start_notify skipped (no known characteristics)")
-
-    async def stop_notify(self) -> None:
-        """No-op - nothing to stop."""
-        return None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """No-op - diagnostic devices don't have position characteristics."""
-        _ = motor_count
-        return None
 
     # Motor control methods - all raise NotImplementedError
 

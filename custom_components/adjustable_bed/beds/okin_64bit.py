@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import (
@@ -117,7 +116,6 @@ class Okin64BitController(BedController):
         """
         super().__init__(coordinator)
         self._variant = variant
-        self._notify_callback: Callable[[str, float], None] | None = None
 
         # Determine characteristic UUID based on variant
         if char_uuid:
@@ -218,23 +216,6 @@ class Okin64BitController(BedController):
             cancel_event=cancel_event,
             response=self._use_response,
         )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        # OKIN 64-bit beds don't support position notifications
-        self._notify_callback = callback
-        _LOGGER.debug("OKIN 64-bit beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        return None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        # OKIN 64-bit beds don't support position reading
-        return None
 
     async def _send_command(self, cmd_bytes: bytes, repeat: int | None = None) -> None:
         """Send a command to the bed."""

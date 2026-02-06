@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import LEGGETT_GEN2_WRITE_CHAR_UUID
@@ -96,7 +95,6 @@ class LeggettGen2Controller(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Leggett & Platt Gen2 controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         self._massage_head_level = 0
         self._massage_foot_level = 0
         _LOGGER.debug("LeggettGen2Controller initialized")
@@ -144,42 +142,6 @@ class LeggettGen2Controller(BedController):
     def supports_memory_programming(self) -> bool:
         """Return True - Gen2 beds support programming memory positions."""
         return True
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to Leggett & Platt Gen2 bed: %s (repeat: %d, delay: %dms)",
-            command,
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            LEGGETT_GEN2_WRITE_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Leggett & Platt Gen2 beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        _ = motor_count  # Unused - this bed doesn't support position feedback
 
     # Motor control methods - Gen2 variant doesn't have motor control via BLE
     # (uses position-based control instead)

@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -90,7 +89,6 @@ class LeggettOkinController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Leggett & Platt Okin controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         self._motor_state: dict[str, MotorDirection] = {}
         _LOGGER.debug("LeggettOkinController initialized")
 
@@ -143,43 +141,6 @@ class LeggettOkinController(BedController):
             6-byte command: [0x04, 0x02, <4-byte-command-big-endian>]
         """
         return build_okin_command(command_value)
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to Leggett & Platt Okin bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            LEGGETT_OKIN_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("Leggett & Platt Okin beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        self._notify_callback = None
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        _ = motor_count  # Unused - this bed doesn't support position feedback
 
     def _get_move_command(self) -> int:
         """Calculate the combined motor movement command."""

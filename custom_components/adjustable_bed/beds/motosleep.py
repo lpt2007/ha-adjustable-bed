@@ -10,9 +10,7 @@ Device names start with "HHC" followed by hexadecimal characters (e.g., HHC36112
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..const import MOTOSLEEP_CHAR_UUID
@@ -73,7 +71,6 @@ class MotoSleepController(BedController):
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the MotoSleep controller."""
         super().__init__(coordinator)
-        self._notify_callback: Callable[[str, float], None] | None = None
         _LOGGER.debug("MotoSleepController initialized")
 
     @property
@@ -132,44 +129,6 @@ class MotoSleepController(BedController):
     def _build_command(self, char_code: int) -> bytes:
         """Build a 2-byte command: [0x24, char_code]."""
         return bytes([0x24, char_code])
-
-    async def write_command(
-        self,
-        command: bytes,
-        repeat_count: int = 1,
-        repeat_delay_ms: int = 100,
-        cancel_event: asyncio.Event | None = None,
-    ) -> None:
-        """Write a command to the bed."""
-        _LOGGER.debug(
-            "Writing command to MotoSleep bed: %s (repeat: %d, delay: %dms)",
-            command.hex(),
-            repeat_count,
-            repeat_delay_ms,
-        )
-        await self._write_gatt_with_retry(
-            MOTOSLEEP_CHAR_UUID,
-            command,
-            repeat_count=repeat_count,
-            repeat_delay_ms=repeat_delay_ms,
-            cancel_event=cancel_event,
-            response=True,
-        )
-
-    async def start_notify(
-        self, callback: Callable[[str, float], None] | None = None
-    ) -> None:
-        """Start listening for position notifications."""
-        self._notify_callback = callback
-        _LOGGER.debug("MotoSleep beds don't support position notifications")
-
-    async def stop_notify(self) -> None:
-        """Stop listening for position notifications."""
-        pass
-
-    async def read_positions(self, motor_count: int = 2) -> None:
-        """Read current position data."""
-        pass
 
     async def _move_motor(self, command_char: int) -> None:
         """Execute a movement command.

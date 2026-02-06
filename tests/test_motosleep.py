@@ -607,13 +607,12 @@ class TestMotoSleepPositionNotifications:
         hass: HomeAssistant,
         mock_motosleep_config_entry,
         mock_coordinator_connected,
-        caplog,
     ):
-        """Test that MotoSleep doesn't support position notifications."""
+        """Test start_notify stores callback without BLE subscription."""
         coordinator = AdjustableBedCoordinator(hass, mock_motosleep_config_entry)
         await coordinator.async_connect()
 
         callback = MagicMock()
         await coordinator.controller.start_notify(callback)
 
-        assert "don't support position notifications" in caplog.text
+        assert coordinator.controller._notify_callback is callback

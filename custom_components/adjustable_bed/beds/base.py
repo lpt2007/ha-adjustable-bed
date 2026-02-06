@@ -27,11 +27,15 @@ class BedController(ABC):
 
     Subclasses must implement:
     - control_characteristic_uuid: The BLE characteristic UUID for sending commands
-    - write_command: Protocol-specific command writing
-    - start_notify/stop_notify: Position notification handling
-    - read_positions: Active position reading
     - Motor control methods (move_head_up, move_head_down, etc.)
     - Preset methods (preset_flat, preset_memory, program_memory)
+
+    Methods with default implementations (override if needed):
+    - write_command: Delegates to _write_gatt_with_retry (override for custom writes)
+    - start_notify/stop_notify: No-op (override for position feedback)
+    - read_positions: No-op (override for position reading)
+    - _move_with_stop: Movement with guaranteed STOP (requires _send_stop)
+    - _preset_with_stop: Preset with guaranteed STOP (requires _send_stop)
 
     Optional methods that can be overridden:
     - preset_zero_g, preset_anti_snore, preset_tv
@@ -46,6 +50,7 @@ class BedController(ABC):
             coordinator: The AdjustableBedCoordinator managing the BLE connection
         """
         self._coordinator = coordinator
+        self._notify_callback: Callable[[str, float], None] | None = None
         self._raw_notify_callback: Callable[[str, bytes], None] | None = None
         self._ble_lock = asyncio.Lock()
 
@@ -224,7 +229,6 @@ class BedController(ABC):
             if i < repeat_count - 1:
                 await asyncio.sleep(repeat_delay_ms / 1000)
 
-    @abstractmethod
     async def write_command(
         self,
         command: bytes,
@@ -234,9 +238,10 @@ class BedController(ABC):
     ) -> None:
         """Write a command to the bed.
 
-        Subclasses implement this to handle protocol-specific command writing.
-        Most implementations can delegate to _write_gatt_with_retry() after
-        any necessary command transformation.
+        Default implementation delegates to _write_gatt_with_retry() using
+        the control_characteristic_uuid. Subclasses with custom write behavior
+        (init sequences, handle-based writes, custom error handling) should
+        override this method.
 
         Args:
             command: The command bytes to send (protocol-specific format)
@@ -251,13 +256,20 @@ class BedController(ABC):
             ConnectionError: If not connected to the bed
             BleakError: If the GATT write fails
         """
+        await self._write_gatt_with_retry(
+            self.control_characteristic_uuid,
+            command,
+            repeat_count=repeat_count,
+            repeat_delay_ms=repeat_delay_ms,
+            cancel_event=cancel_event,
+        )
 
-    @abstractmethod
     async def start_notify(self, callback: Callable[[str, float], None] | None = None) -> None:
         """Start listening for position notifications.
 
-        Subscribe to BLE notifications for position updates. When the bed
-        reports a position change, the callback is invoked.
+        Default implementation stores the callback without subscribing to
+        BLE notifications. Subclasses with position feedback should override
+        this to subscribe to the appropriate characteristics.
 
         Args:
             callback: Function called with (position_name, angle) when position
@@ -266,35 +278,80 @@ class BedController(ABC):
                      May be None for beds that require notification setup for
                      protocol reasons (e.g., Jensen PIN unlock) even when
                      position feedback is not needed.
-
-        Note:
-            Not all bed types support position notifications. Implementations
-            that don't support this should store the callback but not subscribe
-            to any notifications.
         """
+        self._notify_callback = callback
 
-    @abstractmethod
     async def stop_notify(self) -> None:
         """Stop listening for position notifications.
 
-        Unsubscribe from BLE notifications. Safe to call even if notifications
-        were never started.
+        Default implementation clears the callback. Subclasses with active
+        BLE subscriptions should override to unsubscribe.
         """
+        self._notify_callback = None
 
-    @abstractmethod
-    async def read_positions(self, motor_count: int = 2) -> None:
+    async def read_positions(self, motor_count: int = 2) -> None:  # noqa: ARG002
         """Read current position data from all motor position characteristics.
 
-        Actively read position values rather than waiting for notifications.
-        Useful after movement commands to get immediate position feedback.
+        Default implementation is a no-op for beds without position feedback.
+        Subclasses with position reading should override this.
 
         Args:
             motor_count: Number of motors to read positions for (2-4)
-
-        Note:
-            Not all bed types support position reading. Implementations that
-            don't support this should return immediately without error.
         """
+
+    async def _send_stop(self) -> None:
+        """Send a STOP command with a fresh cancel event.
+
+        Subclasses should override this to send their protocol-specific stop
+        command. Used by _move_with_stop() and _preset_with_stop().
+
+        Raises:
+            NotImplementedError: If the subclass hasn't implemented this
+        """
+        raise NotImplementedError("Subclass must implement _send_stop or override _move_with_stop")
+
+    async def _move_with_stop(self, command: bytes) -> None:
+        """Execute a movement command with guaranteed STOP at end.
+
+        Uses coordinator's motor_pulse_count and motor_pulse_delay_ms for timing.
+        Subclasses that need different movement patterns should override this.
+        Requires _send_stop() to be implemented.
+
+        Args:
+            command: The movement command bytes to send repeatedly.
+        """
+        try:
+            pulse_count = self._coordinator.motor_pulse_count
+            pulse_delay = self._coordinator.motor_pulse_delay_ms
+            await self.write_command(command, repeat_count=pulse_count, repeat_delay_ms=pulse_delay)
+        finally:
+            try:
+                await self._send_stop()
+            except (BleakError, ConnectionError):
+                _LOGGER.debug("Failed to send STOP during cleanup", exc_info=True)
+
+    async def _preset_with_stop(
+        self, command: bytes, repeat_count: int = 100, repeat_delay_ms: int = 300
+    ) -> None:
+        """Execute a preset command with guaranteed STOP at end.
+
+        Subclasses that need different preset patterns should override this.
+        Requires _send_stop() to be implemented.
+
+        Args:
+            command: The preset command bytes to send.
+            repeat_count: Number of times to repeat (default 100).
+            repeat_delay_ms: Delay between repeats in ms (default 300).
+        """
+        try:
+            await self.write_command(
+                command, repeat_count=repeat_count, repeat_delay_ms=repeat_delay_ms
+            )
+        finally:
+            try:
+                await self._send_stop()
+            except (BleakError, ConnectionError):
+                _LOGGER.debug("Failed to send STOP during preset cleanup", exc_info=True)
 
     async def read_non_notifying_positions(self) -> None:  # noqa: B027
         """Read positions only for motors that don't support notifications.
