@@ -23,7 +23,7 @@ from custom_components.adjustable_bed.coordinator import AdjustableBedCoordinato
 
 
 def _to_packet(command: str) -> bytes:
-    return f"{command}\r\n".encode("utf-8")
+    return f"{command}\r\n".encode()
 
 
 class TestSutaController:

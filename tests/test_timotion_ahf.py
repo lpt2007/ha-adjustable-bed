@@ -60,8 +60,10 @@ class TestTiMOTIONAhfController:
         packet = build_timotion_ahf_command(group1=0x04, group2=0x20)
         assert len(packet) == 11
         assert packet[:3] == bytes([0xDD, 0xDD, 0xFF])
-        assert packet[3] == 0x04 and packet[4] == 0x04
-        assert packet[5] == 0x20 and packet[6] == 0x20
+        assert packet[3] == 0x04
+        assert packet[4] == 0x04
+        assert packet[5] == 0x20
+        assert packet[6] == 0x20
         assert packet[7:] == bytes([0x00, 0x00, 0x00, 0x00])
 
     async def test_move_back_up_sends_motor1_and_stop(

@@ -112,7 +112,7 @@ class SutaController(BedController):
 
     def _build_command(self, command: str) -> bytes:
         """Build a CRLF-terminated AT command packet."""
-        return f"{command}\r\n".encode("utf-8")
+        return f"{command}\r\n".encode()
 
     def _refresh_write_characteristic(self) -> None:
         """Resolve write characteristic and write mode from discovered services."""
@@ -133,10 +133,15 @@ class SutaController(BedController):
             self._write_mode_initialized = True
             return
 
+        # SUTA devices expose writable characteristics dynamically under
+        # SUTA_SERVICE_UUID, so we intentionally select the first writable char
+        # we find and store it in _write_char_uuid instead of matching a fixed UUID.
         for char in service.characteristics:
             props = {prop.lower() for prop in char.properties}
             if "write" in props or "write-without-response" in props:
                 self._write_char_uuid = str(char.uuid)
+                # Prefer write-with-response when available for acknowledgements;
+                # otherwise fall back to write-without-response.
                 self._write_with_response = "write" in props
                 self._write_mode_initialized = True
                 _LOGGER.debug(

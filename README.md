@@ -82,7 +82,6 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 | ✅ [Vibradorm](docs/beds/vibradorm.md) | Vibradorm |
 | 🧪 [SUTA Smart Home](docs/beds/suta.md) | SUTA bed-frame controllers (`SUTA-*`) |
 | 🧪 [TiMOTION AHF](docs/beds/timotion-ahf.md) | TiMOTION AHF (`AHF*`) |
-| ✅ [Svane](docs/beds/svane.md) | Svane |
 | 🧪 [Rondure](docs/beds/rondure.md) | 1500 Tilt Base |
 | 🧪 [Remacro](docs/beds/remacro.md) | CheersSleep, Jeromes, Slumberland, The Brick |
 | 🧪 [Cool Base](docs/beds/coolbase.md) | Cool Base (Keeson with fan) |
