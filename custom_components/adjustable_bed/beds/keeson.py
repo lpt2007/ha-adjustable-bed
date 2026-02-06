@@ -96,36 +96,23 @@ class SinoCommands:
     Motor and preset commands use the same values as standard Keeson.
     Light commands are Sino-specific (discrete on/off, not toggle).
 
-    Based on reverse engineering of com.ore.bedding.glideawaymontion APK.
+    Based on reverse engineering of com.ore.Dynasty iOS IPA.
     """
 
     # Lights - discrete on/off (not toggle)
     LIGHT_ON = 0x31000001
     LIGHT_OFF = 0x31000000
 
-    # Massage - step commands (SinoProtocol values)
-    # These step intensity up/down by 1 level each press
-    MASSAGE_HEAD_UP = 0x800  # 2048 - increase head massage intensity
-    MASSAGE_HEAD_DOWN = 0x800000  # 8388608 - decrease head massage intensity
-    MASSAGE_FOOT_UP = 0x400  # 1024 - increase foot massage intensity
-    MASSAGE_FOOT_DOWN = 0x1000000  # 16777216 - decrease foot massage intensity
+    # Massage on/off
+    MASSAGE_OFF = 0x10000000
+    MASSAGE_ON = 0x10000001
 
-    # All intensity (head + foot together)
-    MASSAGE_ALL_UP = 0xC00  # 3072 - increase all massage intensity
-    MASSAGE_ALL_DOWN = 0x1800000  # 25165824 - decrease all massage intensity
+    # Massage absolute intensity base addresses (add level 0-10)
+    MASSAGE_HEAD_INTENSITY_BASE = 0x10000010
+    MASSAGE_FOOT_INTENSITY_BASE = 0x11000010
 
-    # Massage toggle and on/off
-    MASSAGE_TOGGLE = 0x100  # 256 - toggle massage (step through modes)
-    MASSAGE_ON = 0x4000000  # 67108864 - turn massage on
-    MASSAGE_OFF = 0x2000000  # 33554432 - stop all massage
-
-    # Direct intensity set (optional, requires param byte)
-    # INTENSITY_ONE = 0x80000  # 524288 - set to level 1
-    # INTENSITY_TWO = 0x100000  # 1048576 - set to level 2
-    # INTENSITY_THREE = 0x200000  # 2097152 - set to level 3
-
-    # Timer - toggle through 10/20/30 min options
-    MASSAGE_TIMER = 0x200  # 512 - step through timer options
+    # Massage wave/pattern base (add pattern 0-10)
+    MASSAGE_HEAD_WAVE_BASE = 0x10000020
 
 
 class KeesonController(BedController):
@@ -841,15 +828,25 @@ class KeesonController(BedController):
     async def massage_toggle(self) -> None:
         """Toggle massage."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE variant: use the toggle command to step through modes
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_TOGGLE))
+            if self._head_massage > 0 or self._foot_massage > 0:
+                await self.write_command(self._build_command(SinoCommands.MASSAGE_OFF))
+                self._head_massage = 0
+                self._foot_massage = 0
+            else:
+                self._head_massage = 1
+                self._foot_massage = 1
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 1)
+                )
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 1)
+                )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_STEP))
 
     async def massage_off(self) -> None:
         """Turn off all massage."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE variant: send stop all command
             await self.write_command(self._build_command(SinoCommands.MASSAGE_OFF))
             self._head_massage = 0
             self._foot_massage = 0
@@ -860,46 +857,66 @@ class KeesonController(BedController):
     async def massage_head_up(self) -> None:
         """Increase head massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: step command increases intensity by 1 level
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_HEAD_UP))
             self._head_massage = min(10, self._head_massage + 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + self._head_massage
+                )
+            )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_UP))
 
     async def massage_head_down(self) -> None:
         """Decrease head massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: step command decreases intensity by 1 level
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_HEAD_DOWN))
             self._head_massage = max(0, self._head_massage - 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + self._head_massage
+                )
+            )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_HEAD_DOWN))
 
     async def massage_foot_up(self) -> None:
         """Increase foot massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: step command increases intensity by 1 level
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_FOOT_UP))
             self._foot_massage = min(10, self._foot_massage + 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + self._foot_massage
+                )
+            )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_UP))
 
     async def massage_foot_down(self) -> None:
         """Decrease foot massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: step command decreases intensity by 1 level
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_FOOT_DOWN))
             self._foot_massage = max(0, self._foot_massage - 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + self._foot_massage
+                )
+            )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_FOOT_DOWN))
 
     async def massage_intensity_up(self) -> None:
         """Increase all massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: increase both head and foot intensity
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_ALL_UP))
             self._head_massage = min(10, self._head_massage + 1)
             self._foot_massage = min(10, self._foot_massage + 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + self._head_massage
+                )
+            )
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + self._foot_massage
+                )
+            )
         else:
             # Standard Keeson doesn't have an all-intensity command
             await super().massage_intensity_up()
@@ -907,34 +924,47 @@ class KeesonController(BedController):
     async def massage_intensity_down(self) -> None:
         """Decrease all massage intensity."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: decrease both head and foot intensity
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_ALL_DOWN))
             self._head_massage = max(0, self._head_massage - 1)
             self._foot_massage = max(0, self._foot_massage - 1)
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + self._head_massage
+                )
+            )
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + self._foot_massage
+                )
+            )
         else:
             # Standard Keeson doesn't have an all-intensity command
             await super().massage_intensity_down()
 
     async def massage_mode_step(self) -> None:
-        """Step through massage modes/timer."""
+        """Step through massage wave patterns."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: use timer step command to cycle through 10/20/30 min options
-            await self.write_command(self._build_command(SinoCommands.MASSAGE_TIMER))
+            self._head_massage = (self._head_massage % 10) + 1
+            await self.write_command(
+                self._build_command(
+                    SinoCommands.MASSAGE_HEAD_WAVE_BASE + self._head_massage
+                )
+            )
         else:
             await self.write_command(self._build_command(KeesonCommands.MASSAGE_TIMER_STEP))
 
     async def massage_head_toggle(self) -> None:
         """Toggle head massage zone on/off."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: toggle by setting to max if off, or stopping if on
             if self._head_massage > 0:
-                # Turn off head massage by sending decrease commands
-                await self.write_command(self._build_command(SinoCommands.MASSAGE_HEAD_DOWN))
-                self._head_massage = max(0, self._head_massage - 1)
+                self._head_massage = 0
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_HEAD_INTENSITY_BASE)
+                )
             else:
-                # Turn on head massage
-                await self.write_command(self._build_command(SinoCommands.MASSAGE_HEAD_UP))
                 self._head_massage = 1
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 1)
+                )
         else:
             # Standard Keeson doesn't have per-zone toggle
             await super().massage_head_toggle()
@@ -942,15 +972,16 @@ class KeesonController(BedController):
     async def massage_foot_toggle(self) -> None:
         """Toggle foot massage zone on/off."""
         if self._variant == KEESON_VARIANT_SINO:
-            # ORE: toggle by setting to max if off, or stopping if on
             if self._foot_massage > 0:
-                # Turn off foot massage by sending decrease commands
-                await self.write_command(self._build_command(SinoCommands.MASSAGE_FOOT_DOWN))
-                self._foot_massage = max(0, self._foot_massage - 1)
+                self._foot_massage = 0
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_FOOT_INTENSITY_BASE)
+                )
             else:
-                # Turn on foot massage
-                await self.write_command(self._build_command(SinoCommands.MASSAGE_FOOT_UP))
                 self._foot_massage = 1
+                await self.write_command(
+                    self._build_command(SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 1)
+                )
         else:
             # Standard Keeson doesn't have per-zone toggle
             await super().massage_foot_toggle()

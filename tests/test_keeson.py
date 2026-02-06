@@ -467,6 +467,348 @@ class TestKeesonMassage:
         )
 
 
+class TestSinoMassage:
+    """Test Sino (Dynasty/INNOVA) massage commands with absolute intensity levels."""
+
+    @pytest.fixture
+    def sino_config_entry_data(self, mock_keeson_config_entry_data: dict) -> dict:
+        """Return config entry data for Sino variant."""
+        return {**mock_keeson_config_entry_data, CONF_PROTOCOL_VARIANT: "sino"}
+
+    async def _make_coordinator(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        entry_id: str,
+    ) -> AdjustableBedCoordinator:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Sino Test Bed",
+            data=sino_config_entry_data,
+            unique_id="AA:BB:CC:DD:EE:FF",
+            entry_id=entry_id,
+        )
+        entry.add_to_hass(hass)
+        coordinator = AdjustableBedCoordinator(hass, entry)
+        await coordinator.async_connect()
+        return coordinator
+
+    async def test_massage_head_up_sends_absolute_intensity(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head up sends absolute intensity command (base + level)."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_head_up")
+
+        await coordinator.controller.massage_head_up()
+        assert coordinator.controller._head_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+        await coordinator.controller.massage_head_up()
+        assert coordinator.controller._head_massage == 2
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 2
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_head_down_sends_absolute_intensity(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head down sends absolute intensity command."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_head_down")
+        coordinator.controller._head_massage = 3
+
+        await coordinator.controller.massage_head_down()
+        assert coordinator.controller._head_massage == 2
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 2
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_foot_up_sends_absolute_intensity(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test foot up sends absolute intensity command."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_foot_up")
+
+        await coordinator.controller.massage_foot_up()
+        assert coordinator.controller._foot_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_foot_down_sends_absolute_intensity(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test foot down sends absolute intensity command."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_foot_down")
+        coordinator.controller._foot_massage = 5
+
+        await coordinator.controller.massage_foot_down()
+        assert coordinator.controller._foot_massage == 4
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 4
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_off_sends_off_and_resets(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test massage_off sends MASSAGE_OFF and resets tracked levels."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_off")
+        coordinator.controller._head_massage = 5
+        coordinator.controller._foot_massage = 3
+
+        await coordinator.controller.massage_off()
+
+        assert coordinator.controller._head_massage == 0
+        assert coordinator.controller._foot_massage == 0
+        expected = coordinator.controller._build_command(SinoCommands.MASSAGE_OFF)
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_toggle_off_to_on(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test massage_toggle turns on both zones at level 1 when off."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_toggle_on")
+
+        await coordinator.controller.massage_toggle()
+
+        assert coordinator.controller._head_massage == 1
+        assert coordinator.controller._foot_massage == 1
+        calls = mock_bleak_client.write_gatt_char.call_args_list
+        head_cmd = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 1
+        )
+        foot_cmd = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 1
+        )
+        assert calls[-2][0][1] == head_cmd
+        assert calls[-1][0][1] == foot_cmd
+
+    async def test_massage_toggle_on_to_off(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test massage_toggle sends MASSAGE_OFF when any massage is active."""
+        coordinator = await self._make_coordinator(
+            hass, sino_config_entry_data, "sino_toggle_off"
+        )
+        coordinator.controller._head_massage = 3
+
+        await coordinator.controller.massage_toggle()
+
+        assert coordinator.controller._head_massage == 0
+        assert coordinator.controller._foot_massage == 0
+        expected = coordinator.controller._build_command(SinoCommands.MASSAGE_OFF)
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_head_toggle_off_to_on(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head toggle turns on at level 1 when off."""
+        coordinator = await self._make_coordinator(
+            hass, sino_config_entry_data, "sino_head_toggle_on"
+        )
+
+        await coordinator.controller.massage_head_toggle()
+
+        assert coordinator.controller._head_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_head_toggle_on_to_off(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head toggle sends intensity 0 when on."""
+        coordinator = await self._make_coordinator(
+            hass, sino_config_entry_data, "sino_head_toggle_off"
+        )
+        coordinator.controller._head_massage = 5
+
+        await coordinator.controller.massage_head_toggle()
+
+        assert coordinator.controller._head_massage == 0
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_foot_toggle_off_to_on(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test foot toggle turns on at level 1 when off."""
+        coordinator = await self._make_coordinator(
+            hass, sino_config_entry_data, "sino_foot_toggle_on"
+        )
+
+        await coordinator.controller.massage_foot_toggle()
+
+        assert coordinator.controller._foot_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_FOOT_INTENSITY_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_foot_toggle_on_to_off(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test foot toggle sends intensity 0 when on."""
+        coordinator = await self._make_coordinator(
+            hass, sino_config_entry_data, "sino_foot_toggle_off"
+        )
+        coordinator.controller._foot_massage = 3
+
+        await coordinator.controller.massage_foot_toggle()
+
+        assert coordinator.controller._foot_massage == 0
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_FOOT_INTENSITY_BASE
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_head_intensity_clamped_at_max(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head intensity clamps at 10."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_head_max")
+        coordinator.controller._head_massage = 10
+
+        await coordinator.controller.massage_head_up()
+
+        assert coordinator.controller._head_massage == 10
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE + 10
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_head_intensity_clamped_at_min(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test head intensity clamps at 0."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_head_min")
+
+        await coordinator.controller.massage_head_down()
+
+        assert coordinator.controller._head_massage == 0
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_INTENSITY_BASE
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+    async def test_massage_mode_step_cycles_wave_patterns(
+        self,
+        hass: HomeAssistant,
+        sino_config_entry_data: dict,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test mode step cycles through wave patterns 1-10."""
+        coordinator = await self._make_coordinator(hass, sino_config_entry_data, "sino_wave")
+
+        await coordinator.controller.massage_mode_step()
+        assert coordinator.controller._head_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_WAVE_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+        # At level 10, wraps to 1
+        coordinator.controller._head_massage = 10
+        await coordinator.controller.massage_mode_step()
+        assert coordinator.controller._head_massage == 1
+        expected = coordinator.controller._build_command(
+            SinoCommands.MASSAGE_HEAD_WAVE_BASE + 1
+        )
+        mock_bleak_client.write_gatt_char.assert_called_with(
+            coordinator.controller._char_uuid, expected, response=True
+        )
+
+
 class TestKeesonPositionNotifications:
     """Test Keeson position notification handling."""
 
