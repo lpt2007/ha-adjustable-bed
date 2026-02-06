@@ -54,7 +54,7 @@ Brands using Richmat actuators:
 |---------|-----------|
 | Motor Control | ✅ (up to 7 motors) |
 | Position Feedback | ❌ |
-| Memory Presets | ✅ (3 slots) |
+| Memory Presets | ✅ (2 slots, 3 on some models) |
 | Massage | ✅ |
 | Under-bed Lights | ✅ |
 | Zero-G / Anti-Snore / TV / Lounge | ✅ |

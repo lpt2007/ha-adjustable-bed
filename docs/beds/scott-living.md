@@ -20,9 +20,9 @@
 |---------|-----------|
 | Motor Control | ✅ (4 motors: head, foot, tilt, lumbar) |
 | Position Feedback | ❌ |
-| Memory Presets | ✅ (3 slots) |
+| Memory Presets | ✅ (4 slots) |
 | Factory Presets | ✅ (Flat, Zero-G, TV, Anti-Snore) |
-| Massage | ❌ |
+| Massage | ✅ (head/foot, up/down intensity) |
 | Light Control | ✅ (toggle) |
 
 ## Protocol Details
@@ -73,16 +73,27 @@ Where:
 | Action | Full Value | cmd1 | Notes |
 |--------|------------|------|-------|
 | Memory 1 | 0x100 | 0x01 | |
-| Light Toggle | 0x200 | 0x02 | |
+| Massage Timer | 0x200 | 0x02 | |
+| Massage Foot + | 0x400 | 0x04 | Increase foot intensity |
+| Massage Head + | 0x800 | 0x08 | Increase head intensity |
 | Zero-G | 0x1000 | 0x10 | Factory preset |
 | Memory 2 | 0x2000 | 0x20 | |
 | Memory 3 / TV | 0x4000 | 0x40 | Dual-purpose |
 | Anti-Snore | 0x8000 | 0x80 | Factory preset |
 
+### cmd2 Byte Commands
+
+| Action | Full Value | cmd2 | Notes |
+|--------|------------|------|-------|
+| Memory 4 | 0x10000 | 0x01 | 17-button remote only |
+| Light Toggle | 0x20000 | 0x02 | |
+| Massage Head - | 0x200000 | 0x20 | Decrease head intensity |
+
 ### cmd3 Byte Commands
 
 | Action | Full Value | cmd3 | Notes |
 |--------|------------|------|-------|
+| Massage Foot - | 0x1000000 | 0x01 | Decrease foot intensity |
 | Flat | 0x8000000 | 0x08 | Factory preset |
 
 ## Command Examples
@@ -99,7 +110,7 @@ Where:
 
 ### Toggle Lights
 ```text
-[0xE6, 0xFE, 0x16, 0x00, 0x02, 0x00, 0x00, 0x01, checksum]
+[0xE6, 0xFE, 0x16, 0x00, 0x00, 0x02, 0x00, 0x01, checksum]
 ```
 
 ## Command Timing
@@ -109,6 +120,7 @@ Where:
 | Motor movement | 10 | 100ms | Continuous while held |
 | Presets | 1 | - | Single command |
 | Light toggle | 1 | - | Single command |
+| Massage | 1 | - | Single command per step |
 | Stop | 1 | - | Always sent after movement |
 
 ## Notes

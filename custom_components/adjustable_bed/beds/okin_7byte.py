@@ -44,15 +44,20 @@ class Okin7ByteCommands:
     HEAD_DOWN = bytes.fromhex("5A0103103001A5")
     FOOT_UP = bytes.fromhex("5A0103103002A5")
     FOOT_DOWN = bytes.fromhex("5A0103103003A5")
-    LUMBAR_UP = bytes.fromhex("5A0103103004A5")
+    LUMBAR_UP = bytes.fromhex("5A0103103006A5")
     LUMBAR_DOWN = bytes.fromhex("5A0103103007A5")
     STOP = bytes.fromhex("5A010310300FA5")
 
     # Presets
     FLAT = bytes.fromhex("5A0103103010A5")
-    LOUNGE = bytes.fromhex("5A0103103011A5")
+    TV = bytes.fromhex("5A0103103011A5")
+    LOUNGE = bytes.fromhex("5A0103103012A5")
     ZERO_GRAVITY = bytes.fromhex("5A0103103013A5")
     ANTI_SNORE = bytes.fromhex("5A0103103016A5")
+
+    # Memory
+    MEMORY_1 = bytes.fromhex("5A010310301AA5")
+    MEMORY_2 = bytes.fromhex("5A010310301BA5")
 
     # Massage
     MASSAGE_ON = bytes.fromhex("5A0103103058A5")
@@ -110,9 +115,17 @@ class Okin7ByteController(BedController):
         return True
 
     @property
+    def supports_preset_tv(self) -> bool:
+        return True
+
+    @property
     def supports_memory_presets(self) -> bool:
-        """Return False - these beds don't support programmable memory presets."""
-        return False
+        """Return True - these beds support 2 memory slots."""
+        return True
+
+    @property
+    def memory_slot_count(self) -> int:
+        return 2
 
     async def write_command(
         self,
@@ -279,20 +292,21 @@ class Okin7ByteController(BedController):
         await self._preset_with_stop(Okin7ByteCommands.LOUNGE)
 
     async def preset_tv(self) -> None:
-        """Go to TV position (alias for lounge)."""
-        await self.preset_lounge()
+        """Go to TV position."""
+        await self._preset_with_stop(Okin7ByteCommands.TV)
 
     async def preset_memory(self, memory_num: int) -> None:
-        """Go to memory position.
-
-        Note: These beds don't support user-programmable memory slots.
-        """
-        _LOGGER.warning(
-            "Okin 7-byte beds don't support programmable memory slots (requested: %d). "
-            "Use preset positions instead.",
-            memory_num,
-        )
-        raise NotImplementedError(f"Memory slot {memory_num} not supported on Okin 7-byte beds")
+        """Go to memory position (slots 1-2)."""
+        memory_commands = {
+            1: Okin7ByteCommands.MEMORY_1,
+            2: Okin7ByteCommands.MEMORY_2,
+        }
+        command = memory_commands.get(memory_num)
+        if command is None:
+            raise NotImplementedError(
+                f"Memory slot {memory_num} not supported (only 1-2 available)"
+            )
+        await self._preset_with_stop(command)
 
     async def program_memory(self, memory_num: int) -> None:
         """Program memory position."""
