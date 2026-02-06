@@ -149,6 +149,23 @@ class OkinCB24Controller(BedController):
         """Return the UUID of the control characteristic."""
         return NORDIC_UART_WRITE_CHAR_UUID
 
+    async def write_command(
+        self,
+        command: bytes,
+        repeat_count: int = 1,
+        repeat_delay_ms: int = 100,
+        cancel_event: asyncio.Event | None = None,
+    ) -> None:
+        """Write a command using write-without-response as required by CB24 protocol."""
+        await self._write_gatt_with_retry(
+            self.control_characteristic_uuid,
+            command,
+            repeat_count=repeat_count,
+            repeat_delay_ms=repeat_delay_ms,
+            cancel_event=cancel_event,
+            response=False,
+        )
+
     # Capability properties
     @property
     def supports_preset_zero_g(self) -> bool:
