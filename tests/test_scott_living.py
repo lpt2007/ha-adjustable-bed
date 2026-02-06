@@ -95,7 +95,7 @@ class TestScottLivingCommands:
         """Commands in cmd2 byte should be correct."""
         assert ScottLivingCommands.MEMORY_4 == 65536  # 0x10000 -> cmd2=0x01
         assert ScottLivingCommands.LIGHT == 131072  # 0x20000 -> cmd2=0x02
-        assert ScottLivingCommands.MASSAGE_HEAD_DOWN == 2097152  # 0x200000 -> cmd2=0x20
+        assert ScottLivingCommands.MASSAGE_HEAD_DOWN == 8388608  # 0x800000 -> cmd2=0x80
 
     def test_cmd3_commands(self):
         """Commands in cmd3 byte should be correct."""
@@ -479,8 +479,8 @@ class TestScottLivingMassage:
 
         calls = mock_client.write_gatt_char.call_args_list
         call_data = calls[0][0][1]
-        # MASSAGE_HEAD_DOWN = 0x200000 -> cmd2=0x20
-        assert call_data[5] == 0x20
+        # MASSAGE_HEAD_DOWN = 0x800000 -> cmd2=0x80
+        assert call_data[5] == 0x80
 
     async def test_massage_foot_up_sends_correct_command(
         self,
@@ -555,5 +555,5 @@ class TestScottLivingMassage:
         assert len(calls) == 2
         first_data = calls[0][0][1]
         second_data = calls[1][0][1]
-        assert first_data[5] == 0x20  # MASSAGE_HEAD_DOWN
+        assert first_data[5] == 0x80  # MASSAGE_HEAD_DOWN
         assert second_data[6] == 0x01  # MASSAGE_FOOT_DOWN

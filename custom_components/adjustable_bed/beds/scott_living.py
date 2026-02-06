@@ -60,7 +60,7 @@ class ScottLivingCommands:
     # cmd2 byte commands
     MEMORY_4 = 65536  # 0x10000 -> cmd2=0x01
     LIGHT = 131072  # 0x20000 -> cmd2=0x02
-    MASSAGE_HEAD_DOWN = 2097152  # 0x200000 -> cmd2=0x20
+    MASSAGE_HEAD_DOWN = 8388608  # 0x800000 -> cmd2=0x80
 
     # cmd3 byte commands
     MASSAGE_FOOT_DOWN = 16777216  # 0x1000000 -> cmd3=0x01

@@ -87,7 +87,7 @@ Where:
 |--------|------------|------|-------|
 | Memory 4 | 0x10000 | 0x01 | 17-button remote only |
 | Light Toggle | 0x20000 | 0x02 | |
-| Massage Head - | 0x200000 | 0x20 | Decrease head intensity |
+| Massage Head - | 0x800000 | 0x80 | Decrease head intensity |
 
 ### cmd3 Byte Commands
 
