@@ -25,7 +25,7 @@
 | Memory Presets | ✅ (4 slots) |
 | Flat Preset | ✅ |
 | Light Control | ✅ |
-| Massage | ❌ |
+| Massage | ✅ (vibration toggle via CBI characteristic) |
 
 **Position Feedback:** The bed reports motor positions via BLE notifications. Position values are raw encoder counts that are converted to percentages.
 

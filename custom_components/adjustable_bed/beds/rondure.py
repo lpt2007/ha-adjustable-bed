@@ -112,7 +112,7 @@ class RondureController(BedController):
         return True
 
     @property
-    def supports_light(self) -> bool:
+    def supports_lights(self) -> bool:
         return True
 
     @property

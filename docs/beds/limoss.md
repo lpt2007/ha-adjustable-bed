@@ -20,12 +20,12 @@
 
 | Feature | Supported |
 |---------|-----------|
-| Motor Control | ✅ (head/back + legs) |
+| Motor Control | ✅ (head/back + legs, 3/4 motor auto-detected) |
 | Position Feedback | ✅ |
 | Flat Preset | ✅ |
-| Memory Presets | ❌ (capability is read, but preset recall/program commands are not exposed yet) |
-| Light Control | ⚠️ Protocol has a toggle command (`0x70`), not exposed by default |
-| Massage | ❌ |
+| Memory Presets | ✅ (software-based: saves raw positions, recalls via SetPos commands) |
+| Light Control | ✅ (toggle via `0x70`) |
+| Massage / Vibration | ✅ (up to 6 zones, zone count reported by capabilities query) |
 
 ## Protocol Details
 
@@ -74,6 +74,8 @@ Auto-detection uses:
 |--------|---------|
 | Motor 1 Up / Down | `0x12` / `0x13` |
 | Motor 2 Up / Down | `0x22` / `0x23` |
+| Motor 3 Up / Down | `0x32` / `0x33` |
+| Motor 4 Up / Down | `0x42` / `0x43` |
 | Stop All | `0xFF` |
 | Flat (both down) | `0x51` |
 | Query Capabilities | `0x02` |
@@ -81,6 +83,12 @@ Auto-detection uses:
 | Ask Motor 2 Position | `0x20` |
 | Ask Motor 3 Position | `0x30` |
 | Ask Motor 4 Position | `0x40` |
+| Set Motor 1 Position | `0x11` |
+| Set Motor 2 Position | `0x21` |
+| Set Motor 3 Position | `0x31` |
+| Set Motor 4 Position | `0x41` |
+| Vibration Zone 1-6 | `0x60` - `0x65` |
+| Light Toggle | `0x70` |
 
 ## Position Feedback
 
@@ -99,7 +107,9 @@ These values are derived from APK behavior (`LIMOSS_SENDING_INTERVAL = 80`).
 ## Notes
 
 - Limoss/Stawett is a unique encrypted protocol and is not compatible with Okin, Solace, or Octo packet formats even though it shares `FFE0/FFE1` UUIDs.
-- The integration currently maps motor 1 to head/back and motor 2 to legs.
+- Motor mapping: motor 1 = back, motor 2 = legs, motor 3 = head (3+ motor beds), motor 4 = feet (4-motor beds). For 2-motor beds, head aliases to motor 1 and feet to motor 2.
+- Memory presets are software-based: `program_memory` saves current raw positions locally, `preset_memory` recalls them via SetPos commands. The capability response reports how many memory slots the hardware supports.
+- Vibration zone count is reported by the capabilities query and stored at runtime.
 
 ## References
 

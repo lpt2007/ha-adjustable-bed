@@ -672,7 +672,11 @@ class LimossController(BedController):
         else:
             _LOGGER.warning("Invalid Limoss vibration zone: %d (valid: 1-6)", zone)
 
-    # Optional light helper (not exposed as capability by default)
+    @property
+    def supports_lights(self) -> bool:
+        """Return True - Limoss supports a light toggle command."""
+        return True
+
     async def lights_toggle(self) -> None:
         """Toggle lights."""
         await self._send_command(LimossCommands.LIGHT_TOGGLE)
