@@ -107,12 +107,12 @@ class TestOkin7ByteCommands:
         assert _cmd(0x74)[5] == 0x74  # LIGHT_OFF
 
     def test_config_lumbar_up_byte(self):
-        """7-byte config should use 0x04 for lumbar up."""
-        assert OKIN_7BYTE_CONFIG.lumbar_up_byte == 0x04
+        """7-byte config should use 0x06 for lumbar up."""
+        assert OKIN_7BYTE_CONFIG.lumbar_up_byte == 0x06
 
     def test_config_lounge_byte(self):
-        """7-byte config should use 0x11 for lounge."""
-        assert OKIN_7BYTE_CONFIG.lounge_byte == 0x11
+        """7-byte config should use 0x12 for lounge."""
+        assert OKIN_7BYTE_CONFIG.lounge_byte == 0x12
 
 
 # -----------------------------------------------------------------------------
@@ -207,17 +207,17 @@ class TestOkin7ByteController:
 
         assert coordinator.controller.supports_discrete_light_control is True
 
-    async def test_memory_presets_not_supported(
+    async def test_memory_presets_supported(
         self,
         hass: HomeAssistant,
         mock_okin_7byte_config_entry,
         mock_coordinator_connected,
     ):
-        """Okin 7-byte should NOT support memory presets."""
+        """Okin 7-byte should support memory presets."""
         coordinator = AdjustableBedCoordinator(hass, mock_okin_7byte_config_entry)
         await coordinator.async_connect()
 
-        assert coordinator.controller.supports_memory_presets is False
+        assert coordinator.controller.supports_memory_presets is True
 
 
 class TestOkin7ByteMovement:
@@ -257,7 +257,7 @@ class TestOkin7ByteMovement:
 
         calls = mock_client.write_gatt_char.call_args_list
         first_call_data = calls[0][0][1]
-        assert first_call_data == _cmd(0x04)
+        assert first_call_data == _cmd(0x06)
 
     async def test_stop_all_sends_stop_command(
         self,

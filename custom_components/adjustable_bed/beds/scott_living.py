@@ -49,13 +49,21 @@ class ScottLivingCommands:
 
     # cmd1 byte commands
     MEMORY_1 = 256  # 0x100 -> cmd1=0x01
-    LIGHT = 512  # 0x200 -> cmd1=0x02
+    MASSAGE_TIMER = 512  # 0x200 -> cmd1=0x02
+    MASSAGE_FOOT_UP = 1024  # 0x400 -> cmd1=0x04
+    MASSAGE_HEAD_UP = 2048  # 0x800 -> cmd1=0x08
     ZERO_G = 4096  # 0x1000 -> cmd1=0x10
     MEMORY_2 = 8192  # 0x2000 -> cmd1=0x20
     MEMORY_3 = 16384  # 0x4000 -> cmd1=0x40 (also TV)
     ANTI_SNORE = 32768  # 0x8000 -> cmd1=0x80
 
-    # Presets
+    # cmd2 byte commands
+    MEMORY_4 = 65536  # 0x10000 -> cmd2=0x01
+    LIGHT = 131072  # 0x20000 -> cmd2=0x02
+    MASSAGE_HEAD_DOWN = 2097152  # 0x200000 -> cmd2=0x20
+
+    # cmd3 byte commands
+    MASSAGE_FOOT_DOWN = 16777216  # 0x1000000 -> cmd3=0x01
     PRESET_FLAT = 134217728  # 0x8000000 -> cmd3=0x08
 
 
@@ -105,7 +113,7 @@ class ScottLivingController(BedController):
 
     @property
     def memory_slot_count(self) -> int:
-        return 3  # Memory 1, 2, 3 (TV)
+        return 4  # Memory 1, 2, 3 (TV), 4
 
     @property
     def supports_memory_programming(self) -> bool:
@@ -346,11 +354,12 @@ class ScottLivingController(BedController):
             1: ScottLivingCommands.MEMORY_1,
             2: ScottLivingCommands.MEMORY_2,
             3: ScottLivingCommands.MEMORY_3,
+            4: ScottLivingCommands.MEMORY_4,
         }
         if command := commands.get(memory_num):
             await self.write_command(self._build_command(command))
         else:
-            _LOGGER.warning("Scott Living supports Memory 1-3, requested: %d", memory_num)
+            _LOGGER.warning("Scott Living supports Memory 1-4, requested: %d", memory_num)
 
     async def program_memory(self, memory_num: int) -> None:
         """Program current position to memory (not supported)."""
@@ -385,7 +394,23 @@ class ScottLivingController(BedController):
         """Toggle lights."""
         await self.write_command(self._build_command(ScottLivingCommands.LIGHT))
 
-    # Massage methods (not explicitly in the 8-button remote but may be available)
+    # Massage methods (available on 13-button and 17-button remotes)
     async def massage_toggle(self) -> None:
-        """Toggle massage (not implemented for Scott Living)."""
-        _LOGGER.debug("Massage not implemented for Scott Living")
+        """Toggle massage (step head massage intensity)."""
+        await self.massage_head_step_up()
+
+    async def massage_head_step_up(self) -> None:
+        """Increase head massage intensity."""
+        await self.write_command(self._build_command(ScottLivingCommands.MASSAGE_HEAD_UP))
+
+    async def massage_head_step_down(self) -> None:
+        """Decrease head massage intensity."""
+        await self.write_command(self._build_command(ScottLivingCommands.MASSAGE_HEAD_DOWN))
+
+    async def massage_foot_step_up(self) -> None:
+        """Increase foot massage intensity."""
+        await self.write_command(self._build_command(ScottLivingCommands.MASSAGE_FOOT_UP))
+
+    async def massage_foot_step_down(self) -> None:
+        """Decrease foot massage intensity."""
+        await self.write_command(self._build_command(ScottLivingCommands.MASSAGE_FOOT_DOWN))

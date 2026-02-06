@@ -24,9 +24,9 @@
 | Position Feedback | ❌ | ❌ | ❌ |
 | Memory Presets | ✅ (4 slots) | ✅ (4 slots) | ✅ (2 slots) |
 | Massage | ✅ (0-10 levels) | ✅ | ✅ (discrete UP/DOWN) |
-| Lighting | ✅ RGB | ❌ | ✅ Toggle |
+| Lighting | ✅ RGB | ✅ Toggle | ✅ Toggle |
 | Anti-Snore | ✅ | ❌ | ✅ |
-| Zero-G | ❌ | ❌ | ✅ |
+| Zero-G | ❌ | ✅ | ✅ |
 | TV Preset | ❌ | ❌ | ✅ |
 | Lounge Preset | ❌ | ❌ | ✅ |
 
@@ -108,7 +108,7 @@ Uses same 32-bit command values as Keeson - see [Keeson commands](keeson.md#comm
 
 **Credit:** Reverse engineering by [kristofferR](https://github.com/kristofferR/ha-adjustable-bed), [Josh Pearce](https://github.com/joshpearce)
 
-**Characteristic UUID:** `fee1`
+**Characteristic UUID:** `d44bc439-abfd-45a2-b575-925416129600`
 **Format:** 5 bytes `[0x6E, 0x01, 0x00, command, checksum]`
 **Checksum:** Sum of first 4 bytes, truncated to 8 bits
 
