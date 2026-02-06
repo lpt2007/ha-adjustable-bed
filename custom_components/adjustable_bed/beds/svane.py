@@ -46,14 +46,16 @@ class SvaneCommands:
     MOTOR_MOVE: bytes = bytes([0x01, 0x00])
     MOTOR_STOP: bytes = bytes([0x00, 0x00])
 
-    # Svane Position preset (2-byte, written to MEMORY characteristic)
+    # Svane Position preset (2-byte, written to MEMORY characteristic in head service)
     # This is a special preset position specific to Svane beds
     SVANE_POSITION: bytes = bytes([0x03, 0x00])
 
-    # Memory/preset commands (6-byte, written to MEMORY characteristic)
+    # Preset commands (6-byte, written to POSITION characteristic in both services)
     FLATTEN: bytes = bytes([0x3F, 0x81, 0x00, 0x00, 0x00, 0x00])
     SAVE_POSITION: bytes = bytes([0x3F, 0x40, 0x00, 0x00, 0x00, 0x00])
     RECALL_POSITION: bytes = bytes([0x3F, 0x80, 0x00, 0x00, 0x00, 0x00])
+
+    # Position query (6-byte, written to MEMORY characteristic in head service)
     READ_POSITION: bytes = bytes([0x3F, 0xFF, 0x00, 0x00, 0x00, 0x00])  # TODO: for future position query support
 
     # Light commands (6-byte, written to LIGHT_ON_OFF characteristic)
@@ -230,53 +232,53 @@ class SvaneController(BedController):
             cancel_event,
         )
 
-    async def _write_memory_command(
+    async def _write_preset_command(
         self,
         command: bytes,
         repeat_count: int,
         repeat_delay_ms: int,
         cancel_event: asyncio.Event | None = None,
     ) -> None:
-        """Write a memory/preset command to available memory characteristics.
+        """Write a preset command to the POSITION characteristic in both motor services.
 
-        Svane beds expose the MEMORY characteristic in both motor services.
-        Some models appear to only react reliably when both are written.
+        The APK sends preset commands (flatten, recall, save) to the POSITION
+        characteristic in both head and feet services, not the MEMORY characteristic.
         """
         if self.client is None or not self.client.is_connected:
-            _LOGGER.error("Cannot write memory command: BLE client not connected")
+            _LOGGER.error("Cannot write preset command: BLE client not connected")
             raise ConnectionError("Not connected to bed")
 
-        memory_chars: list[BleakGATTCharacteristic] = []
+        position_chars: list[BleakGATTCharacteristic] = []
         for service_uuid in (SVANE_HEAD_SERVICE_UUID, SVANE_FEET_SERVICE_UUID):
-            char = self._get_char_in_service(service_uuid, SVANE_CHAR_MEMORY_UUID)
+            char = self._get_char_in_service(service_uuid, SVANE_CHAR_POSITION_UUID)
             if char is not None:
-                memory_chars.append(char)
+                position_chars.append(char)
 
-        if not memory_chars:
-            _LOGGER.error("Memory characteristic not found in head or feet service")
-            raise ConnectionError("Memory characteristic not found")
+        if not position_chars:
+            _LOGGER.error("Position characteristic not found in head or feet service")
+            raise ConnectionError("Position characteristic not found")
 
         effective_cancel = cancel_event or self._coordinator.cancel_command
 
         _LOGGER.debug(
-            "Writing memory command %s to %d characteristic(s) (repeat: %d, delay: %dms)",
+            "Writing preset command %s to %d characteristic(s) (repeat: %d, delay: %dms)",
             command.hex(),
-            len(memory_chars),
+            len(position_chars),
             repeat_count,
             repeat_delay_ms,
         )
 
         for i in range(repeat_count):
             if effective_cancel is not None and effective_cancel.is_set():
-                _LOGGER.info("Memory command cancelled after %d/%d writes", i, repeat_count)
+                _LOGGER.info("Preset command cancelled after %d/%d writes", i, repeat_count)
                 return
 
-            for char in memory_chars:
+            for char in position_chars:
                 try:
                     async with self._ble_lock:
                         await self.client.write_gatt_char(char, command, response=True)
                 except BleakError:
-                    _LOGGER.exception("Failed to write memory command to %s", char.uuid[:8])
+                    _LOGGER.exception("Failed to write preset command to %s", char.uuid[:8])
                     raise
 
             if i < repeat_count - 1:
@@ -491,7 +493,7 @@ class SvaneController(BedController):
     # Preset methods
     async def preset_flat(self) -> None:
         """Go to flat position."""
-        await self._write_memory_command(
+        await self._write_preset_command(
             SvaneCommands.FLATTEN,
             repeat_count=max(3, self._coordinator.motor_pulse_count),
             repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,
@@ -513,7 +515,7 @@ class SvaneController(BedController):
         Svane beds only support a single memory position (memory_num is ignored).
         """
         del memory_num  # Svane only supports 1 memory slot
-        await self._write_memory_command(
+        await self._write_preset_command(
             SvaneCommands.RECALL_POSITION,
             repeat_count=max(3, self._coordinator.motor_pulse_count),
             repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,
@@ -525,7 +527,7 @@ class SvaneController(BedController):
         Svane beds only support a single memory position (memory_num is ignored).
         """
         del memory_num  # Svane only supports 1 memory slot
-        await self._write_memory_command(
+        await self._write_preset_command(
             SvaneCommands.SAVE_POSITION,
             repeat_count=max(3, self._coordinator.motor_pulse_count),
             repeat_delay_ms=self._coordinator.motor_pulse_delay_ms,

@@ -71,14 +71,19 @@ Commands are written to the direction-specific characteristic within the appropr
 | Feet Down | `c258` | `bae9` (DOWN) | `[0x01, 0x00]` |
 | Feet Stop | `c258` | same as move | `[0x00, 0x00]` |
 
-### Preset Commands (written to MEMORY characteristic `fb6e`)
+### Preset Commands (written to POSITION characteristic `143d` in both services)
+
+| Command | Bytes | Characteristic | Services | Description |
+|---------|-------|----------------|----------|-------------|
+| Flatten | `[0x3F, 0x81, 0x00, 0x00, 0x00, 0x00]` | POSITION (`143d`) | Head + Feet | Go to flat position |
+| Recall Position | `[0x3F, 0x80, 0x00, 0x00, 0x00, 0x00]` | POSITION (`143d`) | Head + Feet | Go to saved memory position |
+| Save Position | `[0x3F, 0x40, 0x00, 0x00, 0x00, 0x00]` | POSITION (`143d`) | Head + Feet | Save current position to memory |
+
+### Memory Commands (written to MEMORY characteristic `fb6e` in head service)
 
 | Command | Bytes | Description |
 |---------|-------|-------------|
 | Svane Position | `[0x03, 0x00]` | Comfort preset (similar to zero-g) |
-| Flatten | `[0x3F, 0x81, 0x00, 0x00, 0x00, 0x00]` | Go to flat position |
-| Recall Position | `[0x3F, 0x80, 0x00, 0x00, 0x00, 0x00]` | Go to saved memory position |
-| Save Position | `[0x3F, 0x40, 0x00, 0x00, 0x00, 0x00]` | Save current position to memory |
 | Read Position | `[0x3F, 0xFF, 0x00, 0x00, 0x00, 0x00]` | Query current position |
 
 ### Light Commands (6-byte, written to LIGHT_ON_OFF `a8e0`)

@@ -23,6 +23,7 @@ from custom_components.adjustable_bed.const import (
     DOMAIN,
     SVANE_CHAR_DOWN_UUID,
     SVANE_CHAR_MEMORY_UUID,
+    SVANE_CHAR_POSITION_UUID,
     SVANE_CHAR_UP_UUID,
     SVANE_FEET_SERVICE_UUID,
     SVANE_HEAD_SERVICE_UUID,
@@ -281,27 +282,27 @@ class _MockService:
         self.characteristics = characteristics
 
 
-class TestSvaneMemoryCommands:
-    """Test Svane memory/preset command routing."""
+class TestSvanePresetCommands:
+    """Test Svane preset command routing to POSITION characteristic."""
 
-    async def test_preset_flat_writes_to_head_and_feet_memory_chars(
+    async def test_preset_flat_writes_to_head_and_feet_position_chars(
         self,
         hass: HomeAssistant,
         mock_svane_config_entry,
         mock_coordinator_connected,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        """Flat preset should write to MEMORY characteristic in both motor services."""
+        """Flat preset should write to POSITION characteristic in both motor services."""
         coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
         assert mock_client is not None
 
-        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
-        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
         mock_client.services = [
-            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
-            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position]),
         ]
         mock_client.write_gatt_char.reset_mock()
 
@@ -314,31 +315,31 @@ class TestSvaneMemoryCommands:
         assert mock_client.write_gatt_char.call_count == expected_repeats * 2
 
         written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
-        assert head_memory in written_chars
-        assert feet_memory in written_chars
+        assert head_position in written_chars
+        assert feet_position in written_chars
         assert all(
             call.args[1] == SvaneCommands.FLATTEN
             for call in mock_client.write_gatt_char.call_args_list
         )
 
-    async def test_program_memory_uses_repeated_writes(
+    async def test_program_memory_writes_to_position_chars(
         self,
         hass: HomeAssistant,
         mock_svane_config_entry,
         mock_coordinator_connected,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        """Program memory should send repeated writes (not a single fire-and-forget write)."""
+        """Program memory should write to POSITION characteristic with repeated writes."""
         coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
         assert mock_client is not None
 
-        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
-        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
         mock_client.services = [
-            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
-            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position]),
         ]
         mock_client.write_gatt_char.reset_mock()
 
@@ -348,8 +349,8 @@ class TestSvaneMemoryCommands:
         await coordinator.controller.program_memory(1)
 
         written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
-        assert head_memory in written_chars
-        assert feet_memory in written_chars
+        assert head_position in written_chars
+        assert feet_position in written_chars
 
         expected_repeats = max(3, coordinator.motor_pulse_count)
         assert mock_client.write_gatt_char.call_count == expected_repeats * 2
@@ -358,24 +359,24 @@ class TestSvaneMemoryCommands:
             for call in mock_client.write_gatt_char.call_args_list
         )
 
-    async def test_preset_memory_uses_repeated_writes(
+    async def test_preset_memory_writes_to_position_chars(
         self,
         hass: HomeAssistant,
         mock_svane_config_entry,
         mock_coordinator_connected,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        """Preset memory should send repeated writes (not a single fire-and-forget write)."""
+        """Preset memory should write to POSITION characteristic with repeated writes."""
         coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
         await coordinator.async_connect()
         mock_client = coordinator._client
         assert mock_client is not None
 
-        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
-        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
         mock_client.services = [
-            _MockService(SVANE_HEAD_SERVICE_UUID, [head_memory]),
-            _MockService(SVANE_FEET_SERVICE_UUID, [feet_memory]),
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position]),
         ]
         mock_client.write_gatt_char.reset_mock()
 
@@ -385,8 +386,8 @@ class TestSvaneMemoryCommands:
         await coordinator.controller.preset_memory(1)
 
         written_chars = {call.args[0] for call in mock_client.write_gatt_char.call_args_list}
-        assert head_memory in written_chars
-        assert feet_memory in written_chars
+        assert head_position in written_chars
+        assert feet_position in written_chars
 
         expected_repeats = max(3, coordinator.motor_pulse_count)
         assert mock_client.write_gatt_char.call_count == expected_repeats * 2
