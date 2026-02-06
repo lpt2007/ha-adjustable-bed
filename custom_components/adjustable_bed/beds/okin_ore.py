@@ -168,8 +168,8 @@ class OkinOreController(BedController):
 
     @property
     def massage_intensity_max(self) -> int:
-        """Return max massage intensity (10 levels)."""
-        return 10
+        """Return max massage intensity (3 levels)."""
+        return 3
 
     async def write_command(
         self,
