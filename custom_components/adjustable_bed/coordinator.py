@@ -1381,7 +1381,21 @@ class AdjustableBedCoordinator:
                     _LOGGER.error("Cannot send stop: no controller available")
                     return
 
-                await self._async_refresh_controller_auth()
+                try:
+                    await self._async_refresh_controller_auth()
+                except BleakError as err:
+                    _LOGGER.warning(
+                        "Auth refresh failed before stop command on %s: %s",
+                        self._address,
+                        err,
+                    )
+                except Exception as err:
+                    _LOGGER.warning(
+                        "Unexpected auth refresh failure before stop command on %s: %s",
+                        self._address,
+                        err,
+                        exc_info=True,
+                    )
 
                 # Use controller's stop_all method which knows the correct protocol
                 await self._controller.stop_all()

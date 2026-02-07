@@ -167,11 +167,14 @@ class JensenController(BedController):
             _LOGGER.warning("Cannot send Jensen PIN unlock command: not connected")
             return
 
-        await self._write_gatt_with_retry(
-            JENSEN_CHAR_UUID,
-            self._build_pin_unlock_command(),
-            response=self._write_with_response,
-        )
+        try:
+            await self._write_gatt_with_retry(
+                JENSEN_CHAR_UUID,
+                self._build_pin_unlock_command(),
+                response=self._write_with_response,
+            )
+        except (ValueError, BleakError) as err:
+            _LOGGER.warning("Failed to send Jensen PIN unlock command: %s", err)
 
     # Capability properties
     @property

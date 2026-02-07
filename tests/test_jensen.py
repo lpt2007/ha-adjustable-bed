@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from bleak.exc import BleakError
 from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -354,6 +355,76 @@ class TestJensenCoordinatorAuthRefresh:
 
         coordinator._controller.send_pin.assert_awaited_once()
         coordinator._controller.write_command.assert_awaited_once()
+
+    async def test_async_stop_command_refreshes_pin(
+        self,
+        hass: HomeAssistant,
+        mock_jensen_config_entry,
+    ):
+        """Test coordinator refreshes Jensen PIN before stop command execution."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jensen_config_entry)
+        coordinator._client = MagicMock()
+        coordinator._client.is_connected = True
+        coordinator._controller = MagicMock()
+        coordinator._controller.send_pin = AsyncMock()
+        coordinator._controller.stop_all = AsyncMock()
+
+        await coordinator.async_stop_command()
+
+        coordinator._controller.send_pin.assert_awaited_once()
+        coordinator._controller.stop_all.assert_awaited_once()
+
+    async def test_async_stop_command_continues_when_auth_refresh_fails(
+        self,
+        hass: HomeAssistant,
+        mock_jensen_config_entry,
+    ):
+        """Test stop still runs when Jensen auth refresh raises an error."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jensen_config_entry)
+        coordinator._client = MagicMock()
+        coordinator._client.is_connected = True
+        coordinator._controller = MagicMock()
+        coordinator._controller.send_pin = AsyncMock(side_effect=BleakError("PIN failed"))
+        coordinator._controller.stop_all = AsyncMock()
+
+        await coordinator.async_stop_command()
+
+        coordinator._controller.send_pin.assert_awaited_once()
+        coordinator._controller.stop_all.assert_awaited_once()
+
+    async def test_async_seek_position_refreshes_pin(
+        self,
+        hass: HomeAssistant,
+        mock_jensen_config_entry,
+    ):
+        """Test coordinator refreshes Jensen PIN before seek position execution."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jensen_config_entry)
+        coordinator._client = MagicMock()
+        coordinator._client.is_connected = True
+        coordinator._controller = MagicMock()
+        coordinator._controller.send_pin = AsyncMock()
+        coordinator._controller.supports_direct_position_control = True
+        coordinator._controller.angle_to_native_position = MagicMock(return_value=123)
+        coordinator._controller.set_motor_position = AsyncMock()
+        coordinator._position_data["back"] = 10.0
+
+        move_up = AsyncMock()
+        move_down = AsyncMock()
+        move_stop = AsyncMock()
+
+        await coordinator.async_seek_position(
+            "back",
+            20.0,
+            lambda c: move_up(c),
+            lambda c: move_down(c),
+            lambda c: move_stop(c),
+        )
+
+        coordinator._controller.send_pin.assert_awaited_once()
+        coordinator._controller.set_motor_position.assert_awaited_once_with("back", 123)
+        move_up.assert_not_awaited()
+        move_down.assert_not_awaited()
+        move_stop.assert_not_awaited()
 
 
 class TestJensenMovement:
