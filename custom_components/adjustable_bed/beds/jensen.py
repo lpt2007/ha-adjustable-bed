@@ -161,6 +161,21 @@ class JensenController(BedController):
         return bytes([0x1E, int(pin_digits[0]), int(pin_digits[1]),
                       int(pin_digits[2]), int(pin_digits[3]), 0x00])
 
+    async def send_pin(self) -> None:
+        """Send PIN unlock command to authorize Jensen commands."""
+        if self.client is None or not self.client.is_connected:
+            _LOGGER.warning("Cannot send Jensen PIN unlock command: not connected")
+            return
+
+        try:
+            await self._write_gatt_with_retry(
+                JENSEN_CHAR_UUID,
+                self._build_pin_unlock_command(),
+                response=self._write_with_response,
+            )
+        except (ValueError, BleakError) as err:
+            _LOGGER.warning("Failed to send Jensen PIN unlock command: %s", err)
+
     # Capability properties
     @property
     def supports_preset_flat(self) -> bool:
@@ -430,11 +445,7 @@ class JensenController(BedController):
             # Send PIN unlock command IMMEDIATELY after notifications are enabled
             # The app ALWAYS does this before any other commands (config, position, etc.)
             _LOGGER.debug("Sending Jensen PIN unlock command")
-            await self._write_gatt_with_retry(
-                JENSEN_CHAR_UUID,
-                self._build_pin_unlock_command(),
-                response=self._write_with_response,
-            )
+            await self.send_pin()
 
             # Request initial position reading only if angle sensing is enabled
             if callback is not None:
