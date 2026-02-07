@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, call
 
 import pytest
 from bleak.exc import BleakError
@@ -324,16 +324,19 @@ class TestJensenCoordinatorAuthRefresh:
         coordinator._client.is_connected = True
         coordinator._controller = MagicMock()
         coordinator._controller.send_pin = AsyncMock()
-
-        command_called = AsyncMock()
+        coordinator._controller.command_called = AsyncMock()
 
         async def _command_fn(_controller):
-            await command_called()
+            await _controller.command_called()
 
         await coordinator.async_execute_controller_command(_command_fn, cancel_running=False)
 
         coordinator._controller.send_pin.assert_awaited_once()
-        command_called.assert_awaited_once()
+        coordinator._controller.command_called.assert_awaited_once()
+        coordinator._controller.assert_has_calls(
+            [call.send_pin(), call.command_called()],
+            any_order=False,
+        )
 
     async def test_async_write_command_refreshes_pin(
         self,
@@ -355,6 +358,13 @@ class TestJensenCoordinatorAuthRefresh:
 
         coordinator._controller.send_pin.assert_awaited_once()
         coordinator._controller.write_command.assert_awaited_once()
+        send_pin_idx = coordinator._controller.mock_calls.index(call.send_pin())
+        write_idx = next(
+            idx
+            for idx, mock_call in enumerate(coordinator._controller.mock_calls)
+            if mock_call[0] == "write_command"
+        )
+        assert send_pin_idx < write_idx
 
     async def test_async_stop_command_refreshes_pin(
         self,
@@ -373,6 +383,9 @@ class TestJensenCoordinatorAuthRefresh:
 
         coordinator._controller.send_pin.assert_awaited_once()
         coordinator._controller.stop_all.assert_awaited_once()
+        send_pin_idx = coordinator._controller.mock_calls.index(call.send_pin())
+        stop_all_idx = coordinator._controller.mock_calls.index(call.stop_all())
+        assert send_pin_idx < stop_all_idx
 
     async def test_async_stop_command_continues_when_auth_refresh_fails(
         self,
@@ -391,6 +404,9 @@ class TestJensenCoordinatorAuthRefresh:
 
         coordinator._controller.send_pin.assert_awaited_once()
         coordinator._controller.stop_all.assert_awaited_once()
+        send_pin_idx = coordinator._controller.mock_calls.index(call.send_pin())
+        stop_all_idx = coordinator._controller.mock_calls.index(call.stop_all())
+        assert send_pin_idx < stop_all_idx
 
     async def test_async_seek_position_refreshes_pin(
         self,
@@ -422,6 +438,11 @@ class TestJensenCoordinatorAuthRefresh:
 
         coordinator._controller.send_pin.assert_awaited_once()
         coordinator._controller.set_motor_position.assert_awaited_once_with("back", 123)
+        send_pin_idx = coordinator._controller.mock_calls.index(call.send_pin())
+        set_position_idx = coordinator._controller.mock_calls.index(
+            call.set_motor_position("back", 123)
+        )
+        assert send_pin_idx < set_position_idx
         move_up.assert_not_awaited()
         move_down.assert_not_awaited()
         move_stop.assert_not_awaited()
