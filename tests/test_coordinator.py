@@ -6,7 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from bleak.exc import BleakError
+from homeassistant.const import CONF_ADDRESS, CONF_NAME
 from homeassistant.core import HomeAssistant
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.adjustable_bed.const import (
     BED_MOTOR_PULSE_DEFAULTS,
@@ -14,12 +16,17 @@ from custom_components.adjustable_bed.const import (
     BED_TYPE_LINAK,
     BED_TYPE_RICHMAT,
     CONF_BED_TYPE,
+    CONF_DISABLE_ANGLE_SENSING,
+    CONF_HAS_MASSAGE,
     CONF_MOTOR_COUNT,
     CONF_MOTOR_PULSE_COUNT,
     CONF_MOTOR_PULSE_DELAY_MS,
+    CONF_PREFERRED_ADAPTER,
+    CONF_RICHMAT_REMOTE,
     DEFAULT_MOTOR_PULSE_COUNT,
     DEFAULT_MOTOR_PULSE_DELAY_MS,
     DOMAIN,
+    RICHMAT_REMOTE_AUTO,
 )
 from custom_components.adjustable_bed.coordinator import AdjustableBedCoordinator
 
@@ -112,6 +119,56 @@ class TestCoordinatorConnection:
             result = await coordinator.async_connect()
 
         assert result is False
+
+    @pytest.mark.usefixtures("mock_coordinator_connected")
+    async def test_connect_richmat_auto_remote_uses_ble_name_detection(
+        self,
+        hass: HomeAssistant,
+    ):
+        """Richmat auto remote should be inferred from BLE name when available."""
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Richmat Test Bed",
+            data={
+                CONF_ADDRESS: TEST_ADDRESS,
+                CONF_NAME: "Richmat Test Bed",
+                CONF_BED_TYPE: BED_TYPE_RICHMAT,
+                CONF_MOTOR_COUNT: 2,
+                CONF_HAS_MASSAGE: True,
+                CONF_DISABLE_ANGLE_SENSING: True,
+                CONF_PREFERRED_ADAPTER: "auto",
+                CONF_RICHMAT_REMOTE: RICHMAT_REMOTE_AUTO,
+            },
+            unique_id=TEST_ADDRESS,
+            entry_id="richmat_auto_remote_test",
+        )
+        entry.add_to_hass(hass)
+
+        adapter_result = MagicMock()
+        adapter_result.device = MagicMock()
+        adapter_result.device.address = TEST_ADDRESS
+        adapter_result.device.name = "QRRM141291"
+        adapter_result.device.details = {"source": "local"}
+        adapter_result.rssi = -55
+        adapter_result.adapter = "local"
+
+        with (
+            patch(
+                "custom_components.adjustable_bed.coordinator.select_adapter",
+                new_callable=AsyncMock,
+                return_value=adapter_result,
+            ),
+            patch(
+                "custom_components.adjustable_bed.coordinator.create_controller",
+                new_callable=AsyncMock,
+                return_value=MagicMock(),
+            ) as mock_create_controller,
+        ):
+            coordinator = AdjustableBedCoordinator(hass, entry)
+            result = await coordinator.async_connect()
+
+        assert result is True
+        assert mock_create_controller.await_args.kwargs["richmat_remote"] == "qrrm"
 
     async def test_disconnect(
         self,
@@ -309,8 +366,6 @@ class TestCoordinatorNotifications:
         mock_bleak_client: MagicMock,
     ):
         """Test start_notify subscribes to notifications when enabled."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
-
         # Create entry with angle sensing enabled
         mock_config_entry_data["disable_angle_sensing"] = False
         entry = MockConfigEntry(
@@ -355,7 +410,6 @@ class TestMotorPulseConfiguration:
         mock_config_entry_data: dict,
     ):
         """Test custom motor pulse values from config."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         mock_config_entry_data[CONF_MOTOR_PULSE_COUNT] = 50
         mock_config_entry_data[CONF_MOTOR_PULSE_DELAY_MS] = 100
@@ -379,7 +433,6 @@ class TestMotorPulseConfiguration:
         mock_config_entry_data: dict,
     ):
         """Test Richmat bed uses its specific default pulse values."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         mock_config_entry_data[CONF_BED_TYPE] = BED_TYPE_RICHMAT
         # Don't set pulse values - should use bed-type defaults
@@ -404,7 +457,6 @@ class TestMotorPulseConfiguration:
         mock_config_entry_data: dict,
     ):
         """Test Keeson bed uses its specific default pulse values."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         mock_config_entry_data[CONF_BED_TYPE] = BED_TYPE_KEESON
         # Don't set pulse values - should use bed-type defaults
@@ -429,7 +481,6 @@ class TestMotorPulseConfiguration:
         mock_config_entry_data: dict,
     ):
         """Test custom pulse config overrides bed-type defaults."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         mock_config_entry_data[CONF_BED_TYPE] = BED_TYPE_RICHMAT
         mock_config_entry_data[CONF_MOTOR_PULSE_COUNT] = 15
@@ -461,7 +512,6 @@ class TestMultiMotorConfiguration:
         motor_count: int,
     ):
         """Test different motor count configurations."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         mock_config_entry_data[CONF_MOTOR_COUNT] = motor_count
 
@@ -483,7 +533,6 @@ class TestMultiMotorConfiguration:
         mock_config_entry_data: dict,
     ):
         """Test device info model includes motor count."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
         for motor_count in [2, 3, 4]:
             mock_config_entry_data[CONF_MOTOR_COUNT] = motor_count

@@ -231,11 +231,17 @@ class BedTechController(BedController):
     # Motor control methods
     async def move_head_up(self) -> None:
         """Move head up."""
-        await self._send_command(BedTechCommands.HEAD_UP)
+        try:
+            await self._send_command(BedTechCommands.HEAD_UP)
+        finally:
+            await self._send_stop_command()
 
     async def move_head_down(self) -> None:
         """Move head down."""
-        await self._send_command(BedTechCommands.HEAD_DOWN)
+        try:
+            await self._send_command(BedTechCommands.HEAD_DOWN)
+        finally:
+            await self._send_stop_command()
 
     async def move_head_stop(self) -> None:
         """Stop head motor."""
@@ -255,11 +261,17 @@ class BedTechController(BedController):
 
     async def move_legs_up(self) -> None:
         """Move legs up (same as feet for BedTech)."""
-        await self._send_command(BedTechCommands.FOOT_UP)
+        try:
+            await self._send_command(BedTechCommands.FOOT_UP)
+        finally:
+            await self._send_stop_command()
 
     async def move_legs_down(self) -> None:
         """Move legs down (same as feet for BedTech)."""
-        await self._send_command(BedTechCommands.FOOT_DOWN)
+        try:
+            await self._send_command(BedTechCommands.FOOT_DOWN)
+        finally:
+            await self._send_stop_command()
 
     async def move_legs_stop(self) -> None:
         """Stop legs motor."""
@@ -267,11 +279,17 @@ class BedTechController(BedController):
 
     async def move_feet_up(self) -> None:
         """Move feet up."""
-        await self._send_command(BedTechCommands.FOOT_UP)
+        try:
+            await self._send_command(BedTechCommands.FOOT_UP)
+        finally:
+            await self._send_stop_command()
 
     async def move_feet_down(self) -> None:
         """Move feet down."""
-        await self._send_command(BedTechCommands.FOOT_DOWN)
+        try:
+            await self._send_command(BedTechCommands.FOOT_DOWN)
+        finally:
+            await self._send_stop_command()
 
     async def move_feet_stop(self) -> None:
         """Stop feet motor."""
@@ -279,11 +297,17 @@ class BedTechController(BedController):
 
     async def move_pillow_up(self) -> None:
         """Move pillow/leg up."""
-        await self._send_command(BedTechCommands.LEG_UP)
+        try:
+            await self._send_command(BedTechCommands.LEG_UP)
+        finally:
+            await self._send_stop_command()
 
     async def move_pillow_down(self) -> None:
         """Move pillow/leg down."""
-        await self._send_command(BedTechCommands.LEG_DOWN)
+        try:
+            await self._send_command(BedTechCommands.LEG_DOWN)
+        finally:
+            await self._send_stop_command()
 
     async def move_pillow_stop(self) -> None:
         """Stop pillow motor."""
@@ -353,14 +377,6 @@ class BedTechController(BedController):
     async def massage_toggle(self) -> None:
         """Toggle massage on/off."""
         await self.write_command(self._build_command(BedTechCommands.MASSAGE_ON))
-
-    async def massage_off(self) -> None:
-        """Turn off massage."""
-        await self.write_command(
-            self._build_command(BedTechCommands.MASSAGE_OFF),
-            repeat_count=1,
-            cancel_event=asyncio.Event(),
-        )
 
     async def massage_head_toggle(self) -> None:
         """Cycle head massage intensity."""
