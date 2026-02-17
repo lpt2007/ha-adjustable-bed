@@ -207,6 +207,16 @@ class TestDetectBedTypeByServiceUUID:
         assert result.bed_type == BED_TYPE_LIMOSS
         assert result.confidence == 0.9
 
+    def test_detect_suta_by_fff0_uuid_and_name(self):
+        """Test SUTA detection by FFF0 UUID + SUTA name pattern."""
+        service_info = _make_service_info(
+            name="SUTA-B803",
+            service_uuids=[SUTA_SERVICE_UUID],
+        )
+        result = detect_bed_type_detailed(service_info)
+        assert result.bed_type == BED_TYPE_SUTA
+        assert result.confidence == 0.9
+
 
 class TestDetectBedTypeByNamePattern:
     """Test detection by device name patterns."""
