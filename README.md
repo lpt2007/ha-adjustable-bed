@@ -70,7 +70,7 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 | ✅ [Reverie](docs/beds/reverie.md) | Reverie |
 | ✅ [Okimat/Okin](docs/beds/okimat.md) | Lucid, CVB, Smartbed |
 | ✅ [Jiecang](docs/beds/jiecang.md) | Glideaway, Dream Motion, LOGICDATA |
-| 🧪 [Limoss](docs/beds/limoss.md) | Limoss, Stawett |
+| ✅ [Limoss](docs/beds/limoss.md) | Limoss, Stawett |
 | ✅ [Jensen](docs/beds/jensen.md) | Jensen (JMC400, LinON Entry) |
 | ✅ [Svane](docs/beds/svane.md) | Svane |
 | ✅ [DewertOkin](docs/beds/dewertokin.md) | Rize, Simmons, Nectar, Resident, Symphony |
@@ -81,13 +81,13 @@ The names below refer to motor/actuator manufacturers. Your bed might use one of
 | ✅ [BedTech](docs/beds/bedtech.md) | BedTech |
 | ✅ [Sleepy's Elite](docs/beds/sleepys.md) | Sleepy's |
 | ✅ [Vibradorm](docs/beds/vibradorm.md) | Vibradorm |
-| 🧪 [SUTA Smart Home](docs/beds/suta.md) | SUTA |
-| 🧪 [TiMOTION AHF](docs/beds/timotion-ahf.md) | TiMOTION |
-| 🧪 [Rondure](docs/beds/rondure.md) | 1500 Tilt Base |
-| 🧪 [Remacro](docs/beds/remacro.md) | CheersSleep, Jeromes, Slumberland, The Brick |
-| 🧪 [Cool Base](docs/beds/coolbase.md) | Cool Base (Keeson with fan) |
-| 🧪 [Scott Living](docs/beds/scott-living.md) | Scott Living |
-| 🧪 [SBI/Q-Plus](docs/beds/sbi.md) | Q-Plus (Costco) |
+| ✅ [SUTA Smart Home](docs/beds/suta.md) | SUTA |
+| ✅ [TiMOTION AHF](docs/beds/timotion-ahf.md) | TiMOTION |
+| ✅ [Rondure](docs/beds/rondure.md) | 1500 Tilt Base |
+| ✅ [Remacro](docs/beds/remacro.md) | CheersSleep, Jeromes, Slumberland, The Brick |
+| ✅ [Cool Base](docs/beds/coolbase.md) | Cool Base (Keeson with fan) |
+| ✅ [Scott Living](docs/beds/scott-living.md) | Scott Living |
+| ✅ [SBI/Q-Plus](docs/beds/sbi.md) | Q-Plus (Costco) |
 
 **Have one of these?** [Let us know](https://github.com/kristofferR/ha-adjustable-bed/issues) how well it works!
 
