@@ -570,6 +570,26 @@ class TestJensenPresets:
             JENSEN_CHAR_UUID, JensenCommands.PRESET_FLAT, response=True
         )
 
+    async def test_preset_flat_retries_for_reliability(
+        self,
+        hass: HomeAssistant,
+        mock_jensen_config_entry,
+        mock_coordinator_connected,
+        mock_bleak_client: MagicMock,
+    ):
+        """Test preset flat sends repeated command packets for reliability."""
+        coordinator = AdjustableBedCoordinator(hass, mock_jensen_config_entry)
+        await coordinator.async_connect()
+        mock_bleak_client.write_gatt_char.reset_mock()
+
+        await coordinator.controller.preset_flat()
+
+        calls = mock_bleak_client.write_gatt_char.call_args_list
+        assert len(calls) >= 2
+        for write_call in calls:
+            assert write_call.args == (JENSEN_CHAR_UUID, JensenCommands.PRESET_FLAT)
+            assert write_call.kwargs == {"response": True}
+
     async def test_preset_memory_recall(
         self,
         hass: HomeAssistant,

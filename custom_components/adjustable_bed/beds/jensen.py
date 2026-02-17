@@ -423,10 +423,13 @@ class JensenController(BedController):
                     for char in service.characteristics:
                         if str(char.uuid).lower() == JENSEN_CHAR_UUID.lower():
                             props = {prop.lower() for prop in char.properties}
-                            if "write-without-response" in props:
-                                self._write_with_response = False
-                            elif "write" in props:
+                            # Prefer write-with-response when both modes are available.
+                            # Jensen's Android app uses writeCharacteristic default behavior
+                            # and does not force no-response mode.
+                            if "write" in props:
                                 self._write_with_response = True
+                            elif "write-without-response" in props:
+                                self._write_with_response = False
                             _LOGGER.info(
                                 "Found Jensen characteristic: %s, properties: %s",
                                 char.uuid,
