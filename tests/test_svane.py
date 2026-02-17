@@ -11,7 +11,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.adjustable_bed.beds.svane import (
     SvaneCommands,
-    SvaneController,
 )
 from custom_components.adjustable_bed.const import (
     BED_TYPE_SVANE,
@@ -31,7 +30,6 @@ from custom_components.adjustable_bed.const import (
     SVANE_LIGHT_SERVICE_UUID,
 )
 from custom_components.adjustable_bed.coordinator import AdjustableBedCoordinator
-
 
 # -----------------------------------------------------------------------------
 # Test Fixtures
@@ -83,15 +81,15 @@ class TestSvaneCommands:
 
     def test_motor_move_command(self):
         """MOTOR_MOVE should be [0x01, 0x00]."""
-        assert SvaneCommands.MOTOR_MOVE == bytes([0x01, 0x00])
+        assert bytes([0x01, 0x00]) == SvaneCommands.MOTOR_MOVE
 
     def test_motor_stop_command(self):
         """MOTOR_STOP should be [0x00, 0x00]."""
-        assert SvaneCommands.MOTOR_STOP == bytes([0x00, 0x00])
+        assert bytes([0x00, 0x00]) == SvaneCommands.MOTOR_STOP
 
     def test_svane_position_command(self):
         """SVANE_POSITION should be [0x03, 0x00]."""
-        assert SvaneCommands.SVANE_POSITION == bytes([0x03, 0x00])
+        assert bytes([0x03, 0x00]) == SvaneCommands.SVANE_POSITION
         assert len(SvaneCommands.SVANE_POSITION) == 2
 
     def test_memory_commands_are_6_bytes(self):
@@ -103,15 +101,15 @@ class TestSvaneCommands:
 
     def test_flatten_command(self):
         """FLATTEN command should have correct bytes."""
-        assert SvaneCommands.FLATTEN == bytes([0x3F, 0x81, 0x00, 0x00, 0x00, 0x00])
+        assert bytes([0x3F, 0x81, 0x00, 0x00, 0x00, 0x00]) == SvaneCommands.FLATTEN
 
     def test_save_position_command(self):
         """SAVE_POSITION command should have correct bytes."""
-        assert SvaneCommands.SAVE_POSITION == bytes([0x3F, 0x40, 0x00, 0x00, 0x00, 0x00])
+        assert bytes([0x3F, 0x40, 0x00, 0x00, 0x00, 0x00]) == SvaneCommands.SAVE_POSITION
 
     def test_recall_position_command(self):
         """RECALL_POSITION command should have correct bytes."""
-        assert SvaneCommands.RECALL_POSITION == bytes([0x3F, 0x80, 0x00, 0x00, 0x00, 0x00])
+        assert bytes([0x3F, 0x80, 0x00, 0x00, 0x00, 0x00]) == SvaneCommands.RECALL_POSITION
 
     def test_light_commands_are_6_bytes(self):
         """Light commands should be 6 bytes."""
@@ -120,11 +118,11 @@ class TestSvaneCommands:
 
     def test_light_on_command(self):
         """LIGHT_ON command should have brightness=80."""
-        assert SvaneCommands.LIGHT_ON == bytes([0x13, 0x02, 0x50, 0x01, 0x00, 0x50])
+        assert bytes([0x13, 0x02, 0x50, 0x01, 0x00, 0x50]) == SvaneCommands.LIGHT_ON
 
     def test_light_off_command(self):
         """LIGHT_OFF command should be all zeros except header."""
-        assert SvaneCommands.LIGHT_OFF == bytes([0x13, 0x02, 0x00, 0x00, 0x00, 0x00])
+        assert bytes([0x13, 0x02, 0x00, 0x00, 0x00, 0x00]) == SvaneCommands.LIGHT_OFF
 
 
 # -----------------------------------------------------------------------------
@@ -183,17 +181,17 @@ class TestSvaneController:
 
         assert coordinator.controller.supports_memory_presets is True
 
-    async def test_memory_slot_count_is_one(
+    async def test_memory_slot_count_is_two(
         self,
         hass: HomeAssistant,
         mock_svane_config_entry,
         mock_coordinator_connected,
     ):
-        """Svane should have 1 memory slot."""
+        """Svane should have 2 software memory slots."""
         coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
         await coordinator.async_connect()
 
-        assert coordinator.controller.memory_slot_count == 1
+        assert coordinator.controller.memory_slot_count == 2
 
     async def test_supports_memory_programming(
         self,
@@ -322,6 +320,45 @@ class TestSvanePresetCommands:
             for call in mock_client.write_gatt_char.call_args_list
         )
 
+    async def test_preset_flat_writes_memory_fallback_when_available(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Flat preset should also issue compatibility writes to MEMORY characteristics."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        head_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        feet_memory = _MockCharacteristic(SVANE_CHAR_MEMORY_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position, head_memory]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position, feet_memory]),
+        ]
+        mock_client.write_gatt_char.reset_mock()
+
+        sleep_mock = AsyncMock()
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
+
+        await coordinator.controller.preset_flat()
+
+        expected_repeats = max(3, coordinator.motor_pulse_count)
+        # POSITION writes + single MEMORY fallback write per service.
+        assert mock_client.write_gatt_char.call_count == (expected_repeats * 2) + 2
+
+        fallback_chars = {
+            mock_client.write_gatt_char.call_args_list[-2].args[0],
+            mock_client.write_gatt_char.call_args_list[-1].args[0],
+        }
+        assert head_memory in fallback_chars
+        assert feet_memory in fallback_chars
+
     async def test_program_memory_writes_to_position_chars(
         self,
         hass: HomeAssistant,
@@ -358,6 +395,82 @@ class TestSvanePresetCommands:
             call.args[1] == SvaneCommands.SAVE_POSITION
             for call in mock_client.write_gatt_char.call_args_list
         )
+
+    async def test_program_memory_stores_software_slot_and_recall_replays_raw_bytes(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Software memory should store raw bytes and replay them on recall."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position]),
+        ]
+        mock_client.read_gatt_char = AsyncMock(side_effect=[b"\x11\x22", b"\x33\x44"])
+        mock_client.write_gatt_char.reset_mock()
+
+        sleep_mock = AsyncMock()
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.sleep", sleep_mock)
+
+        await coordinator.controller.program_memory(2)
+        assert mock_client.write_gatt_char.call_count == 0
+
+        await coordinator.controller.preset_memory(2)
+
+        assert mock_client.write_gatt_char.call_count == 2
+        assert mock_client.write_gatt_char.call_args_list[0].args[0] is head_position
+        assert mock_client.write_gatt_char.call_args_list[0].args[1] == b"\x11\x22"
+        assert mock_client.write_gatt_char.call_args_list[1].args[0] is feet_position
+        assert mock_client.write_gatt_char.call_args_list[1].args[1] == b"\x33\x44"
+
+    async def test_software_memory_recall_honors_cancel_before_feet_write(
+        self,
+        hass: HomeAssistant,
+        mock_svane_config_entry,
+        mock_coordinator_connected,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Software recall should stop before the feet write when command is cancelled."""
+        coordinator = AdjustableBedCoordinator(hass, mock_svane_config_entry)
+        await coordinator.async_connect()
+        mock_client = coordinator._client
+        assert mock_client is not None
+
+        head_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        feet_position = _MockCharacteristic(SVANE_CHAR_POSITION_UUID)
+        mock_client.services = [
+            _MockService(SVANE_HEAD_SERVICE_UUID, [head_position]),
+            _MockService(SVANE_FEET_SERVICE_UUID, [feet_position]),
+        ]
+        mock_client.read_gatt_char = AsyncMock(side_effect=[b"\x55\x66", b"\x77\x88"])
+
+        await coordinator.controller.program_memory(1)
+        mock_client.write_gatt_char.reset_mock()
+
+        async def _cancel_during_delay(wait_coro, timeout):
+            del timeout
+            coordinator.cancel_command.set()
+            await wait_coro
+            return True
+
+        wait_for_mock = AsyncMock(side_effect=_cancel_during_delay)
+        monkeypatch.setattr("custom_components.adjustable_bed.beds.svane.asyncio.wait_for", wait_for_mock)
+
+        await coordinator.controller.preset_memory(1)
+
+        assert wait_for_mock.await_count == 1
+        assert mock_client.write_gatt_char.call_count == 1
+        assert mock_client.write_gatt_char.call_args_list[0].args[0] is head_position
+        assert mock_client.write_gatt_char.call_args_list[0].args[1] == b"\x55\x66"
 
     async def test_preset_memory_writes_to_position_chars(
         self,

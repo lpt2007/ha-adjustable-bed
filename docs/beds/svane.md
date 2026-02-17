@@ -21,7 +21,7 @@
 |---------|-----------|
 | Motor Control | ✅ (2 motors: head, feet) |
 | Position Feedback | ✅ |
-| Memory Presets | ✅ (1 slot) |
+| Memory Presets | ✅ (2 software slots + firmware fallback) |
 | Flat Preset | ✅ |
 | Svane Position (Zero-G) | ✅ |
 | Under-bed Lights | ✅ |
@@ -79,12 +79,17 @@ Commands are written to the direction-specific characteristic within the appropr
 | Recall Position | `[0x3F, 0x80, 0x00, 0x00, 0x00, 0x00]` | POSITION (`143d`) | Head + Feet | Go to saved memory position |
 | Save Position | `[0x3F, 0x40, 0x00, 0x00, 0x00, 0x00]` | POSITION (`143d`) | Head + Feet | Save current position to memory |
 
-### Memory Commands (written to MEMORY characteristic `fb6e` in head service)
+### Memory Commands (written to MEMORY characteristic `fb6e`)
 
 | Command | Bytes | Description |
 |---------|-------|-------------|
 | Svane Position | `[0x03, 0x00]` | Comfort preset (similar to zero-g) |
 | Read Position | `[0x3F, 0xFF, 0x00, 0x00, 0x00, 0x00]` | Query current position |
+
+Implementation notes:
+- `preset_flat`, `save`, and `recall` use POSITION (`143d`) writes in head + feet services.
+- Compatibility fallback also writes these preset packets to MEMORY (`fb6e`) if present.
+- The integration provides two software memory slots by reading raw POSITION payloads for head/feet and replaying those bytes on recall.
 
 ### Light Commands (6-byte, written to LIGHT_ON_OFF `a8e0`)
 

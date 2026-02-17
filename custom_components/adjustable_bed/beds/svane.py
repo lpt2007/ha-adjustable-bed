@@ -75,11 +75,16 @@ class SvaneController(BedController):
     # Max angle estimates for position feedback (0-100 raw value mapped to degrees)
     _HEAD_MAX_ANGLE: float = 60.0
     _FEET_MAX_ANGLE: float = 45.0
+    _SOFTWARE_MEMORY_SLOT_COUNT: int = 2
+    _SOFTWARE_RECALL_DELAY_S: float = 1.0
 
     def __init__(self, coordinator: AdjustableBedCoordinator) -> None:
         """Initialize the Svane controller."""
         super().__init__(coordinator)
         self._notify_callback: Callable[[str, float], None] | None = None
+        # Svane app stores two recall targets in software by reading raw
+        # HEAD/FEET position bytes and replaying them later.
+        self._software_memory_positions: dict[int, tuple[bytes, bytes]] = {}
         _LOGGER.debug("SvaneController initialized")
 
     @property
@@ -109,8 +114,8 @@ class SvaneController(BedController):
 
     @property
     def memory_slot_count(self) -> int:
-        """Return 1 - Svane beds support a single memory slot."""
-        return 1
+        """Return 2 - Svane app exposes two software memory slots."""
+        return self._SOFTWARE_MEMORY_SLOT_COUNT
 
     @property
     def supports_memory_programming(self) -> bool:
@@ -238,6 +243,7 @@ class SvaneController(BedController):
         repeat_count: int,
         repeat_delay_ms: int,
         cancel_event: asyncio.Event | None = None,
+        memory_fallback: bool = True,
     ) -> None:
         """Write a preset command to the POSITION characteristic in both motor services.
 
@@ -253,6 +259,13 @@ class SvaneController(BedController):
             char = self._get_char_in_service(service_uuid, SVANE_CHAR_POSITION_UUID)
             if char is not None:
                 position_chars.append(char)
+
+        memory_chars: list[BleakGATTCharacteristic] = []
+        if memory_fallback:
+            for service_uuid in (SVANE_HEAD_SERVICE_UUID, SVANE_FEET_SERVICE_UUID):
+                char = self._get_char_in_service(service_uuid, SVANE_CHAR_MEMORY_UUID)
+                if char is not None:
+                    memory_chars.append(char)
 
         if not position_chars:
             _LOGGER.error("Position characteristic not found in head or feet service")
@@ -283,6 +296,103 @@ class SvaneController(BedController):
 
             if i < repeat_count - 1:
                 await asyncio.sleep(repeat_delay_ms / 1000)
+
+        # Compatibility fallback: some Svane firmware revisions still react to
+        # preset commands on MEMORY characteristics.
+        if memory_chars:
+            _LOGGER.debug(
+                "Applying MEMORY-characteristic fallback for preset command %s (%d characteristic(s))",
+                command.hex(),
+                len(memory_chars),
+            )
+            for char in memory_chars:
+                try:
+                    async with self._ble_lock:
+                        await self.client.write_gatt_char(char, command, response=True)
+                except BleakError:
+                    # Fallback writes are best-effort compatibility only; primary
+                    # POSITION writes already completed above.
+                    _LOGGER.debug(
+                        "Ignoring fallback preset write failure on %s",
+                        char.uuid[:8],
+                        exc_info=True,
+                    )
+
+    async def _read_position_command_bytes(self, service_uuid: str) -> bytes | None:
+        """Read raw position command bytes from a motor POSITION characteristic."""
+        if self.client is None or not self.client.is_connected:
+            _LOGGER.error("Cannot read position bytes: BLE client not connected")
+            raise ConnectionError("Not connected to bed")
+
+        char = self._get_char_in_service(service_uuid, SVANE_CHAR_POSITION_UUID)
+        if char is None:
+            _LOGGER.warning(
+                "Position characteristic missing in service %s while reading software memory",
+                service_uuid[:8],
+            )
+            return None
+
+        try:
+            async with self._ble_lock:
+                data = await self.client.read_gatt_char(char)
+        except BleakError:
+            _LOGGER.exception(
+                "Failed to read position bytes from service %s char %s",
+                service_uuid[:8],
+                SVANE_CHAR_POSITION_UUID[:8],
+            )
+            return None
+
+        if not data:
+            _LOGGER.debug(
+                "Empty position payload while reading software memory from service %s",
+                service_uuid[:8],
+            )
+            return None
+        return bytes(data)
+
+    async def _recall_software_memory(self, memory_num: int) -> bool:
+        """Recall stored software memory by replaying HEAD/FEET position bytes."""
+        saved_positions = self._software_memory_positions.get(memory_num)
+        if saved_positions is None:
+            return False
+
+        head_bytes, feet_bytes = saved_positions
+        cancel_event = self._coordinator.cancel_command
+        _LOGGER.debug(
+            "Recalling Svane software memory slot %d (head=%s feet=%s)",
+            memory_num,
+            head_bytes.hex(),
+            feet_bytes.hex(),
+        )
+        await self._write_to_service_char(
+            SVANE_HEAD_SERVICE_UUID,
+            SVANE_CHAR_POSITION_UUID,
+            head_bytes,
+            cancel_event=cancel_event,
+        )
+        if cancel_event.is_set():
+            _LOGGER.debug("Cancelled Svane software recall before feet write")
+            return True
+
+        # Keep parity with app timing while allowing early cancellation.
+        try:
+            await asyncio.wait_for(
+                cancel_event.wait(),
+                timeout=self._SOFTWARE_RECALL_DELAY_S,
+            )
+            _LOGGER.debug("Cancelled Svane software recall during head/feet delay")
+            return True
+        except TimeoutError:
+            pass
+
+        await self._write_to_service_char(
+            SVANE_FEET_SERVICE_UUID,
+            SVANE_CHAR_POSITION_UUID,
+            feet_bytes,
+            cancel_event=cancel_event,
+        )
+        return True
 
     async def start_notify(self, callback: Callable[[str, float], None] | None = None) -> None:
         """Start listening for position notifications."""
@@ -510,11 +620,24 @@ class SvaneController(BedController):
         )
 
     async def preset_memory(self, memory_num: int) -> None:
-        """Go to memory preset.
+        """Go to memory preset."""
+        if memory_num < 1 or memory_num > self._SOFTWARE_MEMORY_SLOT_COUNT:
+            _LOGGER.warning(
+                "Svane supports memory slots 1-%d only (requested: %d)",
+                self._SOFTWARE_MEMORY_SLOT_COUNT,
+                memory_num,
+            )
+            return
 
-        Svane beds only support a single memory position (memory_num is ignored).
-        """
-        del memory_num  # Svane only supports 1 memory slot
+        # Primary path: replay software-stored position bytes.
+        if await self._recall_software_memory(memory_num):
+            return
+
+        # Fallback path: try firmware recall command if software slot is empty.
+        _LOGGER.debug(
+            "Software memory slot %d is empty, falling back to firmware recall command",
+            memory_num,
+        )
         await self._write_preset_command(
             SvaneCommands.RECALL_POSITION,
             repeat_count=max(3, self._coordinator.motor_pulse_count),
@@ -522,11 +645,31 @@ class SvaneController(BedController):
         )
 
     async def program_memory(self, memory_num: int) -> None:
-        """Program current position to memory.
+        """Program current position to memory."""
+        if memory_num < 1 or memory_num > self._SOFTWARE_MEMORY_SLOT_COUNT:
+            _LOGGER.warning(
+                "Svane supports memory slots 1-%d only (requested: %d)",
+                self._SOFTWARE_MEMORY_SLOT_COUNT,
+                memory_num,
+            )
+            return
 
-        Svane beds only support a single memory position (memory_num is ignored).
-        """
-        del memory_num  # Svane only supports 1 memory slot
+        head_position = await self._read_position_command_bytes(SVANE_HEAD_SERVICE_UUID)
+        feet_position = await self._read_position_command_bytes(SVANE_FEET_SERVICE_UUID)
+        if head_position is not None and feet_position is not None:
+            self._software_memory_positions[memory_num] = (head_position, feet_position)
+            _LOGGER.info(
+                "Stored Svane software memory slot %d (head=%s feet=%s)",
+                memory_num,
+                head_position.hex(),
+                feet_position.hex(),
+            )
+            return
+
+        _LOGGER.debug(
+            "Could not capture raw position bytes for software memory slot %d; falling back to firmware save command",
+            memory_num,
+        )
         await self._write_preset_command(
             SvaneCommands.SAVE_POSITION,
             repeat_count=max(3, self._coordinator.motor_pulse_count),
