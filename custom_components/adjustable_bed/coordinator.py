@@ -30,6 +30,7 @@ from .adapter import (
 )
 from .const import (
     ADAPTER_AUTO,
+    BED_TYPE_RELAY,
     BED_MOTOR_PULSE_DEFAULTS,
     BED_TYPE_COMFORT_MOTION,
     BED_TYPE_DEWERTOKIN,
@@ -531,6 +532,23 @@ class AdjustableBedCoordinator:
         # Clear intentional disconnect flag when explicitly connecting
         # This ensures the flag persists through late disconnect callbacks
         self._intentional_disconnect = False
+        
+         # Relay backend: no BLE connection required
+        if self._bed_type == BED_TYPE_RELAY:
+            if self._controller is None:
+                _LOGGER.debug("Relay bed type - creating controller without BLE")
+                self._controller = await create_controller(
+                    coordinator=self,
+                    bed_type=self._bed_type,
+                    protocol_variant=self._protocol_variant,
+                    client=None,
+                    octo_pin=self._octo_pin,
+                    richmat_remote=self._richmat_remote,
+                    jensen_pin=self._jensen_pin,
+                    cb24_bed_selection=self._cb24_bed_selection,
+                )
+            self._notify_connection_state_change(True)
+            return True
 
         if self._client is not None and self._client.is_connected:
             _LOGGER.debug("Already connected to %s, reusing connection", self._address)
