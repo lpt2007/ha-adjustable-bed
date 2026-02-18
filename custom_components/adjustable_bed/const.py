@@ -66,6 +66,20 @@ CONF_CB24_BED_SELECTION: Final = "cb24_bed_selection"
 CONF_BACK_MAX_ANGLE: Final = "back_max_angle"
 CONF_LEGS_MAX_ANGLE: Final = "legs_max_angle"
 
+# start Configuration keys added by LPT2007
+CONF_BACKEND = "backend"
+BACKEND_BLUETOOTH = "bluetooth"
+BACKEND_RELAY = "relay"
+
+CONF_RELAY_HEAD_UP = "relay_head_up"
+CONF_RELAY_HEAD_DOWN = "relay_head_down"
+CONF_RELAY_FEET_UP = "relay_feet_up"
+CONF_RELAY_FEET_DOWN = "relay_feet_down"
+CONF_RELAY_PULSE_TIME = "relay_pulse_time"
+# end Configuration keys added by LPT2007
+
+DEFAULT_RELAY_PULSE_TIME = 0.5
+
 # Default angle limits (from Linak beds)
 DEFAULT_BACK_MAX_ANGLE: Final = 68.0
 DEFAULT_LEGS_MAX_ANGLE: Final = 45.0
