@@ -70,7 +70,6 @@ CONF_LEGS_MAX_ANGLE: Final = "legs_max_angle"
 CONF_BACKEND = "backend"
 BACKEND_BLUETOOTH = "bluetooth"
 BACKEND_RELAY = "relay"
-
 CONF_RELAY_HEAD_UP = "relay_head_up"
 CONF_RELAY_HEAD_DOWN = "relay_head_down"
 CONF_RELAY_FEET_UP = "relay_feet_up"
@@ -106,6 +105,7 @@ BED_TYPE_OKIN_ORE: Final = "okin_ore"  # OREBedBleProtocol (A5 5A format, 000010
 BED_TYPE_LEGGETT_GEN2: Final = "leggett_gen2"  # Leggett Gen2 ASCII protocol
 BED_TYPE_LEGGETT_OKIN: Final = "leggett_okin"  # Leggett Okin binary protocol
 BED_TYPE_LEGGETT_WILINKE: Final = "leggett_wilinke"  # Leggett WiLinke 5-byte
+BED_TYPE_RELAY: Final = "relay" # WiFi and Zigbee 4-relay controler add by LPT2007 18.2.2026
 
 # Bed types - Legacy naming (backwards compatibility)
 # These map to the protocol-based types above
@@ -158,6 +158,9 @@ SUPPORTED_BED_TYPES: Final = [
     BED_TYPE_LEGGETT_GEN2,
     BED_TYPE_LEGGETT_OKIN,
     BED_TYPE_LEGGETT_WILINKE,
+    # start add by LPT2007 18.2.2026
+    BED_TYPE_RELAY,
+     # end add by LPT2007 18.2.2026
     # Brand-specific types
     BED_TYPE_LINAK,
     BED_TYPE_RICHMAT,
