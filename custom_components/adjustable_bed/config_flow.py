@@ -643,6 +643,9 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
         devices: dict[str, str] = {
             "select_by_brand": "Select by actuator brand (recommended)",
             "manual": "Show all BLE devices",
+        # start added by LPT2007 18.2.2026
+            "relay": "Relay (Zigbee/WiFi switches) - use 4 switch entities",
+        # end added by LPT2007 18.2.2026   
         }
 
         # Sort discovered beds: named devices first (alphabetically), then MAC-only/unnamed
