@@ -677,7 +677,100 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_ADDRESS): vol.In(devices)}),
         )
+# start added by LPT2007 18.2.2026
+        async def async_step_relay(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure relay backend using existing switch entities."""
+        errors: dict[str, str] = {}
 
+        if user_input is not None:
+            # Use one of the relay entity_ids to build a stable unique_id
+            unique = user_input[CONF_RELAY_HEAD_UP]
+            await self.async_set_unique_id(f"relay:{unique}")
+            self._abort_if_unique_id_configured()
+
+            name = user_input.get(CONF_NAME, "Adjustable Bed (Relay)")
+
+            entry_data = {
+                CONF_NAME: name,
+                CONF_ADDRESS: f"relay:{unique}",
+
+                # Relay backend marker
+                CONF_BACKEND: BACKEND_RELAY,
+
+                # Minimal bed meta: 2 motors, no massage. (Controller maps head/feet.)
+                CONF_BED_TYPE: BED_TYPE_DIAGNOSTIC,
+                CONF_MOTOR_COUNT: 2,
+                CONF_HAS_MASSAGE: False,
+
+                # Relay mapping (switch entities)
+                CONF_RELAY_HEAD_UP: user_input[CONF_RELAY_HEAD_UP],
+                CONF_RELAY_HEAD_DOWN: user_input[CONF_RELAY_HEAD_DOWN],
+                CONF_RELAY_FEET_UP: user_input[CONF_RELAY_FEET_UP],
+                CONF_RELAY_FEET_DOWN: user_input[CONF_RELAY_FEET_DOWN],
+
+                # Pulse time
+                CONF_RELAY_PULSE_TIME: float(
+                    user_input.get(CONF_RELAY_PULSE_TIME, DEFAULT_RELAY_PULSE_TIME)
+                ),
+
+                # Keep reasonable defaults for shared options
+                CONF_DISABLE_ANGLE_SENSING: True,
+                CONF_PROTOCOL_VARIANT: VARIANT_AUTO,
+                CONF_PREFERRED_ADAPTER: ADAPTER_AUTO,
+                CONF_DISCONNECT_AFTER_COMMAND: True,
+                CONF_IDLE_DISCONNECT_SECONDS: DEFAULT_IDLE_DISCONNECT_SECONDS,
+            }
+
+            _LOGGER.info(
+                "Creating relay bed entry: name=%s, head_up=%s, head_down=%s, feet_up=%s, feet_down=%s, pulse=%.2fs",
+                name,
+                entry_data[CONF_RELAY_HEAD_UP],
+                entry_data[CONF_RELAY_HEAD_DOWN],
+                entry_data[CONF_RELAY_FEET_UP],
+                entry_data[CONF_RELAY_FEET_DOWN],
+                entry_data[CONF_RELAY_PULSE_TIME],
+            )
+
+            return self.async_create_entry(title=name, data=entry_data)
+
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_NAME, default="Adjustable Bed (Relay)"): TextSelector(
+                    TextSelectorConfig()
+                ),
+                vol.Required(CONF_RELAY_HEAD_UP): EntitySelector(
+                    EntitySelectorConfig(domain="switch")
+                ),
+                vol.Required(CONF_RELAY_HEAD_DOWN): EntitySelector(
+                    EntitySelectorConfig(domain="switch")
+                ),
+                vol.Required(CONF_RELAY_FEET_UP): EntitySelector(
+                    EntitySelectorConfig(domain="switch")
+                ),
+                vol.Required(CONF_RELAY_FEET_DOWN): EntitySelector(
+                    EntitySelectorConfig(domain="switch")
+                ),
+                vol.Optional(
+                    CONF_RELAY_PULSE_TIME, default=DEFAULT_RELAY_PULSE_TIME
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0.1,
+                        max=5.0,
+                        step=0.1,
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="relay",
+            data_schema=schema,
+            errors=errors,
+        )
+# end added by LPT2007 18.2.2026
     async def async_step_select_actuator(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
