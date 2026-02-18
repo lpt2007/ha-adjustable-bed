@@ -115,6 +115,11 @@ async def create_controller(
         ConnectionError: If auto-detection is needed but client is not connected
     """
     # Protocol-based bed types (new naming convention)
+    if bed_type == BED_TYPE_RELAY:
+        from .beds.relay import RelayController
+        
+        return RelayController(coordinator)
+        
     if bed_type == BED_TYPE_OKIN_HANDLE:
         from .beds.okin_handle import OkinHandleController
 
