@@ -581,6 +581,11 @@ class AdjustableBedConfigFlow(ConfigFlow, domain=DOMAIN):
             if address == "diagnostic":
                 _LOGGER.debug("User selected diagnostic mode")
                 return await self.async_step_diagnostic()
+            # start added by LPT2007 18.2.26
+            if address == "relay":
+                 _LOGGER.debug("User selected relay backend")
+                 return await self.async_step_relay()
+            # end added by LPT2007 18.2.26
 
             _LOGGER.info("User selected device: %s", address)
             # Normalize address to uppercase to match Bluetooth discovery
