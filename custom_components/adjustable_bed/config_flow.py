@@ -26,6 +26,14 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
     TextSelector,
     TextSelectorConfig,
+    # start added by LPT2007 18.2.26
+    # — added relay backend —
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    # end added by LPT2007 18.2.26
 )
 from homeassistant.helpers.translation import async_get_translations
 
