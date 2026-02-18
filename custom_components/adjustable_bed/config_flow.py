@@ -1,4 +1,5 @@
 """Config flow for Adjustable Bed integration."""
+"""Add relay support by LPT2007"""
 
 from __future__ import annotations
 
